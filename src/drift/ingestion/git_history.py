@@ -144,6 +144,8 @@ def parse_git_history(
             ],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=str(repo_path),
             timeout=60,
         )

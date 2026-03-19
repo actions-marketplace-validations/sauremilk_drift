@@ -238,6 +238,8 @@ def analyze_diff(
             ["git", "diff", "--name-only", diff_ref],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=repo_path,
             check=True,
         )

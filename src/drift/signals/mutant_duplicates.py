@@ -12,7 +12,6 @@ size range (±40% LOC) are compared.
 from __future__ import annotations
 
 import ast
-import difflib
 from collections import defaultdict
 from itertools import combinations
 from pathlib import Path
@@ -55,27 +54,33 @@ def _function_body_text(
         return ""
 
 
-def _structural_similarity(a: str, b: str) -> float:
-    """Compute structural similarity via AST n-gram Jaccard, with text fallback.
+# Sentinel for ngrams that failed to parse (distinct from None/empty).
+_NGRAM_PARSE_FAILED: list[tuple[str, ...]] = []
 
-    1. Parse both snippets into ASTs.
-    2. Walk each AST, collecting node-type trigrams (ignoring names/literals).
-    3. Return Jaccard similarity of the two trigram multisets.
 
-    Falls back to difflib SequenceMatcher when either snippet fails to parse
-    (e.g. partial code, syntax errors).
+def _structural_similarity_cached(
+    ngrams_a: list[tuple[str, ...]] | None,
+    ngrams_b: list[tuple[str, ...]] | None,
+) -> float:
+    """Compute structural similarity from pre-computed AST n-gram lists.
+
+    Returns 0.0 when either side failed to parse (no expensive difflib
+    fallback — the vast majority of findings come from the AST path and
+    the difflib fallback dominated runtime for marginal benefit).
     """
-    if not a or not b:
+    if ngrams_a is _NGRAM_PARSE_FAILED or ngrams_b is _NGRAM_PARSE_FAILED:
+        return 0.0
+    if not ngrams_a or not ngrams_b:
         return 0.0
 
-    ngrams_a = _ast_ngrams(a)
-    ngrams_b = _ast_ngrams(b)
+    # Cheap reject: if ngram set sizes differ by >3×, similarity < 0.5
+    len_a, len_b = len(ngrams_a), len(ngrams_b)
+    if len_a > 0 and len_b > 0:
+        size_ratio = min(len_a, len_b) / max(len_a, len_b)
+        if size_ratio < 0.33:
+            return size_ratio  # guaranteed below threshold
 
-    if ngrams_a is not None and ngrams_b is not None:
-        return _jaccard(ngrams_a, ngrams_b)
-
-    # Fallback: text-based comparison for unparseable snippets
-    return difflib.SequenceMatcher(None, a, b).ratio()
+    return _jaccard(ngrams_a, ngrams_b)
 
 
 def _ast_ngrams(source: str, n: int = 3) -> list[tuple[str, ...]] | None:
@@ -198,6 +203,19 @@ class MutantDuplicateSignal(BaseSignal):
                     )
 
         # ---- Phase 2: Near-duplicates via LOC-bucket comparison ----
+        # Pre-compute AST ngrams per function ONCE (avoids re-parsing
+        # the same function body for every pair it participates in).
+        file_cache: dict[Path, list[str]] = {}
+        ngram_cache: dict[str, list[tuple[str, ...]] | None] = {}
+        for fn in functions:
+            fn_key = f"{fn.file_path}:{fn.name}:{fn.start_line}"
+            text = _function_body_text(fn, self._repo_path, file_cache)
+            if text:
+                ngrams = _ast_ngrams(text)
+                ngram_cache[fn_key] = ngrams if ngrams is not None else _NGRAM_PARSE_FAILED
+            else:
+                ngram_cache[fn_key] = _NGRAM_PARSE_FAILED
+
         # Group functions into LOC buckets (bucket_size=10 lines) so we
         # only compare functions of approximately similar size.
         bucket_size = 10
@@ -206,7 +224,6 @@ class MutantDuplicateSignal(BaseSignal):
             bucket = fn.loc // bucket_size
             loc_buckets[bucket].append(fn)
 
-        file_cache: dict[Path, list[str]] = {}
         sorted_buckets = sorted(loc_buckets.keys())
 
         for i, bucket_key in enumerate(sorted_buckets):
@@ -242,10 +259,10 @@ class MutantDuplicateSignal(BaseSignal):
                     continue
 
                 comparisons += 1
-                text_a = _function_body_text(a, self._repo_path, file_cache)
-                text_b = _function_body_text(b, self._repo_path, file_cache)
+                ng_a = ngram_cache.get(f"{a.file_path}:{a.name}:{a.start_line}")
+                ng_b = ngram_cache.get(f"{b.file_path}:{b.name}:{b.start_line}")
 
-                sim = _structural_similarity(text_a, text_b)
+                sim = _structural_similarity_cached(ng_a, ng_b)
                 if sim >= SIMILARITY_THRESHOLD and sim < 1.0:
                     checked.add(key)
 

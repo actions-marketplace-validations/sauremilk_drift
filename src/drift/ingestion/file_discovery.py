@@ -39,7 +39,26 @@ def detect_language(path: Path) -> str | None:
 
 
 def _matches_any(path_str: str, patterns: list[str]) -> bool:
-    return any(fnmatch.fnmatch(path_str, pattern) for pattern in patterns)
+    """Check if *path_str* matches any exclude pattern.
+
+    ``fnmatch`` treats ``*`` as "any characters except separator" but does
+    **not** support ``**`` for recursive directory matching.  The common
+    pattern ``**/dirname/**`` therefore never matches paths with multiple
+    directory levels.  We handle this by extracting the middle segment of
+    ``**/X/**`` patterns and testing it against each path component with
+    ``fnmatch`` (so ``**/*.egg-info/**`` still works).
+    """
+    parts = path_str.split("/")
+    for pattern in patterns:
+        if fnmatch.fnmatch(path_str, pattern):
+            return True
+        # Recursive directory patterns: **/name/** or **/pattern/**
+        if pattern.startswith("**/") and pattern.endswith("/**"):
+            dir_pattern = pattern[3:-3]  # strip **/ and /**
+            for part in parts:
+                if fnmatch.fnmatch(part, dir_pattern):
+                    return True
+    return False
 
 
 def discover_files(
