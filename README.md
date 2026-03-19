@@ -115,7 +115,7 @@ fail_on: high # critical | high | medium | low
 
 ### `drift analyze`
 
-Full repository analysis with Rich terminal output.
+Full repository analysis with Rich terminal output. Includes **actionable recommendations** — concrete, rule-based suggestions for fixing detected drift (no LLM required).
 
 ```bash
 drift analyze --repo . --since 90 --format rich
@@ -147,11 +147,25 @@ drift patterns --category error_handling
 
 ### `drift trend`
 
-Show drift score evolution over time.
+Show drift score evolution over time with an **ASCII trend chart** when ≥3 snapshots exist.
 
 ```bash
 drift trend --last 90
 ```
+
+### `drift timeline`
+
+**Root-cause analysis** — identifies *when* drift began per module and correlates it with AI-attributed commits. Shows clean periods, drift onset dates, trigger commits, and AI burst detection.
+
+```bash
+drift timeline --repo . --since 90
+```
+
+| Flag           | Default | Description      |
+| -------------- | ------- | ---------------- |
+| `--repo, -r`   | `.`     | Repository path  |
+| `--since, -s`  | `90`    | Days of history  |
+| `--config, -c` | —       | Config file path |
 
 ## Output Formats
 
@@ -170,6 +184,8 @@ drift/
 ├── cache.py            # Parse result caching (SHA-256 keyed)
 ├── config.py           # drift.yaml configuration loading
 ├── models.py           # Core data models (dataclasses)
+├── timeline.py         # Root-cause analysis: when & why drift began
+├── recommendations.py  # Rule-based actionable fix suggestions
 ├── ingestion/
 │   ├── ast_parser.py   # Python AST parsing (built-in ast module)
 │   ├── file_discovery.py
@@ -186,7 +202,7 @@ drift/
 ├── scoring/
 │   └── engine.py       # Weighted composite scoring
 └── output/
-    ├── rich_output.py  # Terminal dashboard
+    ├── rich_output.py  # Terminal dashboard + timeline + trend chart
     └── json_output.py  # JSON + SARIF
 ```
 
@@ -237,7 +253,7 @@ drift analyze --repo .
 
 ## Roadmap
 
-- **v0.1 (current):** 6 active detection signals, Python support, CLI + CI integration, parse caching, trend history
+- **v0.1 (current):** 6 active detection signals, Python support, CLI + CI integration, parse caching, trend history with ASCII charts, timeline root-cause analysis, actionable recommendations
 - **v0.2:** TypeScript support (tree-sitter), Doc-Impl Drift signal, embedding-based duplicate detection
 - **v0.3:** IDE plugin (VS Code), ADR-to-code alignment, team dashboards
 - **v0.4:** PR bot, auto-fix suggestions, historical drift tracking

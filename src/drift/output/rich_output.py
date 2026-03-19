@@ -63,9 +63,7 @@ def _sparkline(values: list[float], width: int = 20) -> str:
     chars = " ▁▂▃▄▅▆▇█"
     mn, mx = min(values), max(values)
     rng = mx - mn if mx != mn else 1.0
-    return "".join(
-        chars[int((v - mn) / rng * (len(chars) - 1))] for v in values[-width:]
-    )
+    return "".join(chars[int((v - mn) / rng * (len(chars) - 1))] for v in values[-width:])
 
 
 def render_summary(analysis: RepoAnalysis, console: Console | None = None) -> None:
@@ -202,9 +200,7 @@ def _format_module_detail(module: ModuleScore) -> Text:
     text.append(f"Drift Score: {module.drift_score:.2f}", style="bold")
     text.append(f"  ({module.severity.value.upper()})\n\n", style="dim")
 
-    for sig_type, score in sorted(
-        module.signal_scores.items(), key=lambda x: x[1], reverse=True
-    ):
+    for sig_type, score in sorted(module.signal_scores.items(), key=lambda x: x[1], reverse=True):
         label = _SIGNAL_LABELS.get(sig_type, "???")
         bar = "█" * int(score * 15) + "░" * (15 - int(score * 15))
 
@@ -238,3 +234,203 @@ def render_full_report(analysis: RepoAnalysis, console: Console | None = None) -
     render_module_table(analysis, console)
     console.print()
     render_findings(analysis.findings, console=console)
+
+
+# ---------------------------------------------------------------------------
+# Timeline rendering
+# ---------------------------------------------------------------------------
+
+
+def render_timeline(
+    timeline: "RepoTimeline",  # noqa: F821
+    console: Console | None = None,
+) -> None:
+    """Render the drift timeline showing *when* and *why* drift began."""
+    from drift.timeline import RepoTimeline  # noqa: F811
+
+    if console is None:
+        console = Console()
+
+    if not timeline.module_timelines:
+        console.print("[dim]No timeline data — no modules with findings.[/dim]")
+        return
+
+    # AI burst summary
+    if timeline.ai_burst_periods:
+        console.print()
+        console.print("[bold]AI Commit Bursts[/bold]")
+        for burst in timeline.ai_burst_periods:
+            span = burst.end_date - burst.start_date
+            console.print(
+                f"  [red]●[/red] {burst.start_date} → {burst.end_date} "
+                f"({span.days + 1}d): "
+                f"[bold]{burst.ai_commit_count}[/bold] AI commits "
+                f"/ {burst.commit_count} total, "
+                f"{len(burst.files_affected)} files"
+            )
+        console.print()
+
+    # Per-module timelines
+    table = Table(title="Module Drift Timeline", show_lines=True)
+    table.add_column("Module", style="bold", min_width=20)
+    table.add_column("Clean Until", min_width=12)
+    table.add_column("Drift Started", min_width=12)
+    table.add_column("Trigger Commits", justify="right")
+    table.add_column("AI Burst?", min_width=8)
+    table.add_column("Score", justify="right")
+
+    for mt in timeline.module_timelines[:15]:
+        clean = str(mt.clean_until) if mt.clean_until else "[dim]—[/dim]"
+        started = f"[red]{mt.drift_started}[/red]" if mt.drift_started else "[dim]—[/dim]"
+        triggers = str(len(mt.trigger_commits))
+        burst = "[red]yes[/red]" if mt.ai_burst else "[dim]no[/dim]"
+        color = (
+            "red" if mt.current_score >= 0.6 else ("yellow" if mt.current_score >= 0.3 else "green")
+        )
+        score = f"[{color}]{mt.current_score:.2f}[/{color}]"
+
+        table.add_row(mt.module_path, clean, started, triggers, burst, score)
+
+    console.print(table)
+
+    # Detailed trigger commits for top 3 drifting modules
+    console.print()
+    for mt in timeline.module_timelines[:3]:
+        if not mt.trigger_commits:
+            continue
+        console.print(f"[bold]{mt.module_path}/[/bold] — trigger commits:")
+        for evt in mt.trigger_commits[:5]:
+            ai_tag = " [red](AI)[/red]" if evt.is_ai else ""
+            console.print(
+                f"  {evt.date}  "
+                f"[dim]{evt.commit_hash or '?'}[/dim]  "
+                f"{evt.author or '?'}{ai_tag}  "
+                f"{evt.description}"
+            )
+        remaining = len(mt.trigger_commits) - 5
+        if remaining > 0:
+            console.print(f"  [dim]... +{remaining} more[/dim]")
+        console.print()
+
+
+# ---------------------------------------------------------------------------
+# Recommendations rendering
+# ---------------------------------------------------------------------------
+
+
+def render_recommendations(
+    recommendations: list["Recommendation"],  # noqa: F821
+    console: Console | None = None,
+) -> None:
+    """Render actionable recommendations."""
+    from drift.recommendations import Recommendation  # noqa: F811
+
+    if console is None:
+        console = Console()
+
+    if not recommendations:
+        console.print("[green]No recommendations — codebase is clean![/green]")
+        return
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]{len(recommendations)} Recommendations[/bold]",
+            border_style="cyan",
+        )
+    )
+
+    _IMPACT_ICONS = {"high": "🔴", "medium": "🟡", "low": "🟢"}
+    _EFFORT_LABELS = {
+        "low": "[green]low[/green]",
+        "medium": "[yellow]med[/yellow]",
+        "high": "[red]high[/red]",
+    }
+
+    for i, rec in enumerate(recommendations, 1):
+        impact_icon = _IMPACT_ICONS.get(rec.impact, "?")
+        effort_label = _EFFORT_LABELS.get(rec.effort, rec.effort)
+        file_hint = f"  [dim]{rec.file_path.as_posix()}[/dim]" if rec.file_path else ""
+
+        console.print(f"  {impact_icon} [bold]{i}. {rec.title}[/bold]{file_hint}")
+        console.print(f"     {rec.description}")
+        console.print(f"     Effort: {effort_label}  |  Impact: {rec.impact}")
+        console.print()
+
+
+# ---------------------------------------------------------------------------
+# Trend chart rendering
+# ---------------------------------------------------------------------------
+
+
+def render_trend_chart(
+    snapshots: list[dict],
+    width: int = 60,
+    console: Console | None = None,
+) -> None:
+    """Render an ASCII trend chart of drift scores over time."""
+    if console is None:
+        console = Console()
+
+    if len(snapshots) < 2:
+        console.print("[dim]Need at least 2 snapshots for a chart.[/dim]")
+        return
+
+    scores = [s["drift_score"] for s in snapshots]
+    dates = [s["timestamp"][:10] for s in snapshots]
+
+    min_score = min(scores)
+    max_score = max(scores)
+    score_range = max_score - min_score if max_score != min_score else 0.1
+
+    # Chart height
+    height = 12
+    chart_width = min(width, len(scores))
+
+    # Resample if we have more snapshots than chart width
+    if len(scores) > chart_width:
+        step = len(scores) / chart_width
+        sampled_scores = [scores[int(i * step)] for i in range(chart_width)]
+        sampled_dates = [dates[int(i * step)] for i in range(chart_width)]
+    else:
+        sampled_scores = scores
+        sampled_dates = dates
+        chart_width = len(scores)
+
+    console.print()
+    console.print("[bold]Drift Score Trend[/bold]")
+    console.print()
+
+    # Render chart rows top-down
+    for row in range(height, -1, -1):
+        threshold = min_score + (row / height) * score_range
+        label = f"{threshold:.2f} │"
+        line = []
+        for s in sampled_scores:
+            normalized = (s - min_score) / score_range
+            bar_height = normalized * height
+            if bar_height >= row:
+                if s >= 0.6:
+                    line.append("[red]█[/red]")
+                elif s >= 0.3:
+                    line.append("[yellow]█[/yellow]")
+                else:
+                    line.append("[green]█[/green]")
+            else:
+                line.append(" ")
+        console.print(f"  {label}{''.join(line)}")
+
+    # X-axis
+    axis = "─" * chart_width
+    console.print(f"       └{axis}")
+
+    # Date labels
+    if len(sampled_dates) >= 2:
+        first_date = sampled_dates[0]
+        last_date = sampled_dates[-1]
+        padding = chart_width - len(first_date) - len(last_date)
+        if padding > 0:
+            console.print(f"        {first_date}{' ' * padding}{last_date}")
+        else:
+            console.print(f"        {first_date}  ...  {last_date}")
+    console.print()

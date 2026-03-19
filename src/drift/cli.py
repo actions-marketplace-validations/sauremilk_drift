@@ -25,9 +25,7 @@ def _configure_logging(verbose: bool = False) -> None:
 
 @click.group()
 @click.version_option(version=__version__, prog_name="drift")
-@click.option(
-    "-v", "--verbose", is_flag=True, default=False, help="Enable debug logging."
-)
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Enable debug logging.")
 def main(verbose: bool = False) -> None:
     """Drift — Detect architectural erosion from AI-generated code."""
     _configure_logging(verbose)
@@ -42,9 +40,7 @@ def main(verbose: bool = False) -> None:
     help="Path to the repository root.",
 )
 @click.option("--path", "-p", default=None, help="Restrict analysis to a subdirectory.")
-@click.option(
-    "--since", "-s", default=90, type=int, help="Days of git history to analyze."
-)
+@click.option("--since", "-s", default=90, type=int, help="Days of git history to analyze.")
 @click.option(
     "--format",
     "-f",
@@ -101,9 +97,16 @@ def analyze(
 
         click.echo(findings_to_sarif(analysis))
     else:
-        from drift.output.rich_output import render_full_report
+        from drift.output.rich_output import render_full_report, render_recommendations
 
         render_full_report(analysis, console)
+
+        # Actionable recommendations
+        from drift.recommendations import generate_recommendations
+
+        recs = generate_recommendations(analysis.findings)
+        if recs:
+            render_recommendations(recs, console)
 
 
 @main.command()
@@ -167,8 +170,7 @@ def check(
         sys.exit(1)
     else:
         console.print(
-            f"\n[bold green]✓ Drift check passed[/bold green] "
-            f"(threshold: {threshold}).",
+            f"\n[bold green]✓ Drift check passed[/bold green] (threshold: {threshold}).",
         )
 
 
@@ -208,9 +210,7 @@ def patterns(repo: Path, category: str | None) -> None:
     with console.status("[bold blue]Discovering patterns..."):
         analysis = analyze_repo(repo, cfg)
 
-    for cat, instances in sorted(
-        analysis.pattern_catalog.items(), key=lambda x: x[0].value
-    ):
+    for cat, instances in sorted(analysis.pattern_catalog.items(), key=lambda x: x[0].value):
         if category and cat.value != category:
             continue
 
@@ -234,6 +234,44 @@ def patterns(repo: Path, category: str | None) -> None:
 
     if not analysis.pattern_catalog:
         console.print("[dim]No patterns detected.[/dim]")
+
+
+@main.command()
+@click.option(
+    "--repo",
+    "-r",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=".",
+)
+@click.option("--since", "-s", default=90, type=int, help="Days of git history to analyze.")
+@click.option("--config", "-c", type=click.Path(path_type=Path), default=None)
+def timeline(repo: Path, since: int, config: Path | None) -> None:
+    """Show when and why drift began in each module (root-cause analysis)."""
+    from drift.analyzer import analyze_repo
+    from drift.config import DriftConfig
+    from drift.ingestion.file_discovery import discover_files
+    from drift.ingestion.git_history import build_file_histories, parse_git_history
+    from drift.output.rich_output import render_timeline
+    from drift.timeline import build_timeline
+
+    cfg = DriftConfig.load(repo, config)
+
+    with console.status("[bold blue]Analyzing repository..."):
+        analysis = analyze_repo(repo, cfg, since_days=since)
+
+    # Reconstruct commits and file histories for timeline
+    with console.status("[bold blue]Building timeline..."):
+        files = discover_files(repo.resolve(), include=cfg.include, exclude=cfg.exclude)
+        known_files = {f.path.as_posix() for f in files}
+        commits = parse_git_history(repo.resolve(), since_days=since, file_filter=known_files)
+        file_histories = build_file_histories(commits, known_files=known_files)
+
+        module_scores = {ms.path.as_posix(): ms.drift_score for ms in analysis.module_scores}
+        tl = build_timeline(commits, file_histories, analysis.findings, module_scores)
+
+    console.print()
+    console.print(f"[bold]Drift Timeline — {repo.resolve().name}[/bold]  ({since}-day history)")
+    render_timeline(tl, console)
 
 
 @main.command()
@@ -293,9 +331,7 @@ def trend(repo: Path, days: int, config: Path | None) -> None:
     # Display trend table
     if len(snapshots) < 2:
         console.print(f"  Drift score: [bold]{analysis.drift_score:.3f}[/bold]")
-        console.print(
-            f"  Files: {analysis.total_files}  |  Findings: {len(analysis.findings)}"
-        )
+        console.print(f"  Files: {analysis.total_files}  |  Findings: {len(analysis.findings)}")
         console.print()
         console.print("[dim]Run again later to see trend comparison.[/dim]")
         return
@@ -348,11 +384,12 @@ def trend(repo: Path, days: int, config: Path | None) -> None:
     console.print(f"  Files analyzed: {analysis.total_files}")
     console.print(f"  Total findings: {len(analysis.findings)}")
     console.print(f"  AI-attributed commits: {analysis.ai_attributed_ratio:.0%}")
-    console.print()
-    console.print(
-        "[dim]Full temporal trend analysis (weekly history snapshots) "
-        "is planned for v0.2.0.[/dim]"
-    )
+
+    # Trend chart
+    if len(snapshots) >= 3:
+        from drift.output.rich_output import render_trend_chart
+
+        render_trend_chart(snapshots, console=console)
 
 
 if __name__ == "__main__":
