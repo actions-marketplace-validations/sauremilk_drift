@@ -1,13 +1,13 @@
 {
   "name": "pydantic",
-  "drift_score": 0.577,
+  "drift_score": 0.564,
   "severity": "medium",
   "files": 403,
   "functions": 8384,
   "ai_ratio": 0.0,
-  "analysis_s": 57.91,
-  "wall_s": 58.43,
-  "findings": 283,
+  "analysis_s": 57.84,
+  "wall_s": 58.38,
+  "findings": 260,
   "signals": {},
   "top5": [
     {

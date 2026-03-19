@@ -1,14 +1,14 @@
 {
   "version": "0.1.0",
-  "repo": "C:/Users/mickg/AppData/Local/Temp/drift_bench_i52589aj/pydantic",
-  "analyzed_at": "2026-03-19T14:18:59.343109+00:00",
-  "drift_score": 0.564,
+  "repo": "C:/Users/mickg/AppData/Local/Temp/drift_bench_mz9c7l52/pydantic",
+  "analyzed_at": "2026-03-19T11:14:31.949401+00:00",
+  "drift_score": 0.577,
   "severity": "medium",
   "summary": {
     "total_files": 403,
     "total_functions": 8384,
     "ai_attributed_ratio": 0.0,
-    "analysis_duration_seconds": 57.84
+    "analysis_duration_seconds": 57.91
   },
   "modules": [
     {
@@ -57,7 +57,7 @@
       "severity": "medium",
       "signal_scores": {
         "pattern_fragmentation": 0.2817,
-        "mutant_duplicate": 0.8861,
+        "mutant_duplicate": 0.8862,
         "explainability_deficit": 0.4313,
         "temporal_volatility": 0.7701,
         "system_misalignment": 0.2891
@@ -94,7 +94,7 @@
       "drift_score": 0.387,
       "severity": "low",
       "signal_scores": {
-        "mutant_duplicate": 0.5375,
+        "mutant_duplicate": 0.5381,
         "temporal_volatility": 0.2891,
         "system_misalignment": 0.2891
       },
@@ -127,16 +127,16 @@
     },
     {
       "path": "pydantic/v1",
-      "drift_score": 0.37,
+      "drift_score": 0.354,
       "severity": "low",
       "signal_scores": {
         "pattern_fragmentation": 0.2835,
         "architecture_violation": 0.1734,
-        "mutant_duplicate": 0.5,
+        "mutant_duplicate": 0.4123,
         "explainability_deficit": 0.4372,
         "temporal_volatility": 0.5635
       },
-      "finding_count": 57,
+      "finding_count": 56,
       "ai_ratio": 0.0
     },
     {
@@ -150,6 +150,16 @@
         "system_misalignment": 0.2891
       },
       "finding_count": 6,
+      "ai_ratio": 0.0
+    },
+    {
+      "path": ".",
+      "drift_score": 0.3,
+      "severity": "low",
+      "signal_scores": {
+        "doc_impl_drift": 0.3
+      },
+      "finding_count": 26,
       "ai_ratio": 0.0
     },
     {
@@ -222,7 +232,7 @@
       "drift_score": 0.181,
       "severity": "info",
       "signal_scores": {
-        "mutant_duplicate": 0.2013,
+        "mutant_duplicate": 0.2014,
         "explainability_deficit": 0.1546
       },
       "finding_count": 3,
@@ -247,16 +257,6 @@
       "signal_scores": {
         "explainability_deficit": 0.1445,
         "temporal_volatility": 0.135
-      },
-      "finding_count": 2,
-      "ai_ratio": 0.0
-    },
-    {
-      "path": ".",
-      "drift_score": 0.137,
-      "severity": "info",
-      "signal_scores": {
-        "doc_impl_drift": 0.1374
       },
       "finding_count": 2,
       "ai_ratio": 0.0
@@ -344,6 +344,160 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: actions/",
+      "description": "README mentions 'actions/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "actions"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: badge/",
+      "description": "README mentions 'badge/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "badge"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: blob/",
+      "description": "README mentions 'blob/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "blob"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: conda/",
+      "description": "README mentions 'conda/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "conda"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: conda-forge/",
+      "description": "README mentions 'conda-forge/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "conda-forge"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: contributing/",
+      "description": "README mentions 'contributing/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "contributing"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: dev/",
+      "description": "README mentions 'dev/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "dev"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: github/",
+      "description": "README mentions 'github/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "github"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: install/",
+      "description": "README mentions 'install/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "install"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: io/",
+      "description": "README mentions 'io/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "io"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: latest/",
+      "description": "README mentions 'latest/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "latest"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: linters/",
       "description": "README mentions 'linters/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -352,6 +506,188 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "linters"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: logfire/",
+      "description": "README mentions 'logfire/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "logfire"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: main/",
+      "description": "README mentions 'main/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "main"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: org/",
+      "description": "README mentions 'org/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "org"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: project/",
+      "description": "README mentions 'project/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "project"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: pypi/",
+      "description": "README mentions 'pypi/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "pypi"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: pyversions/",
+      "description": "README mentions 'pyversions/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "pyversions"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: redirect/",
+      "description": "README mentions 'redirect/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "redirect"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: security/",
+      "description": "README mentions 'security/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "security"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: status/",
+      "description": "README mentions 'status/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "status"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: tech/",
+      "description": "README mentions 'tech/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "tech"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: tree/",
+      "description": "README mentions 'tree/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "tree"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: v/",
+      "description": "README mentions 'v/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "v"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: workflow/",
+      "description": "README mentions 'workflow/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "workflow"
       }
     },
     {
@@ -4240,7 +4576,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.6963855421686747,
+      "score": 0.6968468468468468,
       "title": "Near-duplicate (82%): get_issues_experts \u2194 get_discussions_experts",
       "description": ".github\\actions\\people\\people.py:451 and .github\\actions\\people\\people.py:497 are 82% similar. Small differences may indicate copy-paste divergence.",
       "file": ".github/actions/people/people.py",
@@ -4248,7 +4584,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.819,
+        "similarity": 0.82,
         "function_a": "get_issues_experts",
         "function_b": "get_discussions_experts",
         "file_a": ".github/actions/people/people.py",
@@ -4258,7 +4594,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.74375,
+      "score": 0.7444827586206896,
       "title": "Near-duplicate (88%): decimal_schema \u2194 url_schema",
       "description": "pydantic-core\\python\\pydantic_core\\core_schema.py:773 and pydantic-core\\python\\pydantic_core\\core_schema.py:3921 are 88% similar. Small differences may indicate copy-paste divergence.",
       "file": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4266,7 +4602,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.875,
+        "similarity": 0.876,
         "function_a": "decimal_schema",
         "function_b": "url_schema",
         "file_a": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4276,7 +4612,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.74375,
+      "score": 0.7444827586206896,
       "title": "Near-duplicate (88%): decimal_schema \u2194 multi_host_url_schema",
       "description": "pydantic-core\\python\\pydantic_core\\core_schema.py:773 and pydantic-core\\python\\pydantic_core\\core_schema.py:3990 are 88% similar. Small differences may indicate copy-paste divergence.",
       "file": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4284,7 +4620,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.875,
+        "similarity": 0.876,
         "function_a": "decimal_schema",
         "function_b": "multi_host_url_schema",
         "file_a": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4294,7 +4630,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.700314465408805,
+      "score": 0.7012499999999999,
       "title": "Near-duplicate (82%): decimal_schema \u2194 str_schema",
       "description": "pydantic-core\\python\\pydantic_core\\core_schema.py:773 and pydantic-core\\python\\pydantic_core\\core_schema.py:889 are 82% similar. Small differences may indicate copy-paste divergence.",
       "file": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4302,7 +4638,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.824,
+        "similarity": 0.825,
         "function_a": "decimal_schema",
         "function_b": "str_schema",
         "file_a": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4312,7 +4648,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.7042857142857143,
+      "score": 0.7053191489361702,
       "title": "Near-duplicate (83%): date_schema \u2194 url_schema",
       "description": "pydantic-core\\python\\pydantic_core\\core_schema.py:1016 and pydantic-core\\python\\pydantic_core\\core_schema.py:3921 are 83% similar. Small differences may indicate copy-paste divergence.",
       "file": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4320,7 +4656,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.829,
+        "similarity": 0.83,
         "function_a": "date_schema",
         "function_b": "url_schema",
         "file_a": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4330,7 +4666,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.7042857142857143,
+      "score": 0.7053191489361702,
       "title": "Near-duplicate (83%): date_schema \u2194 multi_host_url_schema",
       "description": "pydantic-core\\python\\pydantic_core\\core_schema.py:1016 and pydantic-core\\python\\pydantic_core\\core_schema.py:3990 are 83% similar. Small differences may indicate copy-paste divergence.",
       "file": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4338,7 +4674,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.829,
+        "similarity": 0.83,
         "function_a": "date_schema",
         "function_b": "multi_host_url_schema",
         "file_a": "pydantic-core/python/pydantic_core/core_schema.py",
@@ -4348,7 +4684,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.6910569105691057,
+      "score": 0.6923387096774194,
       "title": "Near-duplicate (81%): conint \u2194 confloat",
       "description": "pydantic\\types.py:150 and pydantic\\types.py:410 are 81% similar. Small differences may indicate copy-paste divergence.",
       "file": "pydantic/types.py",
@@ -4356,7 +4692,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.813,
+        "similarity": 0.815,
         "function_a": "conint",
         "function_b": "confloat",
         "file_a": "pydantic/types.py",
@@ -4365,26 +4701,8 @@
     },
     {
       "signal": "mutant_duplicate",
-      "severity": "high",
-      "score": 0.7948317307692307,
-      "title": "Near-duplicate (94%): go \u2194 get_annotation_with_constraints",
-      "description": "pydantic\\v1\\schema.py:1040 and pydantic\\v1\\schema.py:1030 are 94% similar. Small differences may indicate copy-paste divergence.",
-      "file": "pydantic/v1/schema.py",
-      "start_line": 1040,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "similarity": 0.935,
-        "function_a": "go",
-        "function_b": "get_annotation_with_constraints",
-        "file_a": "pydantic/v1/schema.py",
-        "file_b": "pydantic/v1/schema.py"
-      }
-    },
-    {
-      "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.6828813559322033,
+      "score": 0.6831641285956007,
       "title": "Near-duplicate (80%): test_deeper_nested_discriminated_annotated_union \u2194 test_discriminated_annotated_union_literal_enum",
       "description": "tests\\test_json_schema.py:4060 and tests\\test_json_schema.py:4232 are 80% similar. Small differences may indicate copy-paste divergence.",
       "file": "tests/test_json_schema.py",
@@ -4392,7 +4710,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.803,
+        "similarity": 0.804,
         "function_a": "test_deeper_nested_discriminated_annotated_union",
         "function_b": "test_discriminated_annotated_union_literal_enum",
         "file_a": "tests/test_json_schema.py",
@@ -4708,7 +5026,7 @@
       "severity": "medium",
       "score": 1.0,
       "title": "Novel dependencies in pydantic/",
-      "description": "Recently introduced 9 package(s) not previously used in this module: annotated_types, base64, configparser, datetime, decimal, mypy, tomli, tomllib, uuid\n  - pydantic\\fields.py:16 imports 'annotated_types'\n  - pydantic\\mypy.py:7 imports 'configparser'\n  - pydantic\\mypy.py:10 imports 'mypy'\n  - pydantic\\mypy.py:11 imports 'mypy'\n  - pydantic\\mypy.py:12 imports 'mypy'",
+      "description": "Recently introduced 11 package(s) not previously used in this module: annotated_types, base64, configparser, datetime, decimal, json, mypy, operator, tomli, tomllib, uuid\n  - pydantic\\fields.py:16 imports 'annotated_types'\n  - pydantic\\main.py:9 imports 'operator'\n  - pydantic\\main.py:1421 imports 'json'\n  - pydantic\\main.py:1606 imports 'json'\n  - pydantic\\mypy.py:7 imports 'configparser'",
       "file": "pydantic",
       "start_line": null,
       "end_line": null,
@@ -4720,7 +5038,9 @@
           "configparser",
           "datetime",
           "decimal",
+          "json",
           "mypy",
+          "operator",
           "tomli",
           "tomllib",
           "uuid"
@@ -4731,12 +5051,14 @@
           "configparser",
           "datetime",
           "decimal",
+          "json",
           "mypy",
+          "operator",
           "tomli",
           "tomllib",
           "uuid"
         ],
-        "import_count": 25
+        "import_count": 28
       }
     },
     {

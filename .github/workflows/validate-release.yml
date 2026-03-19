@@ -1,0 +1,33 @@
+name: Validate Release Tag
+
+# Triggered on every tag push matching v*.
+# Acts as the first gate in the release pipeline:
+#   - Rejects tags that are not full SemVer (vMAJOR.MINOR.PATCH)
+#   - Rejects major-only tags pushed by humans (v1, v2 → automation only)
+#   - Rejects mismatches between the tag and pyproject.toml version
+#
+# If this workflow fails, the publish workflow will NOT be triggered
+# because GitHub releases are normally created AFTER the tag is pushed.
+# For extra safety, publish.yml also runs the same check as its first job.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  validate-tag:
+    name: Validate tag & pyproject.toml consistency
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Block major-only tags and validate SemVer format
+        # Rejects v1, v2, etc. – those must only come from automation.
+        # Accepts v1.2.3 style and validates pyproject.toml matches.
+        run: python scripts/check_version.py --tag "${{ github.ref_name }}"

@@ -58,6 +58,10 @@ def main(verbose: bool = False) -> None:
 )
 @click.option("--config", "-c", type=click.Path(path_type=Path), default=None)
 @click.option("--workers", "-w", default=8, type=int, help="Parallel workers for file parsing.")
+@click.option(
+    "--no-embeddings", is_flag=True, default=False, help="Disable embedding-based analysis."
+)
+@click.option("--embedding-model", default=None, help="Sentence-transformers model name.")
 def analyze(
     repo: Path,
     path: str | None,
@@ -65,6 +69,8 @@ def analyze(
     output_format: str,
     config: Path | None,
     workers: int,
+    no_embeddings: bool,
+    embedding_model: str | None,
 ) -> None:
     """Analyze a repository for architectural drift."""
     from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
@@ -73,6 +79,10 @@ def analyze(
     from drift.config import DriftConfig
 
     cfg = DriftConfig.load(repo, config)
+    if no_embeddings:
+        cfg.embeddings_enabled = False
+    if embedding_model:
+        cfg.embedding_model = embedding_model
 
     # For machine-readable formats, send progress to stderr so stdout stays clean
     progress_console = Console(stderr=True) if output_format != "rich" else console
@@ -151,6 +161,10 @@ def analyze(
 )
 @click.option("--config", "-c", type=click.Path(path_type=Path), default=None)
 @click.option("--workers", "-w", default=8, type=int, help="Parallel workers for file parsing.")
+@click.option(
+    "--no-embeddings", is_flag=True, default=False, help="Disable embedding-based analysis."
+)
+@click.option("--embedding-model", default=None, help="Sentence-transformers model name.")
 def check(
     repo: Path,
     diff_ref: str,
@@ -158,6 +172,8 @@ def check(
     output_format: str,
     config: Path | None,
     workers: int,
+    no_embeddings: bool,
+    embedding_model: str | None,
 ) -> None:
     """Check a diff for drift (CI mode)."""
     from drift.analyzer import analyze_diff
@@ -165,6 +181,10 @@ def check(
     from drift.scoring.engine import severity_gate_pass
 
     cfg = DriftConfig.load(repo, config)
+    if no_embeddings:
+        cfg.embeddings_enabled = False
+    if embedding_model:
+        cfg.embedding_model = embedding_model
     threshold = fail_on or cfg.severity_gate()
 
     with console.status("[bold blue]Checking diff..."):

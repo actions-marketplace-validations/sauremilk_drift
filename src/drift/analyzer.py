@@ -20,6 +20,7 @@ import drift.signals.system_misalignment  # noqa: F401
 import drift.signals.temporal_volatility  # noqa: F401
 from drift.cache import ParseCache
 from drift.config import DriftConfig
+from drift.embeddings import get_embedding_service
 from drift.ingestion.ast_parser import parse_file
 from drift.ingestion.file_discovery import discover_files
 from drift.ingestion.git_history import build_file_histories, parse_git_history
@@ -157,11 +158,22 @@ def analyze_repo(
         commits, file_histories = git_future.result()
 
     _progress("Analyzing git history", 0, 0)
+
+    # Initialise embedding service (None when deps missing or disabled).
+    emb_svc = None
+    if config.embeddings_enabled:
+        emb_svc = get_embedding_service(
+            cache_dir=repo_path / config.cache_dir,
+            model_name=config.embedding_model,
+            batch_size=config.embedding_batch_size,
+        )
+
     ctx = AnalysisContext(
         repo_path=repo_path,
         config=config,
         parse_results=parse_results,
         file_histories=file_histories,
+        embedding_service=emb_svc,
     )
     signals = create_signals(ctx)
 
@@ -293,11 +305,20 @@ def analyze_diff(
         commits, file_histories = git_future.result()
 
     # --- 4. Run signals ---
+    emb_svc = None
+    if config.embeddings_enabled:
+        emb_svc = get_embedding_service(
+            cache_dir=repo_path / config.cache_dir,
+            model_name=config.embedding_model,
+            batch_size=config.embedding_batch_size,
+        )
+
     ctx = AnalysisContext(
         repo_path=repo_path,
         config=config,
         parse_results=parse_results,
         file_histories=file_histories,
+        embedding_service=emb_svc,
     )
     signals = create_signals(ctx)
 

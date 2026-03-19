@@ -3,33 +3,213 @@
 Detects divergence between architectural documentation (ADRs, README)
 and actual code implementation.
 
-Structural checks: missing README, phantom directory references in docs,
-and source directories absent from documentation.
-Full NLP-based claim extraction is deferred to a future release.
+v0.2 enhancements:
+- Markdown AST parsing via mistune instead of raw-text regex.
+- URL-segment blacklist eliminates false positives from badge/CI links.
+- Separate extraction per node type (links, code-blocks, prose).
+- Optional embedding-based claim validation.
 """
 
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
+from urllib.parse import urlparse
 
 from drift.config import DriftConfig
 from drift.models import FileHistory, Finding, ParseResult, Severity, SignalType
 from drift.signals.base import BaseSignal, register_signal
 
-# Regex to extract top-level directory names referenced in markdown
-_DIR_REF_RE = re.compile(r"`?(\w[\w\-]*)/" r"`?", re.MULTILINE)
+if TYPE_CHECKING:
+    from drift.embeddings import EmbeddingService
+
+logger = logging.getLogger("drift.dia")
+
+
+# ---------------------------------------------------------------------------
+# URL / path segment blacklist – segments that look like directories but
+# belong to URLs (GitHub, CI badges, package registries, etc.)
+# ---------------------------------------------------------------------------
+
+_URL_PATH_SEGMENTS: set[str] = {
+    # GitHub / GitLab UI paths
+    "actions",
+    "badge",
+    "blob",
+    "tree",
+    "commit",
+    "commits",
+    "compare",
+    "pull",
+    "pulls",
+    "issues",
+    "releases",
+    "tags",
+    "raw",
+    "archive",
+    "wiki",
+    "settings",
+    "security",
+    "discussions",
+    "packages",
+    "milestones",
+    "labels",
+    "projects",
+    "graphs",
+    "network",
+    # CI/CD
+    "workflows",
+    "runs",
+    "jobs",
+    "steps",
+    "artifacts",
+    "pipelines",
+    # Package registries
+    "pypi",
+    "npmjs",
+    "registry",
+    "npm",
+    "dist",
+    "download",
+    # Web / URL generic
+    "http",
+    "https",
+    "www",
+    "com",
+    "org",
+    "io",
+    "dev",
+    "net",
+    "api",
+    "v1",
+    "v2",
+    "v3",
+    # Common markdown / text fragments
+    "e",
+    "g",
+    "i",
+    "eg",
+    "etc",
+    "img",
+    "svg",
+    "png",
+    "jpg",
+    "gif",
+    "ico",
+    "shields",
+    "codecov",
+    "coveralls",
+    "readthedocs",
+}
+
+
+# ---------------------------------------------------------------------------
+# Markdown AST helpers
+# ---------------------------------------------------------------------------
+
+
+def _get_mistune():
+    """Lazy-import mistune; returns the module or None if unavailable."""
+    try:
+        import mistune  # noqa: PLC0415
+
+        return mistune
+    except ImportError:
+        return None
+
+
+_FALLBACK_DIR_RE = re.compile(r"(?<!\w)(\w[\w\-]*)/" r"(?!\S*://)")
+
+
+def _extract_dir_refs_from_ast(markdown_text: str) -> set[str]:
+    """Parse Markdown via mistune AST and extract directory-like references.
+
+    Only prose and code-span nodes are inspected; link *URLs* are skipped
+    entirely (they are the main source of badge/CI false positives).
+
+    Falls back to a simple regex when mistune is not installed.
+    """
+    mistune = _get_mistune()
+    if mistune is None:
+        # Regex fallback — less precise, but functional without mistune
+        refs = set(_FALLBACK_DIR_RE.findall(markdown_text))
+        return {r for r in refs if not _is_url_segment(r)}
+
+    md = mistune.create_markdown(renderer="ast")
+    try:
+        tokens: list[dict[str, Any]] = md(markdown_text)  # type: ignore[assignment]
+    except Exception:
+        logger.debug("Failed to parse Markdown AST, falling back to empty refs")
+        return set()
+
+    refs: set[str] = set()
+    _walk_tokens(tokens, refs)
+    return refs
+
+
+_PROSE_DIR_RE = re.compile(r"`?(\w[\w\-]*)/" r"`?")
+
+
+def _walk_tokens(tokens: list[dict[str, Any]], refs: set[str]) -> None:
+    """Recursively walk mistune AST tokens collecting directory references."""
+    for tok in tokens:
+        tok_type = tok.get("type", "")
+
+        # Skip link URLs entirely — they are the #1 source of FPs
+        if tok_type == "link":
+            # Still walk the link *text children* (they may mention real dirs)
+            children = tok.get("children")
+            if children:
+                _walk_tokens(children, refs)
+            continue
+
+        # Skip images
+        if tok_type == "image":
+            continue
+
+        # For code spans / code blocks — extract directory-like patterns
+        if tok_type in ("codespan", "block_code"):
+            raw = tok.get("raw", tok.get("text", ""))
+            if raw:
+                refs.update(_PROSE_DIR_RE.findall(raw))
+            continue
+
+        # For paragraphs, headings, list items — check raw text of
+        # leaf children (text, softbreak, etc.)
+        raw = tok.get("raw", tok.get("text", ""))
+        if raw and tok_type in ("text", "paragraph", "heading"):
+            refs.update(_PROSE_DIR_RE.findall(raw))
+
+        # Recurse into children
+        children = tok.get("children")
+        if children and isinstance(children, list):
+            _walk_tokens(children, refs)
+
+
+def _is_url_segment(name: str) -> bool:
+    """Return True if *name* looks like a URL path component, not a directory."""
+    return name.lower() in _URL_PATH_SEGMENTS
+
+
+# ---------------------------------------------------------------------------
+# Signal
+# ---------------------------------------------------------------------------
 
 
 @register_signal
 class DocImplDriftSignal(BaseSignal):
     """Detect drift between documentation claims and code reality.
 
-    MVP checks:
+    Checks:
     1. README or docs/ presence.
     2. Modules referenced in README that don't exist in the codebase.
     3. Top-level source directories with no README mention.
+    4. (Optional, with embeddings) Semantic claim validation.
     """
+
+    _embedding_service: EmbeddingService | None = None  # set by create_signals
 
     def __init__(self, repo_path: Path) -> None:
         self._repo_path = repo_path
@@ -72,16 +252,16 @@ class DocImplDriftSignal(BaseSignal):
         # Collect actual top-level source directories that contain .py files
         source_dirs = self._source_directories(parse_results)
 
-        # Extract directory names referenced in README
-        referenced_dirs = set(_DIR_REF_RE.findall(readme_text))
+        # Extract directory names using Markdown AST parsing
+        referenced_dirs = _extract_dir_refs_from_ast(readme_text)
 
         # Check for phantom references: mentioned in README but absent
         for ref in sorted(referenced_dirs):
-            ref_lower = ref.lower()
-            if ref_lower in {"e", "g", "i", "eg", "http", "https", "www", "com"}:
-                continue  # Skip common false positives
+            if _is_url_segment(ref):
+                continue
+
             candidate = self._repo_path / ref
-            if not candidate.exists() and ref_lower not in {d.lower() for d in source_dirs}:
+            if not candidate.exists() and ref.lower() not in {d.lower() for d in source_dirs}:
                 findings.append(
                     Finding(
                         signal_type=self.signal_type,

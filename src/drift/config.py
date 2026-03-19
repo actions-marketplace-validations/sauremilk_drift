@@ -26,6 +26,7 @@ class PolicyConfig(BaseModel):
     layer_boundaries: list[LayerBoundary] = Field(default_factory=list)
     max_pattern_variants: dict[str, int] = Field(default_factory=dict)
     ai_attribution: dict[str, Any] = Field(default_factory=dict)
+    allowed_cross_layer: list[str] = Field(default_factory=list)
 
 
 class ThresholdsConfig(BaseModel):
@@ -93,6 +94,9 @@ class DriftConfig(BaseModel):
     thresholds: ThresholdsConfig = Field(default_factory=ThresholdsConfig)
     cache_dir: str = ".drift-cache"
     fail_on: str = "high"
+    embeddings_enabled: bool = True
+    embedding_model: str = "all-MiniLM-L6-v2"
+    embedding_batch_size: int = 64
 
     @staticmethod
     def _find_config_file(repo_path: Path) -> Path | None:

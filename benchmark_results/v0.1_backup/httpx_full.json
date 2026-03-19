@@ -1,26 +1,36 @@
 {
   "version": "0.1.0",
-  "repo": "C:/Users/mickg/AppData/Local/Temp/drift_bench_i52589aj/httpx",
-  "analyzed_at": "2026-03-19T14:19:04.527063+00:00",
-  "drift_score": 0.487,
+  "repo": "C:/Users/mickg/AppData/Local/Temp/drift_bench_mz9c7l52/httpx",
+  "analyzed_at": "2026-03-19T11:14:36.665176+00:00",
+  "drift_score": 0.472,
   "severity": "medium",
   "summary": {
     "total_files": 60,
     "total_functions": 1134,
     "ai_attributed_ratio": 0.0,
-    "analysis_duration_seconds": 3.39
+    "analysis_duration_seconds": 3.33
   },
   "modules": [
     {
       "path": "httpx",
-      "drift_score": 0.426,
-      "severity": "medium",
+      "drift_score": 0.382,
+      "severity": "low",
       "signal_scores": {
         "pattern_fragmentation": 0.2797,
-        "mutant_duplicate": 0.686,
+        "mutant_duplicate": 0.5483,
         "explainability_deficit": 0.3451
       },
-      "finding_count": 18,
+      "finding_count": 15,
+      "ai_ratio": 0.0
+    },
+    {
+      "path": ".",
+      "drift_score": 0.3,
+      "severity": "low",
+      "signal_scores": {
+        "doc_impl_drift": 0.3
+      },
+      "finding_count": 23,
       "ai_ratio": 0.0
     },
     {
@@ -35,33 +45,22 @@
     },
     {
       "path": "httpx/_transports",
-      "drift_score": 0.214,
+      "drift_score": 0.201,
       "severity": "low",
       "signal_scores": {
         "pattern_fragmentation": 0.2313,
-        "mutant_duplicate": 0.2432,
         "explainability_deficit": 0.1503
-      },
-      "finding_count": 4,
-      "ai_ratio": 0.0
-    },
-    {
-      "path": ".",
-      "drift_score": 0.173,
-      "severity": "info",
-      "signal_scores": {
-        "doc_impl_drift": 0.1734
       },
       "finding_count": 3,
       "ai_ratio": 0.0
     },
     {
       "path": "tests",
-      "drift_score": 0.169,
+      "drift_score": 0.168,
       "severity": "info",
       "signal_scores": {
         "pattern_fragmentation": 0.1927,
-        "mutant_duplicate": 0.2198,
+        "mutant_duplicate": 0.2189,
         "doc_impl_drift": 0.0434
       },
       "finding_count": 3,
@@ -79,6 +78,20 @@
     }
   ],
   "findings": [
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: 20Suite/",
+      "description": "README mentions '20Suite/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "20Suite"
+      }
+    },
     {
       "signal": "doc_impl_drift",
       "severity": "low",
@@ -111,6 +124,230 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: advanced/",
+      "description": "README mentions 'advanced/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "advanced"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: api/",
+      "description": "README mentions 'api/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "api"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: async/",
+      "description": "README mentions 'async/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "async"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: blob/",
+      "description": "README mentions 'blob/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "blob"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: br/",
+      "description": "README mentions 'br/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "br"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: compatibility/",
+      "description": "README mentions 'compatibility/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "compatibility"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: contributing/",
+      "description": "README mentions 'contributing/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "contributing"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: encode/",
+      "description": "README mentions 'encode/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "encode"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: http2/",
+      "description": "README mentions 'http2/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "http2"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: img/",
+      "description": "README mentions 'img/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "img"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: io/",
+      "description": "README mentions 'io/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "io"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: master/",
+      "description": "README mentions 'master/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "master"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: org/",
+      "description": "README mentions 'org/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "org"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: project/",
+      "description": "README mentions 'project/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "project"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: py/",
+      "description": "README mentions 'py/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "py"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: quickstart/",
+      "description": "README mentions 'quickstart/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "quickstart"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: text/",
       "description": "README mentions 'text/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -119,6 +356,48 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "text"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: third_party_packages/",
+      "description": "README mentions 'third_party_packages/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "third_party_packages"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: transports/",
+      "description": "README mentions 'transports/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "transports"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: workflows/",
+      "description": "README mentions 'workflows/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "workflows"
       }
     },
     {
@@ -416,7 +695,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "high",
-      "score": 0.7887387387387387,
+      "score": 0.7892857142857143,
       "title": "Near-duplicate (93%): get \u2194 delete",
       "description": "httpx\\_api.py:174 and httpx\\_api.py:405 are 93% similar. Small differences may indicate copy-paste divergence.",
       "file": "httpx/_api.py",
@@ -424,7 +703,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.928,
+        "similarity": 0.929,
         "function_a": "get",
         "function_b": "delete",
         "file_a": "httpx/_api.py",
@@ -434,7 +713,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "high",
-      "score": 0.7887387387387387,
+      "score": 0.7892857142857143,
       "title": "Near-duplicate (93%): options \u2194 delete",
       "description": "httpx\\_api.py:210 and httpx\\_api.py:405 are 93% similar. Small differences may indicate copy-paste divergence.",
       "file": "httpx/_api.py",
@@ -442,7 +721,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.928,
+        "similarity": 0.929,
         "function_a": "options",
         "function_b": "delete",
         "file_a": "httpx/_api.py",
@@ -452,7 +731,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "high",
-      "score": 0.7887387387387387,
+      "score": 0.7892857142857143,
       "title": "Near-duplicate (93%): head \u2194 delete",
       "description": "httpx\\_api.py:246 and httpx\\_api.py:405 are 93% similar. Small differences may indicate copy-paste divergence.",
       "file": "httpx/_api.py",
@@ -460,7 +739,7 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.928,
+        "similarity": 0.929,
         "function_a": "head",
         "function_b": "delete",
         "file_a": "httpx/_api.py",
@@ -470,7 +749,7 @@
     {
       "signal": "mutant_duplicate",
       "severity": "medium",
-      "score": 0.760248447204969,
+      "score": 0.7573717948717948,
       "title": "Near-duplicate (89%): test_multipart_files_content \u2194 test_multipart_data_and_files_content",
       "description": "tests\\test_content.py:256 and tests\\test_content.py:299 are 89% similar. Small differences may indicate copy-paste divergence.",
       "file": "tests/test_content.py",
@@ -478,83 +757,11 @@
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "similarity": 0.894,
+        "similarity": 0.891,
         "function_a": "test_multipart_files_content",
         "function_b": "test_multipart_data_and_files_content",
         "file_a": "tests/test_content.py",
         "file_b": "tests/test_content.py"
-      }
-    },
-    {
-      "signal": "mutant_duplicate",
-      "severity": "medium",
-      "score": 0.756544502617801,
-      "title": "Near-duplicate (89%): Client.request \u2194 AsyncClient.request",
-      "description": "httpx\\_client.py:771 and httpx\\_client.py:1485 are 89% similar. Small differences may indicate copy-paste divergence.",
-      "file": "httpx/_client.py",
-      "start_line": 771,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "similarity": 0.89,
-        "function_a": "Client.request",
-        "function_b": "AsyncClient.request",
-        "file_a": "httpx/_client.py",
-        "file_b": "httpx/_client.py"
-      }
-    },
-    {
-      "signal": "mutant_duplicate",
-      "severity": "medium",
-      "score": 0.6900990099009902,
-      "title": "Near-duplicate (81%): Client.stream \u2194 AsyncClient.stream",
-      "description": "httpx\\_client.py:828 and httpx\\_client.py:1543 are 81% similar. Small differences may indicate copy-paste divergence.",
-      "file": "httpx/_client.py",
-      "start_line": 828,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "similarity": 0.812,
-        "function_a": "Client.stream",
-        "function_b": "AsyncClient.stream",
-        "file_a": "httpx/_client.py",
-        "file_b": "httpx/_client.py"
-      }
-    },
-    {
-      "signal": "mutant_duplicate",
-      "severity": "high",
-      "score": 0.8245635910224438,
-      "title": "Near-duplicate (97%): Client.__init__ \u2194 AsyncClient.__init__",
-      "description": "httpx\\_client.py:639 and httpx\\_client.py:1353 are 97% similar. Small differences may indicate copy-paste divergence.",
-      "file": "httpx/_client.py",
-      "start_line": 639,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "similarity": 0.97,
-        "function_a": "Client.__init__",
-        "function_b": "AsyncClient.__init__",
-        "file_a": "httpx/_client.py",
-        "file_b": "httpx/_client.py"
-      }
-    },
-    {
-      "signal": "mutant_duplicate",
-      "severity": "high",
-      "score": 0.8411688311688311,
-      "title": "Near-duplicate (99%): HTTPTransport.__init__ \u2194 AsyncHTTPTransport.__init__",
-      "description": "httpx\\_transports\\default.py:136 and httpx\\_transports\\default.py:280 are 99% similar. Small differences may indicate copy-paste divergence.",
-      "file": "httpx/_transports/default.py",
-      "start_line": 136,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "similarity": 0.99,
-        "function_a": "HTTPTransport.__init__",
-        "function_b": "AsyncHTTPTransport.__init__",
-        "file_a": "httpx/_transports/default.py",
-        "file_b": "httpx/_transports/default.py"
       }
     },
     {

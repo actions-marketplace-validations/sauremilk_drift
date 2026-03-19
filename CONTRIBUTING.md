@@ -48,6 +48,44 @@ Signals must be:
 3. Add tests for new behaviour
 4. Update the README if you add a feature
 
+## Versioning
+
+Drift follows **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`
+
+| Typ               | Wann                                             | Beispiel            |
+| ----------------- | ------------------------------------------------ | ------------------- |
+| **PATCH** `x.x.↑` | Bugfix, kein neues Feature, kein Breaking Change | `v1.1.0` → `v1.1.1` |
+| **MINOR** `x.↑.0` | Neues Feature, rückwärtskompatibel               | `v1.1.0` → `v1.2.0` |
+| **MAJOR** `↑.0.0` | Breaking Change, inkompatible API-Änderung       | `v1.1.0` → `v2.0.0` |
+
+### GitHub Actions Major-Version-Tag
+
+Da Drift eine GitHub Action ist (`uses: sauremilk/drift@v1`), gibt es eine zusätzliche Konvention:
+den **Major-Version-Tag** (`v1`, `v2`) als beweglichen Zeiger. Das bedeutet:
+
+- Nutzer referenzieren `@v1` und bekommen automatisch alle Minor/Patch-Updates
+- Der `v1`-Tag wird nach jedem Minor/Patch-Release auf den neuen Commit verschoben
+- Bei einem **Breaking Change** wird `v2` erstellt und `@v2` zum neuen Tag
+
+Der CI/CD-Workflow (`publish.yml`) verschiebt den Major-Tag **automatisch** nach jedem
+GitHub-Release. Manuell ist das nicht nötig – außer bei außerplanmäßigen Hotfixes:
+
+```bash
+git tag -f v1 && git push -f origin v1
+```
+
+### Release-Prozess
+
+Jeder sinnvolle Commit-Batch (Feature, Fix, Konfigurationsänderung) sollte einen eigenen
+versionierten Release bekommen, damit das Changelog sauber bleibt und Nutzer auf bestimmte
+Versionen pinnen können.
+
+1. Version in `pyproject.toml` erhöhen (z. B. `1.1.0` → `1.1.1`)
+2. Commit: `git commit -m "chore: bump version to v1.1.1"`
+3. Tag erstellen: `git tag v1.1.1`
+4. Push tag: `git push origin v1.1.1`
+5. GitHub Release aus dem Tag erstellen → CI verschiebt `v1` automatisch
+
 ## Reporting issues
 
 Use the [issue templates](.github/ISSUE_TEMPLATE/) — they help reproduce problems quickly.

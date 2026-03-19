@@ -356,16 +356,60 @@ drift is designed to **complement** these tools, not replace them. The recommend
 
 ---
 
-## 10. Conclusion
+## 10. v0.2 Signal Enhancements
 
-drift v0.1 demonstrates that deterministic static analysis — without LLM involvement — can detect meaningful structural erosion in Python codebases. Across 5 repositories:
+drift v0.2 improves three signals — DIA, AVS, and MDS — through Markdown AST parsing, knowledge-graph-aware heuristics, and optional embedding support. All enhancements remain **deterministic by default** (embeddings are opt-in).
 
-- **80% precision** (strict) on 291 classified findings, rising to **89% strict** when excluding the DIA signal (which has weight 0.00)
+### 10.1 Changes
+
+| Signal  | v0.1 Approach                        | v0.2 Approach                                                                                                                            | Key Improvement                                                       |
+| ------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **DIA** | Regex over raw Markdown text         | mistune AST parser; link URL exclusion; URL-segment blacklist (~80 entries)                                                              | Eliminates badge/CI/GitHub URL false positives                        |
+| **AVS** | Naive directory-name layer inference | Omnilayer recognition (config/, utils/, types/); hub-module dampening via in-degree centrality; optional embedding-based layer inference | Cross-cutting dirs no longer flagged; high-fanin nodes dampened       |
+| **MDS** | AST Jaccard similarity only          | Hybrid similarity (0.6 × AST Jaccard + 0.4 × cosine embedding); FAISS-indexed semantic duplicate search                                  | Catches renamed-variable duplicates that structural comparison misses |
+
+### 10.2 Precision Results (v0.1 → v0.2)
+
+Ground-truth reclassification on 5 repositories using the same stratified sampling and objective classification criteria (§3.1):
+
+| Signal  | v0.1 Sample | v0.1 Prec | v0.2 Sample | v0.2 Prec |  Δ Prec   | v0.1 FP | v0.2 FP |  Δ FP   |
+| ------- | :---------: | :-------: | :---------: | :-------: | :-------: | :-----: | :-----: | :-----: |
+| PFS     |     49      | **100%**  |     49      | **100%**  |     —     |    0    |    0    |    —    |
+| SMS     |     19      |  **95%**  |     20      |  **95%**  |     —     |    0    |    0    |    —    |
+| TVS     |     34      |  **94%**  |     35      |  **94%**  |     —     |    0    |    0    |    —    |
+| MDS     |     51      |  **92%**  |     56      |  **89%**  |   −3pp    |    0    |    0    |    —    |
+| EDS     |     72      |  **81%**  |     72      |  **81%**  |     —     |    0    |    0    |    —    |
+| DIA     |     61      |  **48%**  |     32      |  **59%**  | **+12pp** |   31    |    6    | **−25** |
+| AVS     |      5      |  **20%**  |      5      |  **20%**  |     —     |    0    |    0    |    —    |
+| **All** |   **291**   |  **80%**  |   **269**   |  **85%**  | **+5pp**  | **31**  |  **6**  | **−25** |
+
+Key observations:
+
+1. **DIA false positives dropped by 81%** (31 → 6). The remaining 6 FPs are edge cases where Markdown prose references non-directory names (e.g., "TypeScript/", "Basic/", "auth/") that pass the URL-segment filter but don't correspond to actual directories.
+2. **Overall strict precision rose from 80% to 85%** (+5 percentage points), entirely driven by DIA improvement.
+3. **AVS strict precision is unchanged at 20%** due to small sample size (5 findings across all repos, 4 classified as Disputed). However, the Omnilayer recognition and hub-dampening improvements are structural — they prevent false positives rather than reclassify existing ones. The signal's lenient precision remains 100%.
+4. **MDS dropped 3pp** (92% → 89%) due to the larger sample including more edge-case near-duplicates. The hybrid similarity approach adds semantic duplicate detection capability while maintaining structural accuracy.
+
+### 10.3 Recall (Unchanged)
+
+The controlled mutation benchmark (§4) produces identical results: **86% recall** (12/14 detected). The v0.2 changes target precision improvement, not recall.
+
+### 10.4 DIA Weight Recommendation
+
+With DIA precision at 59% (strict) and 81% (lenient), the signal is approaching scoring-readiness. A conservative DIA weight of **0.05** could be introduced in a future version once precision exceeds 70% on an independent corpus.
+
+---
+
+## 11. Conclusion
+
+drift v0.2 demonstrates that deterministic static analysis — without LLM involvement — can detect meaningful structural erosion in Python codebases. Across 5 repositories:
+
+- **85% precision** (strict) on 269 classified findings, with only **6 false positives** (down from 31 in v0.1)
 - **86% recall** on 14 controlled mutations, with misses occurring at threshold boundaries
 - **3 actionable findings** in a production codebase, including copy-pasted functions, error-handling fragmentation, and API inconsistency
 
 The tool produces the fewest findings (and lowest score) on carefully hand-crafted codebases like httpx, and the most on large or rapidly scaffolded codebases like FastAPI and PWBS — behavior consistent with its design intent.
 
-**Limitations:** DIA precision (48%) confirms the signal is not ready for scoring. AI-attribution is currently uninformative (0% across all repos). Ground-truth classification is single-rater. Replication on a fully independent corpus is the most important next step for external validity.
+**Limitations:** DIA precision (59%) has improved significantly but remains below scoring threshold. AI-attribution is currently uninformative (0% across all repos). Ground-truth classification is single-rater. Replication on a fully independent corpus is the most important next step for external validity.
 
 **The value of drift is delta, not absolute.** Track your score over time with `drift trend`. A rising score means your codebase is losing coherence. A stable or falling score means you're maintaining design intent — even with AI-generated code in the mix.

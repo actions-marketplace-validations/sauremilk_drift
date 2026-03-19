@@ -1,14 +1,14 @@
 {
   "version": "0.1.0",
   "repo": "C:/Users/mickg/PWBS/drift",
-  "analyzed_at": "2026-03-19T14:17:42.033611+00:00",
-  "drift_score": 0.437,
+  "analyzed_at": "2026-03-19T11:13:14.977089+00:00",
+  "drift_score": 0.442,
   "severity": "medium",
   "summary": {
-    "total_files": 56,
-    "total_functions": 342,
+    "total_files": 45,
+    "total_functions": 263,
     "ai_attributed_ratio": 0.0,
-    "analysis_duration_seconds": 0.16
+    "analysis_duration_seconds": 0.25
   },
   "modules": [
     {
@@ -18,7 +18,7 @@
       "signal_scores": {
         "doc_impl_drift": 0.3
       },
-      "finding_count": 24,
+      "finding_count": 31,
       "ai_ratio": 0.0
     },
     {
@@ -32,66 +32,52 @@
       "ai_ratio": 0.0
     },
     {
+      "path": "tests",
+      "drift_score": 0.289,
+      "severity": "low",
+      "signal_scores": {
+        "system_misalignment": 0.2891
+      },
+      "finding_count": 1,
+      "ai_ratio": 0.0
+    },
+    {
       "path": "src/drift/ingestion",
-      "drift_score": 0.28,
+      "drift_score": 0.261,
       "severity": "low",
       "signal_scores": {
         "pattern_fragmentation": 0.2529,
         "explainability_deficit": 0.4159,
-        "temporal_volatility": 0.203,
+        "temporal_volatility": 0.1335,
         "system_misalignment": 0.2891
       },
-      "finding_count": 15,
-      "ai_ratio": 0.0
-    },
-    {
-      "path": "tests",
-      "drift_score": 0.27,
-      "severity": "low",
-      "signal_scores": {
-        "mutant_duplicate": 0.2602,
-        "system_misalignment": 0.2891
-      },
-      "finding_count": 2,
-      "ai_ratio": 0.0
-    },
-    {
-      "path": "scripts",
-      "drift_score": 0.255,
-      "severity": "low",
-      "signal_scores": {
-        "pattern_fragmentation": 0.2168,
-        "explainability_deficit": 0.4724,
-        "doc_impl_drift": 0.0434,
-        "system_misalignment": 0.2891
-      },
-      "finding_count": 10,
-      "ai_ratio": 0.0
-    },
-    {
-      "path": "src/drift/signals",
-      "drift_score": 0.252,
-      "severity": "low",
-      "signal_scores": {
-        "pattern_fragmentation": 0.1445,
-        "explainability_deficit": 0.4908,
-        "temporal_volatility": 0.185,
-        "system_misalignment": 0.2891
-      },
-      "finding_count": 12,
+      "finding_count": 14,
       "ai_ratio": 0.0
     },
     {
       "path": "src/drift",
-      "drift_score": 0.243,
+      "drift_score": 0.239,
       "severity": "low",
       "signal_scores": {
         "pattern_fragmentation": 0.2409,
-        "explainability_deficit": 0.2361,
-        "temporal_volatility": 0.2282,
+        "explainability_deficit": 0.2313,
+        "temporal_volatility": 0.2167,
         "system_misalignment": 0.2891
       },
       "finding_count": 7,
+      "ai_ratio": 0.0
+    },
+    {
+      "path": "src/drift/signals",
+      "drift_score": 0.237,
+      "severity": "low",
+      "signal_scores": {
+        "pattern_fragmentation": 0.1445,
+        "explainability_deficit": 0.4565,
+        "temporal_volatility": 0.1564,
+        "system_misalignment": 0.2891
+      },
+      "finding_count": 9,
       "ai_ratio": 0.0
     },
     {
@@ -104,23 +90,21 @@
       },
       "finding_count": 3,
       "ai_ratio": 0.0
+    },
+    {
+      "path": "scripts",
+      "drift_score": 0.108,
+      "severity": "info",
+      "signal_scores": {
+        "pattern_fragmentation": 0.1445,
+        "explainability_deficit": 0.1012,
+        "doc_impl_drift": 0.0434
+      },
+      "finding_count": 3,
+      "ai_ratio": 0.0
     }
   ],
   "findings": [
-    {
-      "signal": "doc_impl_drift",
-      "severity": "low",
-      "score": 0.3,
-      "title": "README references missing directory: MDS/",
-      "description": "README mentions 'MDS/' but no such directory exists. Documentation may be outdated.",
-      "file": "README.md",
-      "start_line": null,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "referenced_dir": "MDS"
-      }
-    },
     {
       "signal": "doc_impl_drift",
       "severity": "low",
@@ -153,6 +137,34 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: actions/",
+      "description": "README mentions 'actions/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "actions"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: api/",
+      "description": "README mentions 'api/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "api"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: auth/",
       "description": "README mentions 'auth/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -161,6 +173,34 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "auth"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: badge/",
+      "description": "README mentions 'badge/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "badge"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: code-security/",
+      "description": "README mentions 'code-security/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "code-security"
       }
     },
     {
@@ -189,6 +229,20 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "drift"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: en/",
+      "description": "README mentions 'en/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "en"
       }
     },
     {
@@ -251,6 +305,20 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: io/",
+      "description": "README mentions 'io/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "io"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: models/",
       "description": "README mentions 'models/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -287,6 +355,20 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "node_modules"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: org/",
+      "description": "README mentions 'org/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "org"
       }
     },
     {
@@ -433,6 +515,20 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: workflows/",
+      "description": "README mentions 'workflows/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "workflows"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: your/",
       "description": "README mentions 'your/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -459,46 +555,6 @@
     },
     {
       "signal": "explainability_deficit",
-      "severity": "medium",
-      "score": 0.5,
-      "title": "Unexplained complexity: _check_detection",
-      "description": "Complexity: 24, LOC: 80. No corresponding test found.",
-      "file": "scripts/_mutation_benchmark.py",
-      "start_line": 522,
-      "end_line": 601,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "_check_detection",
-        "complexity": 24,
-        "loc": 80,
-        "has_docstring": true,
-        "has_test": false,
-        "has_return_type": true,
-        "explanation_score": 0.5
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "low",
-      "score": 0.413,
-      "title": "Unexplained complexity: main",
-      "description": "Complexity: 11, LOC: 92. No docstring. No corresponding test found.",
-      "file": "scripts/_mutation_benchmark.py",
-      "start_line": 604,
-      "end_line": 695,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "main",
-        "complexity": 11,
-        "loc": 92,
-        "has_docstring": false,
-        "has_test": false,
-        "has_return_type": true,
-        "explanation_score": 0.25
-      }
-    },
-    {
-      "signal": "explainability_deficit",
       "severity": "low",
       "score": 0.35,
       "title": "Unexplained complexity: main",
@@ -521,96 +577,16 @@
       "signal": "explainability_deficit",
       "severity": "medium",
       "score": 0.5,
-      "title": "Unexplained complexity: classify_finding",
-      "description": "Complexity: 31, LOC: 134. No corresponding test found.",
-      "file": "scripts/ground_truth_analysis.py",
-      "start_line": 23,
-      "end_line": 156,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "classify_finding",
-        "complexity": 31,
-        "loc": 134,
-        "has_docstring": true,
-        "has_test": false,
-        "has_return_type": true,
-        "explanation_score": 0.5
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "high",
-      "score": 0.85,
-      "title": "Unexplained complexity: main",
-      "description": "Complexity: 17, LOC: 140. No docstring. No corresponding test found. No return type annotation.",
-      "file": "scripts/ground_truth_analysis.py",
-      "start_line": 159,
-      "end_line": 298,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "main",
-        "complexity": 17,
-        "loc": 140,
-        "has_docstring": false,
-        "has_test": false,
-        "has_return_type": false,
-        "explanation_score": 0.0
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "high",
-      "score": 0.7,
-      "title": "Unexplained complexity: _check_detection",
-      "description": "Complexity: 14, LOC: 41. No docstring. No corresponding test found. No return type annotation.",
-      "file": "scripts/mutation_benchmark.py",
-      "start_line": 453,
-      "end_line": 493,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "_check_detection",
-        "complexity": 14,
-        "loc": 41,
-        "has_docstring": false,
-        "has_test": false,
-        "has_return_type": false,
-        "explanation_score": 0.0
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "medium",
-      "score": 0.5,
-      "title": "Unexplained complexity: main",
-      "description": "Complexity: 10, LOC: 87. No docstring. No corresponding test found. No return type annotation.",
-      "file": "scripts/mutation_benchmark.py",
-      "start_line": 496,
-      "end_line": 582,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "main",
-        "complexity": 10,
-        "loc": 87,
-        "has_docstring": false,
-        "has_test": false,
-        "has_return_type": false,
-        "explanation_score": 0.0
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "medium",
-      "score": 0.5,
       "title": "Unexplained complexity: analyze_repo",
-      "description": "Complexity: 23, LOC: 168. No corresponding test found.",
+      "description": "Complexity: 22, LOC: 157. No corresponding test found.",
       "file": "src/drift/analyzer.py",
-      "start_line": 58,
-      "end_line": 225,
+      "start_line": 57,
+      "end_line": 213,
       "ai_attributed": false,
       "metadata": {
         "function_name": "analyze_repo",
-        "complexity": 23,
-        "loc": 168,
+        "complexity": 22,
+        "loc": 157,
         "has_docstring": true,
         "has_test": false,
         "has_return_type": true,
@@ -620,17 +596,17 @@
     {
       "signal": "explainability_deficit",
       "severity": "low",
-      "score": 0.35,
+      "score": 0.325,
       "title": "Unexplained complexity: analyze_diff",
-      "description": "Complexity: 14, LOC: 124. No corresponding test found.",
+      "description": "Complexity: 13, LOC: 113. No corresponding test found.",
       "file": "src/drift/analyzer.py",
-      "start_line": 228,
-      "end_line": 351,
+      "start_line": 216,
+      "end_line": 328,
       "ai_attributed": false,
       "metadata": {
         "function_name": "analyze_diff",
-        "complexity": 14,
-        "loc": 124,
+        "complexity": 13,
+        "loc": 113,
         "has_docstring": true,
         "has_test": false,
         "has_return_type": true,
@@ -682,15 +658,15 @@
       "severity": "high",
       "score": 0.75,
       "title": "Unexplained complexity: PythonFileParser._process_function",
-      "description": "Complexity: 25, LOC: 92. No docstring. No corresponding test found.",
+      "description": "Complexity: 24, LOC: 85. No docstring. No corresponding test found.",
       "file": "src/drift/ingestion/ast_parser.py",
-      "start_line": 275,
-      "end_line": 366,
+      "start_line": 251,
+      "end_line": 335,
       "ai_attributed": false,
       "metadata": {
         "function_name": "PythonFileParser._process_function",
-        "complexity": 25,
-        "loc": 92,
+        "complexity": 24,
+        "loc": 85,
         "has_docstring": false,
         "has_test": false,
         "has_return_type": true,
@@ -704,8 +680,8 @@
       "title": "Unexplained complexity: PythonFileParser.visit_ClassDef",
       "description": "Complexity: 10, LOC: 38. No docstring. No corresponding test found.",
       "file": "src/drift/ingestion/ast_parser.py",
-      "start_line": 378,
-      "end_line": 415,
+      "start_line": 347,
+      "end_line": 384,
       "ai_attributed": false,
       "metadata": {
         "function_name": "PythonFileParser.visit_ClassDef",
@@ -762,15 +738,15 @@
       "severity": "low",
       "score": 0.45,
       "title": "Unexplained complexity: parse_git_history",
-      "description": "Complexity: 18, LOC: 124. No corresponding test found.",
+      "description": "Complexity: 18, LOC: 122. No corresponding test found.",
       "file": "src/drift/ingestion/git_history.py",
       "start_line": 116,
-      "end_line": 239,
+      "end_line": 237,
       "ai_attributed": false,
       "metadata": {
         "function_name": "parse_git_history",
         "complexity": 18,
-        "loc": 124,
+        "loc": 122,
         "has_docstring": true,
         "has_test": false,
         "has_return_type": true,
@@ -900,52 +876,12 @@
     {
       "signal": "explainability_deficit",
       "severity": "low",
-      "score": 0.338,
-      "title": "Unexplained complexity: ArchitectureViolationSignal.analyze",
-      "description": "Complexity: 9, LOC: 50. No docstring. No corresponding test found.",
-      "file": "src/drift/signals/architecture_violation.py",
-      "start_line": 234,
-      "end_line": 283,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "ArchitectureViolationSignal.analyze",
-        "complexity": 9,
-        "loc": 50,
-        "has_docstring": false,
-        "has_test": false,
-        "has_return_type": true,
-        "explanation_score": 0.25
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "medium",
-      "score": 0.562,
-      "title": "Unexplained complexity: ArchitectureViolationSignal._check_inferred_layers",
-      "description": "Complexity: 15, LOC: 78. No docstring. No corresponding test found.",
-      "file": "src/drift/signals/architecture_violation.py",
-      "start_line": 325,
-      "end_line": 402,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "ArchitectureViolationSignal._check_inferred_layers",
-        "complexity": 15,
-        "loc": 78,
-        "has_docstring": false,
-        "has_test": false,
-        "has_return_type": true,
-        "explanation_score": 0.25
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "low",
       "score": 0.375,
       "title": "Unexplained complexity: DocImplDriftSignal.analyze",
       "description": "Complexity: 10, LOC: 76. No docstring. No corresponding test found.",
       "file": "src/drift/signals/doc_impl_drift.py",
-      "start_line": 225,
-      "end_line": 300,
+      "start_line": 45,
+      "end_line": 120,
       "ai_attributed": false,
       "metadata": {
         "function_name": "DocImplDriftSignal.analyze",
@@ -982,39 +918,19 @@
       "severity": "high",
       "score": 0.75,
       "title": "Unexplained complexity: MutantDuplicateSignal.analyze",
-      "description": "Complexity: 41, LOC: 186. No docstring. No corresponding test found.",
+      "description": "Complexity: 31, LOC: 157. No docstring. No corresponding test found.",
       "file": "src/drift/signals/mutant_duplicates.py",
-      "start_line": 133,
-      "end_line": 318,
+      "start_line": 143,
+      "end_line": 299,
       "ai_attributed": false,
       "metadata": {
         "function_name": "MutantDuplicateSignal.analyze",
-        "complexity": 41,
-        "loc": 186,
+        "complexity": 31,
+        "loc": 157,
         "has_docstring": false,
         "has_test": false,
         "has_return_type": true,
         "explanation_score": 0.25
-      }
-    },
-    {
-      "signal": "explainability_deficit",
-      "severity": "low",
-      "score": 0.325,
-      "title": "Unexplained complexity: MutantDuplicateSignal._find_semantic_duplicates",
-      "description": "Complexity: 13, LOC: 78. No corresponding test found.",
-      "file": "src/drift/signals/mutant_duplicates.py",
-      "start_line": 320,
-      "end_line": 397,
-      "ai_attributed": false,
-      "metadata": {
-        "function_name": "MutantDuplicateSignal._find_semantic_duplicates",
-        "complexity": 13,
-        "loc": 78,
-        "has_docstring": true,
-        "has_test": false,
-        "has_return_type": true,
-        "explanation_score": 0.5
       }
     },
     {
@@ -1098,42 +1014,23 @@
       }
     },
     {
-      "signal": "mutant_duplicate",
-      "severity": "high",
-      "score": 0.9,
-      "title": "Exact duplicate: _imp \u2194 _imp",
-      "description": "tests\\test_architecture_violation.py:24 and tests\\test_avs_enhanced.py:20 are identical (7 lines). Consider consolidating.",
-      "file": "tests/test_architecture_violation.py",
-      "start_line": 24,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "similarity": 1.0,
-        "body_hash": "10e8514e554b820c",
-        "function_a": "_imp",
-        "function_b": "_imp",
-        "file_a": "tests/test_architecture_violation.py",
-        "file_b": "tests/test_avs_enhanced.py"
-      }
-    },
-    {
       "signal": "pattern_fragmentation",
-      "severity": "high",
-      "score": 0.75,
-      "title": "error_handling: 4 variants in scripts/",
-      "description": "4 error_handling variants in scripts/ (3/6 use canonical pattern).\n  - benchmark_repos.py:129 (main)\n  - check_version.py:50 (_get_pyproject_version)\n  - ground_truth_analysis.py:168 (main)",
+      "severity": "medium",
+      "score": 0.5,
+      "title": "error_handling: 2 variants in scripts/",
+      "description": "2 error_handling variants in scripts/ (1/2 use canonical pattern).\n  - benchmark_repos.py:129 (main)",
       "file": "scripts",
       "start_line": null,
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
         "category": "error_handling",
-        "num_variants": 4,
-        "variant_count": 4,
-        "canonical_count": 3,
+        "num_variants": 2,
+        "variant_count": 2,
+        "canonical_count": 1,
         "canonical_variant": "{\"handler_count\": 1, \"handlers\": [{\"actions\": [\"print\", \"ret",
         "module": "scripts",
-        "total_instances": 6
+        "total_instances": 2
       }
     },
     {
@@ -1141,7 +1038,7 @@
       "severity": "high",
       "score": 0.8333333333333334,
       "title": "error_handling: 6 variants in src/drift/",
-      "description": "6 error_handling variants in src/drift/ (2/8 use canonical pattern).\n  - analyzer.py:184 (analyze_repo)\n  - analyzer.py:248 (analyze_diff)\n  - cache.py:45 (ParseCache.get)",
+      "description": "6 error_handling variants in src/drift/ (2/7 use canonical pattern).\n  - analyzer.py:172 (analyze_repo)\n  - analyzer.py:236 (analyze_diff)\n  - cache.py:45 (ParseCache.get)",
       "file": "src/drift",
       "start_line": null,
       "end_line": null,
@@ -1153,7 +1050,7 @@
         "canonical_count": 2,
         "canonical_variant": "{\"handler_count\": 1, \"handlers\": [{\"actions\": [\"pass\"], \"exc",
         "module": "src/drift",
-        "total_instances": 8
+        "total_instances": 7
       }
     },
     {
@@ -1161,7 +1058,7 @@
       "severity": "high",
       "score": 0.875,
       "title": "error_handling: 8 variants in src/drift/ingestion/",
-      "description": "8 error_handling variants in src/drift/ingestion/ (1/8 use canonical pattern).\n  - ast_parser.py:295 (PythonFileParser._process_function)\n  - ast_parser.py:384 (PythonFileParser.visit_ClassDef)\n  - file_discovery.py:27 (_detect_supported_languages)",
+      "description": "8 error_handling variants in src/drift/ingestion/ (1/8 use canonical pattern).\n  - ast_parser.py:271 (PythonFileParser._process_function)\n  - ast_parser.py:353 (PythonFileParser.visit_ClassDef)\n  - file_discovery.py:27 (_detect_supported_languages)",
       "file": "src/drift/ingestion",
       "start_line": null,
       "end_line": null,
@@ -1181,7 +1078,7 @@
       "severity": "medium",
       "score": 0.5,
       "title": "error_handling: 2 variants in src/drift/signals/",
-      "description": "2 error_handling variants in src/drift/signals/ (1/2 use canonical pattern).\n  - doc_impl_drift.py:141 (_extract_dir_refs_from_ast)",
+      "description": "2 error_handling variants in src/drift/signals/ (1/2 use canonical pattern).\n  - mutant_duplicates.py:93 (_ast_ngrams)",
       "file": "src/drift/signals",
       "start_line": null,
       "end_line": null,
@@ -1200,42 +1097,15 @@
       "signal": "system_misalignment",
       "severity": "medium",
       "score": 1.0,
-      "title": "Novel dependencies in scripts/",
-      "description": "Recently introduced 5 package(s) not previously used in this module: cProfile, datetime, drift, io, pstats\n  - scripts\\diagnose_phases.py:10 imports 'drift'\n  - scripts\\diagnose_phases.py:11 imports 'drift'\n  - scripts\\diagnose_phases.py:12 imports 'drift'\n  - scripts\\diagnose_phases.py:13 imports 'drift'\n  - scripts\\diagnose_phases.py:14 imports 'drift'",
-      "file": "scripts",
-      "start_line": null,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "novel_packages": [
-          "cProfile",
-          "datetime",
-          "drift",
-          "io",
-          "pstats"
-        ],
-        "novel_imports": [
-          "cProfile",
-          "datetime",
-          "drift",
-          "io",
-          "pstats"
-        ],
-        "import_count": 19
-      }
-    },
-    {
-      "signal": "system_misalignment",
-      "severity": "medium",
-      "score": 1.0,
       "title": "Novel dependencies in src/drift/",
-      "description": "Recently introduced 15 package(s) not previously used in this module: click, collections, concurrent, dataclasses, datetime, drift, enum, json, pydantic, rich, subprocess, sys, time, urllib, yaml\n  - src\\drift\\__main__.py:3 imports 'drift'\n  - src\\drift\\analyzer.py:5 imports 'datetime'\n  - src\\drift\\analyzer.py:7 imports 'subprocess'\n  - src\\drift\\analyzer.py:8 imports 'time'\n  - src\\drift\\analyzer.py:9 imports 'collections'",
+      "description": "Recently introduced 20 package(s) not previously used in this module: __future__, click, collections, concurrent, dataclasses, datetime, drift, enum, hashlib, json, logging, pathlib, pydantic, rich, subprocess, sys, time, typing, urllib, yaml\n  - src\\drift\\__main__.py:3 imports 'drift'\n  - src\\drift\\analyzer.py:3 imports '__future__'\n  - src\\drift\\analyzer.py:5 imports 'datetime'\n  - src\\drift\\analyzer.py:6 imports 'logging'\n  - src\\drift\\analyzer.py:7 imports 'subprocess'",
       "file": "src/drift",
       "start_line": null,
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
         "novel_packages": [
+          "__future__",
           "click",
           "collections",
           "concurrent",
@@ -1243,16 +1113,21 @@
           "datetime",
           "drift",
           "enum",
+          "hashlib",
           "json",
+          "logging",
+          "pathlib",
           "pydantic",
           "rich",
           "subprocess",
           "sys",
           "time",
+          "typing",
           "urllib",
           "yaml"
         ],
         "novel_imports": [
+          "__future__",
           "click",
           "collections",
           "concurrent",
@@ -1260,16 +1135,20 @@
           "datetime",
           "drift",
           "enum",
+          "hashlib",
           "json",
+          "logging",
+          "pathlib",
           "pydantic",
           "rich",
           "subprocess",
           "sys",
           "time",
+          "typing",
           "urllib",
           "yaml"
         ],
-        "import_count": 74
+        "import_count": 93
       }
     },
     {
@@ -1381,7 +1260,7 @@
       "severity": "medium",
       "score": 1.0,
       "title": "Novel dependencies in src/drift/signals/",
-      "description": "Recently introduced 18 package(s) not previously used in this module: __future__, abc, collections, dataclasses, datetime, drift, fnmatch, inspect, itertools, json, logging, math, mistune, networkx, pathlib, re, typing, urllib\n  - src\\drift\\signals\\__init__.py:3 imports 'drift'\n  - src\\drift\\signals\\__init__.py:4 imports 'drift'\n  - src\\drift\\signals\\__init__.py:5 imports 'drift'\n  - src\\drift\\signals\\__init__.py:6 imports 'drift'\n  - src\\drift\\signals\\__init__.py:7 imports 'drift'",
+      "description": "Recently introduced 16 package(s) not previously used in this module: __future__, abc, ast, collections, dataclasses, datetime, drift, fnmatch, inspect, itertools, json, math, networkx, pathlib, re, typing\n  - src\\drift\\signals\\__init__.py:3 imports 'drift'\n  - src\\drift\\signals\\__init__.py:4 imports 'drift'\n  - src\\drift\\signals\\__init__.py:5 imports 'drift'\n  - src\\drift\\signals\\__init__.py:6 imports 'drift'\n  - src\\drift\\signals\\__init__.py:7 imports 'drift'",
       "file": "src/drift/signals",
       "start_line": null,
       "end_line": null,
@@ -1390,6 +1269,7 @@
         "novel_packages": [
           "__future__",
           "abc",
+          "ast",
           "collections",
           "dataclasses",
           "datetime",
@@ -1398,18 +1278,16 @@
           "inspect",
           "itertools",
           "json",
-          "logging",
           "math",
-          "mistune",
           "networkx",
           "pathlib",
           "re",
-          "typing",
-          "urllib"
+          "typing"
         ],
         "novel_imports": [
           "__future__",
           "abc",
+          "ast",
           "collections",
           "dataclasses",
           "datetime",
@@ -1418,16 +1296,13 @@
           "inspect",
           "itertools",
           "json",
-          "logging",
           "math",
-          "mistune",
           "networkx",
           "pathlib",
           "re",
-          "typing",
-          "urllib"
+          "typing"
         ],
-        "import_count": 72
+        "import_count": 61
       }
     },
     {
@@ -1435,18 +1310,22 @@
       "severity": "medium",
       "score": 1.0,
       "title": "Novel dependencies in tests/",
-      "description": "Recently introduced 10 package(s) not previously used in this module: click, datetime, io, json, math, re, rich, subprocess, textwrap, unittest\n  - tests\\conftest.py:5 imports 'textwrap'\n  - tests\\test_integration.py:5 imports 'subprocess'\n  - tests\\test_integration.py:6 imports 'textwrap'\n  - tests\\test_new_features.py:5 imports 'textwrap'\n  - tests\\test_new_features.py:7 imports 'unittest'",
+      "description": "Recently introduced 14 package(s) not previously used in this module: __future__, click, datetime, drift, io, json, math, pathlib, pytest, re, rich, subprocess, textwrap, unittest\n  - tests\\conftest.py:3 imports '__future__'\n  - tests\\conftest.py:5 imports 'textwrap'\n  - tests\\conftest.py:6 imports 'pathlib'\n  - tests\\conftest.py:8 imports 'pytest'\n  - tests\\test_architecture_violation.py:3 imports 'pathlib'",
       "file": "tests",
       "start_line": null,
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
         "novel_packages": [
+          "__future__",
           "click",
           "datetime",
+          "drift",
           "io",
           "json",
           "math",
+          "pathlib",
+          "pytest",
           "re",
           "rich",
           "subprocess",
@@ -1454,106 +1333,50 @@
           "unittest"
         ],
         "novel_imports": [
+          "__future__",
           "click",
           "datetime",
+          "drift",
           "io",
           "json",
           "math",
+          "pathlib",
+          "pytest",
           "re",
           "rich",
           "subprocess",
           "textwrap",
           "unittest"
         ],
-        "import_count": 12
-      }
-    },
-    {
-      "signal": "temporal_volatility",
-      "severity": "medium",
-      "score": 0.64,
-      "title": "High volatility: src/drift/signals/mutant_duplicates.py",
-      "description": "Change frequency: 3.0/week (3.1\u03c3 above mean). 8 defect-correlated commits (2.6\u03c3 above mean).",
-      "file": "src/drift/signals/mutant_duplicates.py",
-      "start_line": null,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "change_frequency_30d": 3.03,
-        "unique_authors": 1,
-        "defect_correlated": 8,
-        "ai_ratio": 0.0,
-        "freq_z": 3.11,
-        "author_z": 0.0,
-        "defect_z": 2.65
+        "import_count": 59
       }
     },
     {
       "signal": "temporal_volatility",
       "severity": "low",
-      "score": 0.48,
+      "score": 0.405,
       "title": "High volatility: src/drift/analyzer.py",
-      "description": "Change frequency: 2.3/week (2.1\u03c3 above mean). 7 defect-correlated commits (2.2\u03c3 above mean).",
+      "description": "Change frequency: 2.1/week (1.8\u03c3 above mean). 6 defect-correlated commits (1.8\u03c3 above mean).",
       "file": "src/drift/analyzer.py",
       "start_line": null,
       "end_line": null,
       "ai_attributed": false,
       "metadata": {
-        "change_frequency_30d": 2.33,
-        "unique_authors": 1,
-        "defect_correlated": 7,
-        "ai_ratio": 0.0,
-        "freq_z": 2.12,
-        "author_z": 0.0,
-        "defect_z": 2.19
-      }
-    },
-    {
-      "signal": "temporal_volatility",
-      "severity": "low",
-      "score": 0.356,
-      "title": "High volatility: src/drift/ingestion/file_discovery.py",
-      "description": "6 defect-correlated commits (1.7\u03c3 above mean).",
-      "file": "src/drift/ingestion/file_discovery.py",
-      "start_line": null,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "change_frequency_30d": 1.87,
+        "change_frequency_30d": 2.1,
         "unique_authors": 1,
         "defect_correlated": 6,
         "ai_ratio": 0.0,
-        "freq_z": 1.47,
+        "freq_z": 1.84,
         "author_z": 0.0,
-        "defect_z": 1.74
+        "defect_z": 1.81
       }
     },
     {
       "signal": "temporal_volatility",
       "severity": "medium",
-      "score": 0.53,
-      "title": "High volatility: src/drift/ingestion/git_history.py",
-      "description": "Change frequency: 2.3/week (2.1\u03c3 above mean). 8 defect-correlated commits (2.6\u03c3 above mean).",
-      "file": "src/drift/ingestion/git_history.py",
-      "start_line": null,
-      "end_line": null,
-      "ai_attributed": false,
-      "metadata": {
-        "change_frequency_30d": 2.33,
-        "unique_authors": 1,
-        "defect_correlated": 8,
-        "ai_ratio": 0.0,
-        "freq_z": 2.12,
-        "author_z": 0.0,
-        "defect_z": 2.65
-      }
-    },
-    {
-      "signal": "temporal_volatility",
-      "severity": "medium",
-      "score": 0.516,
+      "score": 0.541,
       "title": "High volatility: src/drift/cli.py",
-      "description": "Change frequency: 2.6/week (2.5\u03c3 above mean). 7 defect-correlated commits (2.2\u03c3 above mean).",
+      "description": "Change frequency: 2.6/week (2.5\u03c3 above mean). 7 defect-correlated commits (2.3\u03c3 above mean).",
       "file": "src/drift/cli.py",
       "start_line": null,
       "end_line": null,
@@ -1563,9 +1386,49 @@
         "unique_authors": 1,
         "defect_correlated": 7,
         "ai_ratio": 0.0,
-        "freq_z": 2.45,
+        "freq_z": 2.55,
         "author_z": 0.0,
-        "defect_z": 2.19
+        "defect_z": 2.32
+      }
+    },
+    {
+      "signal": "temporal_volatility",
+      "severity": "medium",
+      "score": 0.541,
+      "title": "High volatility: src/drift/signals/mutant_duplicates.py",
+      "description": "Change frequency: 2.6/week (2.5\u03c3 above mean). 7 defect-correlated commits (2.3\u03c3 above mean).",
+      "file": "src/drift/signals/mutant_duplicates.py",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "change_frequency_30d": 2.57,
+        "unique_authors": 1,
+        "defect_correlated": 7,
+        "ai_ratio": 0.0,
+        "freq_z": 2.55,
+        "author_z": 0.0,
+        "defect_z": 2.32
+      }
+    },
+    {
+      "signal": "temporal_volatility",
+      "severity": "low",
+      "score": 0.462,
+      "title": "High volatility: src/drift/ingestion/git_history.py",
+      "description": "Change frequency: 2.1/week (1.8\u03c3 above mean). 7 defect-correlated commits (2.3\u03c3 above mean).",
+      "file": "src/drift/ingestion/git_history.py",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "change_frequency_30d": 2.1,
+        "unique_authors": 1,
+        "defect_correlated": 7,
+        "ai_ratio": 0.0,
+        "freq_z": 1.84,
+        "author_z": 0.0,
+        "defect_z": 2.32
       }
     }
   ]

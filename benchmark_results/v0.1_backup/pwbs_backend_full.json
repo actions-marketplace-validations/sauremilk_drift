@@ -1,14 +1,14 @@
 {
   "version": "0.1.0",
   "repo": "C:/Users/mickg/PWBS/backend",
-  "analyzed_at": "2026-03-19T14:17:41.379790+00:00",
-  "drift_score": 0.46,
+  "analyzed_at": "2026-03-19T11:13:14.218297+00:00",
+  "drift_score": 0.52,
   "severity": "medium",
   "summary": {
     "total_files": 490,
     "total_functions": 5073,
     "ai_attributed_ratio": 0.0,
-    "analysis_duration_seconds": 3.84
+    "analysis_duration_seconds": 6.23
   },
   "modules": [
     {
@@ -23,24 +23,13 @@
     },
     {
       "path": "_deferred/routes",
-      "drift_score": 0.606,
+      "drift_score": 0.618,
       "severity": "high",
       "signal_scores": {
         "pattern_fragmentation": 0.4132,
-        "mutant_duplicate": 0.8642
+        "mutant_duplicate": 0.8902
       },
-      "finding_count": 11,
-      "ai_ratio": 0.0
-    },
-    {
-      "path": "_deferred/marketplace",
-      "drift_score": 0.523,
-      "severity": "medium",
-      "signal_scores": {
-        "pattern_fragmentation": 0.2409,
-        "mutant_duplicate": 0.9
-      },
-      "finding_count": 25,
+      "finding_count": 12,
       "ai_ratio": 0.0
     },
     {
@@ -52,6 +41,17 @@
         "mutant_duplicate": 0.9
       },
       "finding_count": 16,
+      "ai_ratio": 0.0
+    },
+    {
+      "path": "_deferred/marketplace",
+      "drift_score": 0.521,
+      "severity": "medium",
+      "signal_scores": {
+        "pattern_fragmentation": 0.2409,
+        "mutant_duplicate": 0.8952
+      },
+      "finding_count": 26,
       "ai_ratio": 0.0
     },
     {
@@ -86,13 +86,13 @@
     },
     {
       "path": "_deferred/billing",
-      "drift_score": 0.475,
+      "drift_score": 0.495,
       "severity": "medium",
       "signal_scores": {
-        "mutant_duplicate": 0.7805,
+        "mutant_duplicate": 0.8155,
         "explainability_deficit": 0.0939
       },
-      "finding_count": 8,
+      "finding_count": 9,
       "ai_ratio": 0.0
     },
     {
@@ -188,6 +188,17 @@
         "pattern_fragmentation": 0.2409
       },
       "finding_count": 1,
+      "ai_ratio": 0.0
+    },
+    {
+      "path": "pwbs/db",
+      "drift_score": 0.24,
+      "severity": "low",
+      "signal_scores": {
+        "pattern_fragmentation": 0.1445,
+        "architecture_violation": 0.3356
+      },
+      "finding_count": 5,
       "ai_ratio": 0.0
     },
     {
@@ -365,17 +376,6 @@
       "ai_ratio": 0.0
     },
     {
-      "path": "pwbs/db",
-      "drift_score": 0.123,
-      "severity": "info",
-      "signal_scores": {
-        "pattern_fragmentation": 0.1445,
-        "architecture_violation": 0.1007
-      },
-      "finding_count": 5,
-      "ai_ratio": 0.0
-    },
-    {
       "path": "<root>",
       "drift_score": 0.116,
       "severity": "info",
@@ -410,7 +410,7 @@
     {
       "signal": "architecture_violation",
       "severity": "medium",
-      "score": 0.15,
+      "score": 0.5,
       "title": "Upward layer import: weaviate_client.py \u2192 config.py",
       "description": "pwbs/db/weaviate_client.py:13 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
       "file": "pwbs/db/weaviate_client.py",
@@ -419,14 +419,13 @@
       "ai_attributed": false,
       "metadata": {
         "src_layer": 2,
-        "dst_layer": 1,
-        "hub_dampened": true
+        "dst_layer": 1
       }
     },
     {
       "signal": "architecture_violation",
       "severity": "medium",
-      "score": 0.15,
+      "score": 0.5,
       "title": "Upward layer import: postgres.py \u2192 config.py",
       "description": "pwbs/db/postgres.py:15 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
       "file": "pwbs/db/postgres.py",
@@ -435,14 +434,13 @@
       "ai_attributed": false,
       "metadata": {
         "src_layer": 2,
-        "dst_layer": 1,
-        "hub_dampened": true
+        "dst_layer": 1
       }
     },
     {
       "signal": "architecture_violation",
       "severity": "medium",
-      "score": 0.15,
+      "score": 0.5,
       "title": "Upward layer import: neo4j_client.py \u2192 config.py",
       "description": "pwbs/db/neo4j_client.py:13 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
       "file": "pwbs/db/neo4j_client.py",
@@ -451,14 +449,13 @@
       "ai_attributed": false,
       "metadata": {
         "src_layer": 2,
-        "dst_layer": 1,
-        "hub_dampened": true
+        "dst_layer": 1
       }
     },
     {
       "signal": "architecture_violation",
       "severity": "medium",
-      "score": 0.15,
+      "score": 0.5,
       "title": "Upward layer import: redis_client.py \u2192 config.py",
       "description": "pwbs/db/redis_client.py:7 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
       "file": "pwbs/db/redis_client.py",
@@ -467,8 +464,7 @@
       "ai_attributed": false,
       "metadata": {
         "src_layer": 2,
-        "dst_layer": 1,
-        "hub_dampened": true
+        "dst_layer": 1
       }
     },
     {
@@ -2568,6 +2564,60 @@
         "function_b": "TestAnalyzeAndPersist._execute",
         "file_a": "tests/test_processing/test_work_patterns.py",
         "file_b": "tests/test_processing/test_work_patterns.py"
+      }
+    },
+    {
+      "signal": "mutant_duplicate",
+      "severity": "high",
+      "score": 0.7788973384030418,
+      "title": "Near-duplicate (92%): scaffold \u2194 scaffold",
+      "description": "_deferred\\marketplace\\cli.py:182 and pwbs\\marketplace\\cli.py:180 are 92% similar. Small differences may indicate copy-paste divergence.",
+      "file": "_deferred/marketplace/cli.py",
+      "start_line": 182,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "similarity": 0.916,
+        "function_a": "scaffold",
+        "function_b": "scaffold",
+        "file_a": "_deferred/marketplace/cli.py",
+        "file_b": "pwbs/marketplace/cli.py"
+      }
+    },
+    {
+      "signal": "mutant_duplicate",
+      "severity": "high",
+      "score": 0.8200879765395894,
+      "title": "Near-duplicate (96%): _handle_subscription_updated \u2194 _handle_subscription_updated",
+      "description": "_deferred\\billing\\service.py:356 and pwbs\\billing\\service.py:361 are 96% similar. Small differences may indicate copy-paste divergence.",
+      "file": "_deferred/billing/service.py",
+      "start_line": 356,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "similarity": 0.965,
+        "function_a": "_handle_subscription_updated",
+        "function_b": "_handle_subscription_updated",
+        "file_a": "_deferred/billing/service.py",
+        "file_b": "pwbs/billing/service.py"
+      }
+    },
+    {
+      "signal": "mutant_duplicate",
+      "severity": "high",
+      "score": 0.8016014234875445,
+      "title": "Near-duplicate (94%): oidc_callback \u2194 oidc_callback",
+      "description": "_deferred\\routes\\sso.py:269 and pwbs\\api\\v1\\routes\\sso.py:268 are 94% similar. Small differences may indicate copy-paste divergence.",
+      "file": "_deferred/routes/sso.py",
+      "start_line": 269,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "similarity": 0.943,
+        "function_a": "oidc_callback",
+        "function_b": "oidc_callback",
+        "file_a": "_deferred/routes/sso.py",
+        "file_b": "pwbs/api/v1/routes/sso.py"
       }
     },
     {

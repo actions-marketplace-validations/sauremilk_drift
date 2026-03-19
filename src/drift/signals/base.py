@@ -5,9 +5,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from drift.config import DriftConfig
 from drift.models import FileHistory, Finding, ParseResult, SignalType
+
+if TYPE_CHECKING:
+    from drift.embeddings import EmbeddingService
 
 
 @dataclass
@@ -22,6 +26,7 @@ class AnalysisContext:
     config: DriftConfig
     parse_results: list[ParseResult] = field(default_factory=list)
     file_histories: dict[str, FileHistory] = field(default_factory=dict)
+    embedding_service: EmbeddingService | None = None
 
 
 class BaseSignal(ABC):
@@ -68,7 +73,8 @@ def create_signals(ctx: AnalysisContext) -> list[BaseSignal]:
     """Instantiate all registered signals.
 
     Signals whose ``__init__`` accepts a ``repo_path`` keyword argument
-    receive it from the context automatically.
+    receive it from the context automatically.  All signals receive
+    ``ctx.embedding_service`` as a ``_embedding_service`` attribute.
     """
     import inspect
 
@@ -77,9 +83,11 @@ def create_signals(ctx: AnalysisContext) -> list[BaseSignal]:
         sig = inspect.signature(cls.__init__)
         params = set(sig.parameters.keys()) - {"self"}
         if "repo_path" in params:
-            signals.append(cls(repo_path=ctx.repo_path))
+            inst = cls(repo_path=ctx.repo_path)
         else:
-            signals.append(cls())
+            inst = cls()
+        inst._embedding_service = ctx.embedding_service  # type: ignore[attr-defined]
+        signals.append(inst)
     return signals
 
 

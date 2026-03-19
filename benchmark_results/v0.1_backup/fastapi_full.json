@@ -1,14 +1,14 @@
 {
   "version": "0.1.0",
-  "repo": "C:/Users/mickg/AppData/Local/Temp/drift_bench_i52589aj/fastapi",
-  "analyzed_at": "2026-03-19T14:17:59.548380+00:00",
-  "drift_score": 0.681,
+  "repo": "C:/Users/mickg/AppData/Local/Temp/drift_bench_mz9c7l52/fastapi",
+  "analyzed_at": "2026-03-19T11:16:24.936114+00:00",
+  "drift_score": 0.69,
   "severity": "high",
   "summary": {
     "total_files": 1118,
     "total_functions": 4554,
     "ai_attributed_ratio": 0.0,
-    "analysis_duration_seconds": 13.88
+    "analysis_duration_seconds": 2.3
   },
   "modules": [
     {
@@ -152,7 +152,7 @@
       "ai_ratio": 0.0
     },
     {
-      "path": "docs_src/app_testing/app_b_an_py310",
+      "path": "docs_src/app_testing/app_b_py310",
       "drift_score": 0.604,
       "severity": "high",
       "signal_scores": {
@@ -422,6 +422,16 @@
       "ai_ratio": 0.0
     },
     {
+      "path": ".",
+      "drift_score": 0.3,
+      "severity": "low",
+      "signal_scores": {
+        "doc_impl_drift": 0.3
+      },
+      "finding_count": 58,
+      "ai_ratio": 0.0
+    },
+    {
       "path": "fastapi/_compat",
       "drift_score": 0.291,
       "severity": "low",
@@ -500,7 +510,7 @@
       "ai_ratio": 0.0
     },
     {
-      "path": "docs_src/settings/app02_an_py310",
+      "path": "docs_src/settings/app02_py310",
       "drift_score": 0.26,
       "severity": "low",
       "signal_scores": {
@@ -608,16 +618,6 @@
         "pattern_fragmentation": 0.2291
       },
       "finding_count": 2,
-      "ai_ratio": 0.0
-    },
-    {
-      "path": ".",
-      "drift_score": 0.224,
-      "severity": "low",
-      "signal_scores": {
-        "doc_impl_drift": 0.2242
-      },
-      "finding_count": 5,
       "ai_ratio": 0.0
     },
     {
@@ -799,6 +799,20 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: 123/",
+      "description": "README mentions '123/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "123"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: 8000/",
       "description": "README mentions '8000/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -807,6 +821,174 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "8000"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: JoshData/",
+      "description": "README mentions 'JoshData/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "JoshData"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: Kludex/",
+      "description": "README mentions 'Kludex/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "Kludex"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: OAI/",
+      "description": "README mentions 'OAI/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "OAI"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: Rebilly/",
+      "description": "README mentions 'Rebilly/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "Rebilly"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: Swagger/",
+      "description": "README mentions 'Swagger/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "Swagger"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: _inesmontani/",
+      "description": "README mentions '_inesmontani/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "_inesmontani"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: actions/",
+      "description": "README mentions 'actions/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "actions"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: ai/",
+      "description": "README mentions 'ai/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "ai"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: async/",
+      "description": "README mentions 'async/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "async"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: benchmarks/",
+      "description": "README mentions 'benchmarks/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "benchmarks"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: blog/",
+      "description": "README mentions 'blog/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "blog"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: brianokken/",
+      "description": "README mentions 'brianokken/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "brianokken"
       }
     },
     {
@@ -827,6 +1009,146 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: deonpillsbury_cisco-cx-python-activity-6963242628536487936-trAp/",
+      "description": "README mentions 'deonpillsbury_cisco-cx-python-activity-6963242628536487936-trAp/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "deonpillsbury_cisco-cx-python-activity-6963242628536487936-trAp"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: dev/",
+      "description": "README mentions 'dev/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "dev"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: en/",
+      "description": "README mentions 'en/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "en"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: episodes/",
+      "description": "README mentions 'episodes/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "episodes"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: esnme/",
+      "description": "README mentions 'esnme/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "esnme"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: extra_types/",
+      "description": "README mentions 'extra_types/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "extra_types"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: fastapi-cli/",
+      "description": "README mentions 'fastapi-cli/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "fastapi-cli"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: fastapi-people/",
+      "description": "README mentions 'fastapi-people/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "fastapi-people"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: fm/",
+      "description": "README mentions 'fm/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "fm"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: guides/",
+      "description": "README mentions 'guides/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "guides"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: home/",
       "description": "README mentions 'home/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -835,6 +1157,90 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "home"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: honnibal/",
+      "description": "README mentions 'honnibal/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "honnibal"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: hugapi/",
+      "description": "README mentions 'hugapi/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "hugapi"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: ijl/",
+      "description": "README mentions 'ijl/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "ijl"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: img/",
+      "description": "README mentions 'img/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "img"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: index/",
+      "description": "README mentions 'index/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "index"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: io/",
+      "description": "README mentions 'io/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "io"
       }
     },
     {
@@ -855,6 +1261,286 @@
       "signal": "doc_impl_drift",
       "severity": "low",
       "score": 0.3,
+      "title": "README references missing directory: latest/",
+      "description": "README mentions 'latest/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "latest"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: link/",
+      "description": "README mentions 'link/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "link"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: logo-margin/",
+      "description": "README mentions 'logo-margin/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "logo-margin"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: ludwig-v0-2/",
+      "description": "README mentions 'ludwig-v0-2/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "ludwig-v0-2"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: org/",
+      "description": "README mentions 'org/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "org"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: posts/",
+      "description": "README mentions 'posts/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "posts"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: project/",
+      "description": "README mentions 'project/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "project"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: pull/",
+      "description": "README mentions 'pull/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "pull"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: pydantic_settings/",
+      "description": "README mentions 'pydantic_settings/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "pydantic_settings"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: pypi/",
+      "description": "README mentions 'pypi/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "pypi"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: pyversions/",
+      "description": "README mentions 'pyversions/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "pyversions"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: redirect/",
+      "description": "README mentions 'redirect/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "redirect"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: scalar/",
+      "description": "README mentions 'scalar/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "scalar"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: show/",
+      "description": "README mentions 'show/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "show"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: sponsors/",
+      "description": "README mentions 'sponsors/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "sponsors"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: status/",
+      "description": "README mentions 'status/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "status"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: swagger-api/",
+      "description": "README mentions 'swagger-api/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "swagger-api"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: tutorial/",
+      "description": "README mentions 'tutorial/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "tutorial"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: types/",
+      "description": "README mentions 'types/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "types"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: usage/",
+      "description": "README mentions 'usage/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "usage"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
       "title": "README references missing directory: user/",
       "description": "README mentions 'user/' but no such directory exists. Documentation may be outdated.",
       "file": "README.md",
@@ -863,6 +1549,62 @@
       "ai_attributed": false,
       "metadata": {
         "referenced_dir": "user"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: v/",
+      "description": "README mentions 'v/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "v"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: virtual-environments/",
+      "description": "README mentions 'virtual-environments/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "virtual-environments"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: workflows/",
+      "description": "README mentions 'workflows/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "workflows"
+      }
+    },
+    {
+      "signal": "doc_impl_drift",
+      "severity": "low",
+      "score": 0.3,
+      "title": "README references missing directory: yml/",
+      "description": "README mentions 'yml/' but no such directory exists. Documentation may be outdated.",
+      "file": "README.md",
+      "start_line": null,
+      "end_line": null,
+      "ai_attributed": false,
+      "metadata": {
+        "referenced_dir": "yml"
       }
     },
     {
@@ -1757,8 +2499,8 @@
       "severity": "high",
       "score": 0.9,
       "title": "Exact duplicate: test_read_item \u2194 test_read_item",
-      "description": "docs_src\\app_testing\\app_b_an_py310\\test_main.py:8 and docs_src\\app_testing\\app_b_py310\\test_main.py:8 are identical (8 lines). Consider consolidating.",
-      "file": "docs_src/app_testing/app_b_an_py310/test_main.py",
+      "description": "docs_src\\app_testing\\app_b_py310\\test_main.py:8 and docs_src\\app_testing\\app_b_py310\\test_main.py:8 are identical (8 lines). Consider consolidating.",
+      "file": "docs_src/app_testing/app_b_py310/test_main.py",
       "start_line": 8,
       "end_line": null,
       "ai_attributed": false,
@@ -1767,7 +2509,7 @@
         "body_hash": "55c89d5e0c64f947",
         "function_a": "test_read_item",
         "function_b": "test_read_item",
-        "file_a": "docs_src/app_testing/app_b_an_py310/test_main.py",
+        "file_a": "docs_src/app_testing/app_b_py310/test_main.py",
         "file_b": "docs_src/app_testing/app_b_py310/test_main.py"
       }
     },
@@ -1776,8 +2518,8 @@
       "severity": "high",
       "score": 0.9,
       "title": "Exact duplicate: test_create_item \u2194 test_create_item",
-      "description": "docs_src\\app_testing\\app_b_an_py310\\test_main.py:30 and docs_src\\app_testing\\app_b_py310\\test_main.py:30 are identical (12 lines). Consider consolidating.",
-      "file": "docs_src/app_testing/app_b_an_py310/test_main.py",
+      "description": "docs_src\\app_testing\\app_b_py310\\test_main.py:30 and docs_src\\app_testing\\app_b_py310\\test_main.py:30 are identical (12 lines). Consider consolidating.",
+      "file": "docs_src/app_testing/app_b_py310/test_main.py",
       "start_line": 30,
       "end_line": null,
       "ai_attributed": false,
@@ -1786,7 +2528,7 @@
         "body_hash": "0b11f0cb0e5e32f1",
         "function_a": "test_create_item",
         "function_b": "test_create_item",
-        "file_a": "docs_src/app_testing/app_b_an_py310/test_main.py",
+        "file_a": "docs_src/app_testing/app_b_py310/test_main.py",
         "file_b": "docs_src/app_testing/app_b_py310/test_main.py"
       }
     },
@@ -1795,8 +2537,8 @@
       "severity": "high",
       "score": 0.9,
       "title": "Exact duplicate: test_create_item_bad_token \u2194 test_create_item_bad_token",
-      "description": "docs_src\\app_testing\\app_b_an_py310\\test_main.py:44 and docs_src\\app_testing\\app_b_py310\\test_main.py:44 are identical (8 lines). Consider consolidating.",
-      "file": "docs_src/app_testing/app_b_an_py310/test_main.py",
+      "description": "docs_src\\app_testing\\app_b_py310\\test_main.py:44 and docs_src\\app_testing\\app_b_py310\\test_main.py:44 are identical (8 lines). Consider consolidating.",
+      "file": "docs_src/app_testing/app_b_py310/test_main.py",
       "start_line": 44,
       "end_line": null,
       "ai_attributed": false,
@@ -1805,7 +2547,7 @@
         "body_hash": "4dab8f10c0d5caca",
         "function_a": "test_create_item_bad_token",
         "function_b": "test_create_item_bad_token",
-        "file_a": "docs_src/app_testing/app_b_an_py310/test_main.py",
+        "file_a": "docs_src/app_testing/app_b_py310/test_main.py",
         "file_b": "docs_src/app_testing/app_b_py310/test_main.py"
       }
     },
@@ -1814,8 +2556,8 @@
       "severity": "high",
       "score": 0.9,
       "title": "Exact duplicate: test_create_existing_item \u2194 test_create_existing_item",
-      "description": "docs_src\\app_testing\\app_b_an_py310\\test_main.py:54 and docs_src\\app_testing\\app_b_py310\\test_main.py:54 are identical (12 lines). Consider consolidating.",
-      "file": "docs_src/app_testing/app_b_an_py310/test_main.py",
+      "description": "docs_src\\app_testing\\app_b_py310\\test_main.py:54 and docs_src\\app_testing\\app_b_py310\\test_main.py:54 are identical (12 lines). Consider consolidating.",
+      "file": "docs_src/app_testing/app_b_py310/test_main.py",
       "start_line": 54,
       "end_line": null,
       "ai_attributed": false,
@@ -1824,7 +2566,7 @@
         "body_hash": "a7d3b325c976b78b",
         "function_a": "test_create_existing_item",
         "function_b": "test_create_existing_item",
-        "file_a": "docs_src/app_testing/app_b_an_py310/test_main.py",
+        "file_a": "docs_src/app_testing/app_b_py310/test_main.py",
         "file_b": "docs_src/app_testing/app_b_py310/test_main.py"
       }
     },
@@ -2669,8 +3411,8 @@
       "severity": "high",
       "score": 0.9,
       "title": "Exact duplicate: test_app \u2194 test_app",
-      "description": "docs_src\\settings\\app02_an_py310\\test_main.py:16 and docs_src\\settings\\app02_py310\\test_main.py:16 are identical (8 lines). Consider consolidating.",
-      "file": "docs_src/settings/app02_an_py310/test_main.py",
+      "description": "docs_src\\settings\\app02_py310\\test_main.py:16 and docs_src\\settings\\app02_py310\\test_main.py:16 are identical (8 lines). Consider consolidating.",
+      "file": "docs_src/settings/app02_py310/test_main.py",
       "start_line": 16,
       "end_line": null,
       "ai_attributed": false,
@@ -2679,7 +3421,7 @@
         "body_hash": "70d7402a7a2c9f6c",
         "function_a": "test_app",
         "function_b": "test_app",
-        "file_a": "docs_src/settings/app02_an_py310/test_main.py",
+        "file_a": "docs_src/settings/app02_py310/test_main.py",
         "file_b": "docs_src/settings/app02_py310/test_main.py"
       }
     },

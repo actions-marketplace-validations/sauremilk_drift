@@ -139,15 +139,15 @@
   "overall_recall": 0.8571428571428571,
   "drift_output": {
     "version": "0.1.0",
-    "repo": "C:/Users/mickg/AppData/Local/Temp/drift_mutation_0sihzeyq/synthetic_repo",
-    "analyzed_at": "2026-03-19T11:41:39.012579+00:00",
-    "drift_score": 0.265,
+    "repo": "C:/Users/mickg/AppData/Local/Temp/drift_mutation_1ud3wixo/synthetic_repo",
+    "analyzed_at": "2026-03-19T14:19:17.582192+00:00",
+    "drift_score": 0.233,
     "severity": "low",
     "summary": {
       "total_files": 24,
       "total_functions": 26,
       "ai_attributed_ratio": 0.0,
-      "analysis_duration_seconds": 0.08
+      "analysis_duration_seconds": 0.12
     },
     "modules": [
       {
@@ -174,17 +174,6 @@
         "ai_ratio": 0.0
       },
       {
-        "path": "src/myapp/models",
-        "drift_score": 0.184,
-        "severity": "info",
-        "signal_scores": {
-          "architecture_violation": 0.2291,
-          "system_misalignment": 0.0723
-        },
-        "finding_count": 3,
-        "ai_ratio": 0.0
-      },
-      {
         "path": "src/myapp/handlers",
         "drift_score": 0.144,
         "severity": "info",
@@ -204,13 +193,24 @@
         },
         "finding_count": 1,
         "ai_ratio": 0.0
+      },
+      {
+        "path": "src/myapp/models",
+        "drift_score": 0.07,
+        "severity": "info",
+        "signal_scores": {
+          "architecture_violation": 0.0687,
+          "system_misalignment": 0.0723
+        },
+        "finding_count": 3,
+        "ai_ratio": 0.0
       }
     ],
     "findings": [
       {
         "signal": "architecture_violation",
         "severity": "medium",
-        "score": 0.5,
+        "score": 0.15,
         "title": "Upward layer import: enriched.py \u2192 auth.py",
         "description": "src/myapp/models/enriched.py:1 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
         "file": "src/myapp/models/enriched.py",
@@ -219,13 +219,14 @@
         "ai_attributed": false,
         "metadata": {
           "src_layer": 2,
-          "dst_layer": 0
+          "dst_layer": 0,
+          "hub_dampened": true
         }
       },
       {
         "signal": "architecture_violation",
         "severity": "medium",
-        "score": 0.5,
+        "score": 0.15,
         "title": "Upward layer import: enriched.py \u2192 orders.py",
         "description": "src/myapp/models/enriched.py:2 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
         "file": "src/myapp/models/enriched.py",
@@ -234,7 +235,8 @@
         "ai_attributed": false,
         "metadata": {
           "src_layer": 2,
-          "dst_layer": 0
+          "dst_layer": 0,
+          "hub_dampened": true
         }
       },
       {

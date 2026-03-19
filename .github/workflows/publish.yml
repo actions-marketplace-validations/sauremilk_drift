@@ -5,8 +5,25 @@ on:
     types: [published]
 
 jobs:
+  validate-version:
+    name: Validate tag & version consistency
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check SemVer tag matches pyproject.toml
+        # Fails if the tag is not vMAJOR.MINOR.PATCH or doesn't match
+        # the version field in pyproject.toml. Abort before any build.
+        run: python scripts/check_version.py --tag "${{ github.ref_name }}"
+
   build:
     name: Build distribution
+    needs: validate-version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,3 +59,30 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  update-major-tag:
+    name: Update major-version tag (e.g. v1 → latest patch)
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Move major-version tag
+        # Parses "v1.2.3" → "v1" and force-updates the tag so that
+        # users pinning `uses: sauremilk/drift@v1` always get the
+        # latest compatible release automatically.
+        run: |
+          TAG="${{ github.ref_name }}"
+          MAJOR=$(echo "$TAG" | grep -oP '^v\d+')
+          if [ -z "$MAJOR" ]; then
+            echo "Tag $TAG does not match vMAJOR.MINOR.PATCH – skipping major-tag update"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f "$MAJOR"
+          git push -f origin "$MAJOR"
+          echo "Moved $MAJOR → $TAG"

@@ -7,8 +7,25 @@ on:
     branches: [master]
 
 jobs:
+  version-check:
+    name: Version format check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate pyproject.toml version is SemVer
+        # Ensures the version in pyproject.toml is always MAJOR.MINOR.PATCH –
+        # a merge to master with an invalid or missing version is blocked.
+        run: python scripts/check_version.py --check-semver
+
   test:
     runs-on: ubuntu-latest
+    needs: version-check
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]

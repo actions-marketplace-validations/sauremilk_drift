@@ -1,13 +1,13 @@
 {
-  "sample_size": 269,
+  "sample_size": 291,
   "precision_by_signal": {
     "doc_impl_drift": {
-      "sample": 32,
-      "tp": 19,
-      "fp": 6,
-      "disputed": 7,
-      "precision_strict": 0.59375,
-      "precision_lenient": 0.8125
+      "sample": 61,
+      "tp": 29,
+      "fp": 31,
+      "disputed": 1,
+      "precision_strict": 0.47540983606557374,
+      "precision_lenient": 0.4918032786885246
     },
     "explainability_deficit": {
       "sample": 72,
@@ -15,14 +15,6 @@
       "fp": 0,
       "disputed": 14,
       "precision_strict": 0.8055555555555556,
-      "precision_lenient": 1.0
-    },
-    "mutant_duplicate": {
-      "sample": 56,
-      "tp": 50,
-      "fp": 0,
-      "disputed": 6,
-      "precision_strict": 0.8928571428571429,
       "precision_lenient": 1.0
     },
     "pattern_fragmentation": {
@@ -34,19 +26,27 @@
       "precision_lenient": 1.0
     },
     "system_misalignment": {
-      "sample": 20,
-      "tp": 19,
+      "sample": 19,
+      "tp": 18,
       "fp": 0,
       "disputed": 1,
-      "precision_strict": 0.95,
+      "precision_strict": 0.9473684210526315,
       "precision_lenient": 1.0
     },
     "temporal_volatility": {
-      "sample": 35,
-      "tp": 33,
+      "sample": 34,
+      "tp": 32,
       "fp": 0,
       "disputed": 2,
-      "precision_strict": 0.9428571428571428,
+      "precision_strict": 0.9411764705882353,
+      "precision_lenient": 1.0
+    },
+    "mutant_duplicate": {
+      "sample": 51,
+      "tp": 47,
+      "fp": 0,
+      "disputed": 4,
+      "precision_strict": 0.9215686274509803,
       "precision_lenient": 1.0
     },
     "architecture_violation": {
@@ -59,22 +59,14 @@
     }
   },
   "total": {
-    "sample": 269,
-    "tp": 229,
-    "fp": 6,
-    "disputed": 34,
-    "precision_strict": 0.8513011152416357,
-    "precision_lenient": 0.9776951672862454
+    "sample": 291,
+    "tp": 234,
+    "fp": 31,
+    "disputed": 26,
+    "precision_strict": 0.8041237113402062,
+    "precision_lenient": 0.8934707903780069
   },
   "classifications": [
-    {
-      "repo": "drift_self",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: MDS/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
     {
       "repo": "drift_self",
       "signal": "doc_impl_drift",
@@ -94,7 +86,39 @@
     {
       "repo": "drift_self",
       "signal": "doc_impl_drift",
+      "title": "README references missing directory: actions/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: api/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "doc_impl_drift",
       "title": "README references missing directory: auth/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: badge/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: code-security/",
       "score": 0.3,
       "severity": "low",
       "label": "FP"
@@ -114,6 +138,14 @@
       "score": 0.3,
       "severity": "low",
       "label": "TP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: en/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
     },
     {
       "repo": "drift_self",
@@ -150,50 +182,10 @@
     {
       "repo": "drift_self",
       "signal": "doc_impl_drift",
-      "title": "README references missing directory: models/",
+      "title": "README references missing directory: io/",
       "score": 0.3,
       "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: myproject/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: node_modules/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: output/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: path/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "explainability_deficit",
-      "title": "Unexplained complexity: main",
-      "score": 0.85,
-      "severity": "high",
-      "label": "TP"
+      "label": "FP"
     },
     {
       "repo": "drift_self",
@@ -222,14 +214,6 @@
     {
       "repo": "drift_self",
       "signal": "explainability_deficit",
-      "title": "Unexplained complexity: _check_detection",
-      "score": 0.7,
-      "severity": "high",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "explainability_deficit",
       "title": "Unexplained complexity: ExplainabilityDeficitSignal.analyze",
       "score": 0.675,
       "severity": "medium",
@@ -238,40 +222,8 @@
     {
       "repo": "drift_self",
       "signal": "explainability_deficit",
-      "title": "Unexplained complexity: ArchitectureViolationSignal._check_inferred_layers",
-      "score": 0.562,
-      "severity": "medium",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "explainability_deficit",
       "title": "Unexplained complexity: PatternFragmentationSignal.analyze",
       "score": 0.525,
-      "severity": "medium",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "explainability_deficit",
-      "title": "Unexplained complexity: _check_detection",
-      "score": 0.5,
-      "severity": "medium",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "explainability_deficit",
-      "title": "Unexplained complexity: classify_finding",
-      "score": 0.5,
-      "severity": "medium",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "explainability_deficit",
-      "title": "Unexplained complexity: main",
-      "score": 0.5,
       "severity": "medium",
       "label": "TP"
     },
@@ -309,10 +261,50 @@
     },
     {
       "repo": "drift_self",
-      "signal": "mutant_duplicate",
-      "title": "Exact duplicate: _imp \u2194 _imp",
-      "score": 0.9,
-      "severity": "high",
+      "signal": "explainability_deficit",
+      "title": "Unexplained complexity: _extract_patterns",
+      "score": 0.4,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "explainability_deficit",
+      "title": "Unexplained complexity: PythonFileParser.visit_ClassDef",
+      "score": 0.375,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "explainability_deficit",
+      "title": "Unexplained complexity: _extract_classes",
+      "score": 0.375,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "explainability_deficit",
+      "title": "Unexplained complexity: render_trend_chart",
+      "score": 0.375,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "explainability_deficit",
+      "title": "Unexplained complexity: DocImplDriftSignal.analyze",
+      "score": 0.375,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "explainability_deficit",
+      "title": "Unexplained complexity: _find_drift_onset",
+      "score": 0.375,
+      "severity": "low",
       "label": "TP"
     },
     {
@@ -334,9 +326,9 @@
     {
       "repo": "drift_self",
       "signal": "pattern_fragmentation",
-      "title": "error_handling: 4 variants in scripts/",
-      "score": 0.75,
-      "severity": "high",
+      "title": "error_handling: 2 variants in scripts/",
+      "score": 0.5,
+      "severity": "medium",
       "label": "TP"
     },
     {
@@ -344,14 +336,6 @@
       "signal": "pattern_fragmentation",
       "title": "error_handling: 2 variants in src/drift/signals/",
       "score": 0.5,
-      "severity": "medium",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "system_misalignment",
-      "title": "Novel dependencies in scripts/",
-      "score": 1.0,
       "severity": "medium",
       "label": "TP"
     },
@@ -406,8 +390,16 @@
     {
       "repo": "drift_self",
       "signal": "temporal_volatility",
+      "title": "High volatility: src/drift/cli.py",
+      "score": 0.541,
+      "severity": "medium",
+      "label": "TP"
+    },
+    {
+      "repo": "drift_self",
+      "signal": "temporal_volatility",
       "title": "High volatility: src/drift/signals/mutant_duplicates.py",
-      "score": 0.64,
+      "score": 0.541,
       "severity": "medium",
       "label": "TP"
     },
@@ -415,33 +407,25 @@
       "repo": "drift_self",
       "signal": "temporal_volatility",
       "title": "High volatility: src/drift/ingestion/git_history.py",
-      "score": 0.53,
-      "severity": "medium",
-      "label": "TP"
-    },
-    {
-      "repo": "drift_self",
-      "signal": "temporal_volatility",
-      "title": "High volatility: src/drift/cli.py",
-      "score": 0.516,
-      "severity": "medium",
-      "label": "TP"
+      "score": 0.462,
+      "severity": "low",
+      "label": "Disputed"
     },
     {
       "repo": "drift_self",
       "signal": "temporal_volatility",
       "title": "High volatility: src/drift/analyzer.py",
-      "score": 0.48,
+      "score": 0.405,
       "severity": "low",
       "label": "Disputed"
     },
     {
-      "repo": "drift_self",
-      "signal": "temporal_volatility",
-      "title": "High volatility: src/drift/ingestion/file_discovery.py",
-      "score": 0.356,
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: 123/",
+      "score": 0.3,
       "severity": "low",
-      "label": "Disputed"
+      "label": "FP"
     },
     {
       "repo": "fastapi",
@@ -454,50 +438,106 @@
     {
       "repo": "fastapi",
       "signal": "doc_impl_drift",
+      "title": "README references missing directory: JoshData/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: Kludex/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: OAI/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: Rebilly/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: Swagger/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: _inesmontani/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: actions/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: ai/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: async/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: benchmarks/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: blog/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: brianokken/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "fastapi",
+      "signal": "doc_impl_drift",
       "title": "README references missing directory: code/",
       "score": 0.3,
       "severity": "low",
       "label": "TP"
-    },
-    {
-      "repo": "fastapi",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: home/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "fastapi",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: items/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "fastapi",
-      "signal": "doc_impl_drift",
-      "title": "README references missing directory: user/",
-      "score": 0.3,
-      "severity": "low",
-      "label": "TP"
-    },
-    {
-      "repo": "fastapi",
-      "signal": "doc_impl_drift",
-      "title": "Source directory not mentioned in README: docs_src/",
-      "score": 0.15,
-      "severity": "info",
-      "label": "Disputed"
-    },
-    {
-      "repo": "fastapi",
-      "signal": "doc_impl_drift",
-      "title": "Source directory not mentioned in README: scripts/",
-      "score": 0.15,
-      "severity": "info",
-      "label": "Disputed"
     },
     {
       "repo": "fastapi",
@@ -1046,6 +1086,94 @@
     {
       "repo": "pydantic",
       "signal": "doc_impl_drift",
+      "title": "README references missing directory: actions/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: badge/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: blob/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: conda/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: conda-forge/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: contributing/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: dev/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: github/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: install/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: io/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: latest/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "pydantic",
+      "signal": "doc_impl_drift",
       "title": "README references missing directory: linters/",
       "score": 0.3,
       "severity": "low",
@@ -1054,26 +1182,18 @@
     {
       "repo": "pydantic",
       "signal": "doc_impl_drift",
-      "title": "Source directory not mentioned in README: pydantic-core/",
-      "score": 0.15,
-      "severity": "info",
-      "label": "Disputed"
+      "title": "README references missing directory: logfire/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
     },
     {
       "repo": "pydantic",
       "signal": "doc_impl_drift",
-      "title": "Source directory not mentioned in README: release/",
-      "score": 0.15,
-      "severity": "info",
-      "label": "Disputed"
-    },
-    {
-      "repo": "pydantic",
-      "signal": "doc_impl_drift",
-      "title": "Source directory not mentioned in README: tests/",
-      "score": 0.15,
-      "severity": "info",
-      "label": "Disputed"
+      "title": "README references missing directory: main/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
     },
     {
       "repo": "pydantic",
@@ -1583,7 +1703,7 @@
       "repo": "pwbs_backend",
       "signal": "architecture_violation",
       "title": "Upward layer import: weaviate_client.py \u2192 config.py",
-      "score": 0.15,
+      "score": 0.5,
       "severity": "medium",
       "label": "Disputed"
     },
@@ -1591,7 +1711,7 @@
       "repo": "pwbs_backend",
       "signal": "architecture_violation",
       "title": "Upward layer import: postgres.py \u2192 config.py",
-      "score": 0.15,
+      "score": 0.5,
       "severity": "medium",
       "label": "Disputed"
     },
@@ -1599,7 +1719,7 @@
       "repo": "pwbs_backend",
       "signal": "architecture_violation",
       "title": "Upward layer import: neo4j_client.py \u2192 config.py",
-      "score": 0.15,
+      "score": 0.5,
       "severity": "medium",
       "label": "Disputed"
     },
@@ -1607,7 +1727,7 @@
       "repo": "pwbs_backend",
       "signal": "architecture_violation",
       "title": "Upward layer import: redis_client.py \u2192 config.py",
-      "score": 0.15,
+      "score": 0.5,
       "severity": "medium",
       "label": "Disputed"
     },
@@ -1982,6 +2102,14 @@
     {
       "repo": "httpx",
       "signal": "doc_impl_drift",
+      "title": "README references missing directory: 20Suite/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
       "title": "README references missing directory: Basic/",
       "score": 0.3,
       "severity": "low",
@@ -1998,7 +2126,7 @@
     {
       "repo": "httpx",
       "signal": "doc_impl_drift",
-      "title": "README references missing directory: text/",
+      "title": "README references missing directory: advanced/",
       "score": 0.3,
       "severity": "low",
       "label": "TP"
@@ -2006,10 +2134,90 @@
     {
       "repo": "httpx",
       "signal": "doc_impl_drift",
-      "title": "Source directory not mentioned in README: tests/",
-      "score": 0.15,
-      "severity": "info",
-      "label": "Disputed"
+      "title": "README references missing directory: api/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: async/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: blob/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: br/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: compatibility/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: contributing/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: encode/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: http2/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "TP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: img/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: io/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
+    },
+    {
+      "repo": "httpx",
+      "signal": "doc_impl_drift",
+      "title": "README references missing directory: master/",
+      "score": 0.3,
+      "severity": "low",
+      "label": "FP"
     },
     {
       "repo": "httpx",
@@ -2126,24 +2334,8 @@
     {
       "repo": "httpx",
       "signal": "mutant_duplicate",
-      "title": "Near-duplicate (99%): HTTPTransport.__init__ \u2194 AsyncHTTPTransport.__init__",
-      "score": 0.8411688311688311,
-      "severity": "high",
-      "label": "TP"
-    },
-    {
-      "repo": "httpx",
-      "signal": "mutant_duplicate",
-      "title": "Near-duplicate (97%): Client.__init__ \u2194 AsyncClient.__init__",
-      "score": 0.8245635910224438,
-      "severity": "high",
-      "label": "TP"
-    },
-    {
-      "repo": "httpx",
-      "signal": "mutant_duplicate",
       "title": "Near-duplicate (93%): get \u2194 delete",
-      "score": 0.7887387387387387,
+      "score": 0.7892857142857143,
       "severity": "high",
       "label": "Disputed"
     },
@@ -2151,7 +2343,7 @@
       "repo": "httpx",
       "signal": "mutant_duplicate",
       "title": "Near-duplicate (93%): options \u2194 delete",
-      "score": 0.7887387387387387,
+      "score": 0.7892857142857143,
       "severity": "high",
       "label": "Disputed"
     },
@@ -2159,7 +2351,7 @@
       "repo": "httpx",
       "signal": "mutant_duplicate",
       "title": "Near-duplicate (93%): head \u2194 delete",
-      "score": 0.7887387387387387,
+      "score": 0.7892857142857143,
       "severity": "high",
       "label": "Disputed"
     },
@@ -2167,23 +2359,7 @@
       "repo": "httpx",
       "signal": "mutant_duplicate",
       "title": "Near-duplicate (89%): test_multipart_files_content \u2194 test_multipart_data_and_files_content",
-      "score": 0.760248447204969,
-      "severity": "medium",
-      "label": "Disputed"
-    },
-    {
-      "repo": "httpx",
-      "signal": "mutant_duplicate",
-      "title": "Near-duplicate (89%): Client.request \u2194 AsyncClient.request",
-      "score": 0.756544502617801,
-      "severity": "medium",
-      "label": "Disputed"
-    },
-    {
-      "repo": "httpx",
-      "signal": "mutant_duplicate",
-      "title": "Near-duplicate (81%): Client.stream \u2194 AsyncClient.stream",
-      "score": 0.6900990099009902,
+      "score": 0.7573717948717948,
       "severity": "medium",
       "label": "Disputed"
     },

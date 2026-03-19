@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "drift-analyzer"
-version = "0.1.0"
+version = "1.1.0"
 description = "Detect architectural erosion from AI-generated code — the first deterministic codebase coherence analyzer for AI-accelerated development"
 readme = "README.md"
 license = "MIT"
@@ -61,13 +61,16 @@ embeddings = [
     "faiss-cpu>=1.7",
     "numpy>=1.26",
 ]
+markdown = [
+    "mistune>=3.0",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.4",
 ]
 all = [
-    "drift-analyzer[typescript,embeddings,dev]",
+    "drift-analyzer[typescript,embeddings,markdown,dev]",
 ]
 
 [project.scripts]

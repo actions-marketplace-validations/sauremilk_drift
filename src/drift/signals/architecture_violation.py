@@ -3,13 +3,22 @@
 Detects imports that violate layer boundaries — e.g. a route handler
 importing directly from a database module instead of going through
 a service layer.
+
+Enhancements over v0.1:
+- Omnilayer recognition: config/utils/types modules are cross-cutting
+  and never generate violations.
+- Hub-module dampening: high-centrality targets get reduced scores.
+- Embedding-based layer inference (optional): uses semantic similarity
+  to layer-prototype descriptions when sentence-transformers is installed.
+- Policy ``allowed_cross_layer`` patterns suppress matching findings.
 """
 
 from __future__ import annotations
 
 import fnmatch
+import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import networkx as nx
 
@@ -23,6 +32,11 @@ from drift.models import (
     SignalType,
 )
 from drift.signals.base import BaseSignal, register_signal
+
+if TYPE_CHECKING:
+    from drift.embeddings import EmbeddingService
+
+logger = logging.getLogger("drift.avs")
 
 
 def _module_for_path(path: Path) -> str:
@@ -68,7 +82,13 @@ def build_import_graph(
     return graph, all_imports
 
 
-# Default layer inference from common directory names
+# ---------------------------------------------------------------------------
+# Layer inference
+# ---------------------------------------------------------------------------
+
+# Sentinel for cross-cutting modules that may be imported from any layer.
+_OMNILAYER = -1
+
 _DEFAULT_LAYERS: dict[str, int] = {
     "api": 0,
     "routes": 0,
@@ -86,18 +106,122 @@ _DEFAULT_LAYERS: dict[str, int] = {
     "infrastructure": 2,
 }
 
+_OMNILAYER_DIRS: set[str] = {
+    "config",
+    "settings",
+    "constants",
+    "types",
+    "utils",
+    "helpers",
+    "common",
+    "shared",
+    "base",
+    "exceptions",
+    "errors",
+    "enums",
+    "schemas",
+}
+
+# Layer-prototype descriptions for embedding-based inference.
+_LAYER_PROTOTYPES: dict[int, str] = {
+    0: "HTTP request handling, route, endpoint, REST API, web handler, response",
+    1: "business logic, service, domain, use case, orchestration, workflow",
+    2: "database, query, model, repository, ORM, storage, persistence, SQL",
+    _OMNILAYER: "configuration, settings, constants, utilities, helpers, types, enums",
+}
+
 
 def _infer_layer(path: Path) -> int | None:
-    """Infer the architectural layer from directory name."""
+    """Infer the architectural layer from directory name.
+
+    Returns ``_OMNILAYER`` for cross-cutting modules, a layer int for
+    recognised layer directories, or ``None`` when no layer can be
+    inferred.
+    """
     for part in path.parts:
-        if part.lower() in _DEFAULT_LAYERS:
-            return _DEFAULT_LAYERS[part.lower()]
+        low = part.lower()
+        if low in _OMNILAYER_DIRS:
+            return _OMNILAYER
+        if low in _DEFAULT_LAYERS:
+            return _DEFAULT_LAYERS[low]
     return None
+
+
+def _infer_layer_with_embeddings(
+    path: Path,
+    parse_result: ParseResult | None,
+    emb: EmbeddingService,
+    proto_embeddings: dict[int, Any],
+) -> int | None:
+    """Embedding-enhanced layer inference.
+
+    Falls back to directory-name inference when no strong semantic match
+    is found.
+    """
+    # Try directory-name first
+    layer = _infer_layer(path)
+    if layer is not None:
+        return layer
+
+    # Build a text representation from the file's docstrings/imports
+    if parse_result is None:
+        return None
+
+    parts: list[str] = []
+    for fn in parse_result.functions[:5]:
+        parts.append(fn.name)
+    for imp in parse_result.imports[:10]:
+        parts.append(imp.imported_module)
+
+    if not parts:
+        return None
+
+    text = " ".join(parts)
+    vec = emb.embed_text(text)
+    if vec is None:
+        return None
+
+    best_layer = None
+    best_sim = 0.0
+    for layer_id, proto_vec in proto_embeddings.items():
+        sim = emb.cosine_similarity(vec, proto_vec)
+        if sim > best_sim:
+            best_sim = sim
+            best_layer = layer_id
+
+    if best_sim >= 0.5 and best_layer is not None:
+        return best_layer
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Hub-module detection via centrality
+# ---------------------------------------------------------------------------
+
+
+def _compute_hub_nodes(graph: nx.DiGraph, percentile: float = 0.90) -> set[str]:
+    """Find hub nodes with in-degree centrality above *percentile*."""
+    if graph.number_of_nodes() < 3:
+        return set()
+    centrality = nx.in_degree_centrality(graph)
+    if not centrality:
+        return set()
+    values = sorted(centrality.values())
+    cutoff_idx = int(len(values) * percentile)
+    cutoff_val = values[min(cutoff_idx, len(values) - 1)]
+    return {node for node, c in centrality.items() if c >= cutoff_val and c > 0}
+
+
+# ---------------------------------------------------------------------------
+# Signal
+# ---------------------------------------------------------------------------
 
 
 @register_signal
 class ArchitectureViolationSignal(BaseSignal):
     """Detect imports that violate architectural layer boundaries."""
+
+    _embedding_service: EmbeddingService | None = None  # set by create_signals
 
     @property
     def signal_type(self) -> SignalType:
@@ -116,16 +240,44 @@ class ArchitectureViolationSignal(BaseSignal):
         graph, all_imports = build_import_graph(parse_results)
         findings: list[Finding] = []
 
-        # Check configured layer boundaries
-        boundaries = getattr(config, "policies", None)
-        if boundaries and hasattr(boundaries, "layer_boundaries"):
-            for boundary in boundaries.layer_boundaries:
+        # Pre-compute per-file lookup for embedding inference
+        pr_by_path: dict[str, ParseResult] = {pr.file_path.as_posix(): pr for pr in parse_results}
+
+        # Pre-compute embedding prototypes once
+        proto_embeddings: dict[int, Any] = {}
+        emb = getattr(self, "_embedding_service", None)
+        if emb is not None:
+            for layer_id, text in _LAYER_PROTOTYPES.items():
+                vec = emb.embed_text(text)
+                if vec is not None:
+                    proto_embeddings[layer_id] = vec
+
+        # Compute hub nodes for score dampening
+        hub_nodes = _compute_hub_nodes(graph)
+
+        # Collect allowed_cross_layer patterns
+        policies = getattr(config, "policies", None) if config else None
+        allowed_patterns: list[str] = getattr(policies, "allowed_cross_layer", []) or []
+
+        # --- Check configured layer boundaries ---
+        if policies and hasattr(policies, "layer_boundaries"):
+            for boundary in policies.layer_boundaries:
                 findings.extend(self._check_boundary(boundary, all_imports, parse_results))
 
-        # Check inferred layer violations (upward imports)
-        findings.extend(self._check_inferred_layers(graph, parse_results))
+        # --- Check inferred layer violations (upward imports) ---
+        findings.extend(
+            self._check_inferred_layers(
+                graph,
+                parse_results,
+                pr_by_path,
+                emb,
+                proto_embeddings,
+                hub_nodes,
+                allowed_patterns,
+            )
+        )
 
-        # Check for circular dependencies
+        # --- Check for circular dependencies ---
         findings.extend(self._check_circular_deps(graph))
 
         return findings
@@ -174,6 +326,11 @@ class ArchitectureViolationSignal(BaseSignal):
         self,
         graph: nx.DiGraph,
         parse_results: list[ParseResult],
+        pr_by_path: dict[str, ParseResult],
+        emb: EmbeddingService | None,
+        proto_embeddings: dict[int, Any],
+        hub_nodes: set[str],
+        allowed_patterns: list[str],
     ) -> list[Finding]:
         findings: list[Finding] = []
 
@@ -181,24 +338,50 @@ class ArchitectureViolationSignal(BaseSignal):
             if graph.nodes.get(dst, {}).get("external"):
                 continue
 
-            src_layer = _infer_layer(Path(src))
-            dst_layer = _infer_layer(Path(dst))
+            # Infer layers (with optional embedding enhancement)
+            if emb is not None and proto_embeddings:
+                src_layer = _infer_layer_with_embeddings(
+                    Path(src), pr_by_path.get(src), emb, proto_embeddings
+                )
+                dst_layer = _infer_layer_with_embeddings(
+                    Path(dst), pr_by_path.get(dst), emb, proto_embeddings
+                )
+            else:
+                src_layer = _infer_layer(Path(src))
+                dst_layer = _infer_layer(Path(dst))
 
             if src_layer is None or dst_layer is None:
                 continue
 
+            # Omnilayer modules never cause violations
+            if src_layer == _OMNILAYER or dst_layer == _OMNILAYER:
+                continue
+
+            # Check allowed_cross_layer patterns
+            if any(
+                _matches_pattern(src, pat) or _matches_pattern(dst, pat) for pat in allowed_patterns
+            ):
+                continue
+
             # Upward import: higher-numbered layer (infra) importing lower (API)
-            # In our scheme: 0 = presentation, 2 = data. Lower imports higher = OK.
-            # Higher imports lower = violation.
             if src_layer > dst_layer:
                 imp_info = data.get("import_info")
                 line = imp_info.line_number if imp_info else 0
+
+                score = 0.5
+                # Dampen score for hub-module targets
+                if dst in hub_nodes:
+                    score *= 0.3
+
+                # Filter out very low-confidence findings
+                if score < 0.15:
+                    continue
 
                 findings.append(
                     Finding(
                         signal_type=self.signal_type,
                         severity=Severity.MEDIUM,
-                        score=0.5,
+                        score=score,
                         title=f"Upward layer import: {Path(src).name} → {Path(dst).name}",
                         description=(
                             f"{src}:{line} — data/infrastructure layer imports from "
@@ -211,6 +394,7 @@ class ArchitectureViolationSignal(BaseSignal):
                         metadata={
                             "src_layer": src_layer,
                             "dst_layer": dst_layer,
+                            "hub_dampened": dst in hub_nodes,
                         },
                     )
                 )

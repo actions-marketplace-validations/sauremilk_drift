@@ -1,13 +1,13 @@
 {
   "name": "fastapi",
-  "drift_score": 0.69,
+  "drift_score": 0.681,
   "severity": "high",
   "files": 1118,
   "functions": 4554,
   "ai_ratio": 0.0,
-  "analysis_s": 2.3,
-  "wall_s": 2.73,
-  "findings": 661,
+  "analysis_s": 13.88,
+  "wall_s": 14.39,
+  "findings": 608,
   "signals": {},
   "top5": [
     {
