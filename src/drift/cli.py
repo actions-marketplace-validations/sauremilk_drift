@@ -50,12 +50,16 @@ def main(verbose: bool = False) -> None:
     help="Output format.",
 )
 @click.option("--config", "-c", type=click.Path(path_type=Path), default=None)
+@click.option(
+    "--workers", "-w", default=8, type=int, help="Parallel workers for file parsing."
+)
 def analyze(
     repo: Path,
     path: str | None,
     since: int,
     output_format: str,
     config: Path | None,
+    workers: int,
 ) -> None:
     """Analyze a repository for architectural drift."""
     from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
@@ -83,7 +87,8 @@ def analyze(
 
     with progress:
         analysis = analyze_repo(
-            repo, cfg, since_days=since, target_path=path, on_progress=_on_progress
+            repo, cfg, since_days=since, target_path=path,
+            on_progress=_on_progress, workers=workers,
         )
         if task_id is not None:
             progress.update(task_id, completed=progress.tasks[task_id].total)
@@ -131,12 +136,16 @@ def analyze(
     default="rich",
 )
 @click.option("--config", "-c", type=click.Path(path_type=Path), default=None)
+@click.option(
+    "--workers", "-w", default=8, type=int, help="Parallel workers for file parsing."
+)
 def check(
     repo: Path,
     diff_ref: str,
     fail_on: str | None,
     output_format: str,
     config: Path | None,
+    workers: int,
 ) -> None:
     """Check a diff for drift (CI mode)."""
     from drift.analyzer import analyze_diff
@@ -147,7 +156,7 @@ def check(
     threshold = fail_on or cfg.severity_gate()
 
     with console.status("[bold blue]Checking diff..."):
-        analysis = analyze_diff(repo, cfg, diff_ref=diff_ref)
+        analysis = analyze_diff(repo, cfg, diff_ref=diff_ref, workers=workers)
 
     if output_format == "json":
         from drift.output.json_output import analysis_to_json
@@ -203,7 +212,6 @@ def patterns(repo: Path, category: str | None) -> None:
 
     from drift.analyzer import analyze_repo
     from drift.config import DriftConfig
-    from drift.models import PatternCategory
 
     cfg = DriftConfig.load(repo)
 
