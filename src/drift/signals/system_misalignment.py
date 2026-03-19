@@ -10,6 +10,7 @@ from __future__ import annotations
 import datetime
 from collections import defaultdict
 from pathlib import Path
+
 from drift.config import DriftConfig
 from drift.models import (
     FileHistory,
@@ -61,9 +62,7 @@ def _find_novel_imports(
     """Find imports in recent files that introduce novel dependencies to their module."""
     novel: list[tuple[ImportInfo, Path, str]] = []
 
-    cutoff = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
-        days=recency_days
-    )
+    cutoff = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(days=recency_days)
 
     for pr in parse_results:
         fpath_str = pr.file_path.as_posix()
@@ -111,9 +110,7 @@ class SystemMisalignmentSignal(BaseSignal):
         recency_days = 14
         if hasattr(config, "thresholds"):
             recency_days = config.thresholds.recency_days
-        cutoff = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
-            days=recency_days
-        )
+        cutoff = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(days=recency_days)
         baseline = _module_imports(parse_results, file_histories, cutoff)
 
         # Find novel imports in recently-modified files
@@ -154,12 +151,12 @@ class SystemMisalignmentSignal(BaseSignal):
                     title=f"Novel dependencies in {module.as_posix()}/",
                     description=(
                         f"Recently introduced {len(unique_packages)} package(s) "
-                        f"not previously used in this module: {pkg_list}\n"
-                        + "\n".join(imp_details)
+                        f"not previously used in this module: {pkg_list}\n" + "\n".join(imp_details)
                     ),
                     file_path=module,
                     metadata={
                         "novel_packages": sorted(unique_packages),
+                        "novel_imports": sorted(unique_packages),
                         "import_count": len(imports),
                     },
                 )

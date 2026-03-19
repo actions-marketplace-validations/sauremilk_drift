@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import subprocess
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -46,9 +47,7 @@ def _fetch_git_history(
     repo_path: Path, since_days: int, known_files: set[str]
 ) -> tuple[list, dict]:
     """Run git history parsing (designed to run in a background thread)."""
-    commits = parse_git_history(
-        repo_path, since_days=since_days, file_filter=known_files
-    )
+    commits = parse_git_history(repo_path, since_days=since_days, file_filter=known_files)
     file_histories = build_file_histories(commits, known_files=known_files)
     return commits, file_histories
 
@@ -119,42 +118,41 @@ def analyze_repo(
     _progress("Parsing files", len(cached_results), len(files))
 
     # Launch git history in a background thread while we parse AST files.
-    executor = ThreadPoolExecutor(max_workers=workers)
-    git_future = executor.submit(_fetch_git_history, repo_path, since_days, known_files)
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        git_future = executor.submit(_fetch_git_history, repo_path, since_days, known_files)
 
-    # Parse uncached files in parallel.
-    parse_results: list[ParseResult] = [None] * len(files)  # type: ignore[list-item]
-    for idx, cached in cached_results.items():
-        parse_results[idx] = cached
+        # Parse uncached files in parallel.
+        parse_results: list[ParseResult] = [None] * len(files)  # type: ignore[list-item]
+        for idx, cached in cached_results.items():
+            parse_results[idx] = cached
 
-    if to_parse:
-        new_results: list[tuple[int, str, ParseResult]] = [None] * len(to_parse)  # type: ignore[list-item]
-        futures = {
-            executor.submit(parse_file, finfo.path, repo_path, finfo.language): (i, idx, finfo)
-            for i, (idx, finfo) in enumerate(to_parse)
-        }
-        for future in as_completed(futures):
-            i, idx, finfo = futures[future]
-            result = future.result()
-            parse_results[idx] = result
-            try:
-                full_path = repo_path / finfo.path
-                content_hash = ParseCache.file_hash(full_path)
-                new_results[i] = (idx, content_hash, result)
-            except OSError:
-                pass
+        if to_parse:
+            new_results: list[tuple[int, str, ParseResult]] = [None] * len(to_parse)  # type: ignore[list-item]
+            futures = {
+                executor.submit(parse_file, finfo.path, repo_path, finfo.language): (i, idx, finfo)
+                for i, (idx, finfo) in enumerate(to_parse)
+            }
+            for future in as_completed(futures):
+                i, idx, finfo = futures[future]
+                result = future.result()
+                parse_results[idx] = result
+                try:
+                    full_path = repo_path / finfo.path
+                    content_hash = ParseCache.file_hash(full_path)
+                    new_results[i] = (idx, content_hash, result)
+                except OSError:
+                    pass
 
-        # Populate cache (main thread, no races).
-        for entry in new_results:
-            if entry is not None:
-                _idx, h, r = entry
-                cache.put(h, r)
+            # Populate cache (main thread, no races).
+            for entry in new_results:
+                if entry is not None:
+                    _idx, h, r = entry
+                    cache.put(h, r)
 
-    _progress("Parsing files", len(files), len(files))
+        _progress("Parsing files", len(files), len(files))
 
-    # Collect git results.
-    commits, file_histories = git_future.result()
-    executor.shutdown(wait=False)
+        # Collect git results.
+        commits, file_histories = git_future.result()
 
     _progress("Analyzing git history", 0, 0)
     signals = [
@@ -171,8 +169,15 @@ def analyze_repo(
     total_signals = len(signals)
     for i, signal in enumerate(signals):
         _progress(f"Signal: {signal.name}", i + 1, total_signals)
-        findings = signal.analyze(parse_results, file_histories, config)
-        all_findings.extend(findings)
+        try:
+            findings = signal.analyze(parse_results, file_histories, config)
+            all_findings.extend(findings)
+        except Exception:
+            logging.getLogger("drift").warning(
+                "Signal '%s' failed; skipping.",
+                signal.name,
+                exc_info=True,
+            )
 
     # --- 5. Scoring ---
     signal_scores = compute_signal_scores(all_findings)
@@ -224,18 +229,17 @@ def analyze_diff(
     if config is None:
         config = DriftConfig.load(repo_path)
 
-    # Get changed files from git
+    # Get changed files from git (subprocess per ADR-004)
     changed_files: list[str] = []
     try:
-        import git
-
-        repo = git.Repo(repo_path, search_parent_directories=True)
-        diff_index = repo.head.commit.diff(diff_ref)
-        for diff_item in diff_index:
-            if diff_item.a_path:
-                changed_files.append(diff_item.a_path)
-            if diff_item.b_path and diff_item.b_path != diff_item.a_path:
-                changed_files.append(diff_item.b_path)
+        result = subprocess.run(
+            ["git", "diff", "--name-only", diff_ref],
+            capture_output=True,
+            text=True,
+            cwd=repo_path,
+            check=True,
+        )
+        changed_files = [line for line in result.stdout.strip().splitlines() if line]
     except Exception as exc:
         logger.warning(
             "Could not resolve diff ref '%s': %s. Falling back to full analysis.",

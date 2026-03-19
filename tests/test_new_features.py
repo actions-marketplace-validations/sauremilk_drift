@@ -80,9 +80,7 @@ class TestBadgeCommand:
         result = runner.invoke(main, ["badge", "--repo", str(tmp_repo)])
         assert result.exit_code == 0
         # An empty repo should have low drift → brightgreen
-        assert any(
-            color in result.output for color in ("brightgreen", "yellow", "orange", "critical")
-        )
+        assert "brightgreen" in result.output
 
 
 # ---------------------------------------------------------------------------

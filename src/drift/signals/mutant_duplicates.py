@@ -16,6 +16,7 @@ import difflib
 from collections import defaultdict
 from itertools import combinations
 from pathlib import Path
+
 from drift.config import DriftConfig
 from drift.models import (
     FileHistory,
@@ -184,7 +185,14 @@ class MutantDuplicateSignal(BaseSignal):
                             file_path=a.file_path,
                             start_line=a.start_line,
                             related_files=[b.file_path],
-                            metadata={"similarity": 1.0, "body_hash": _h},
+                            metadata={
+                                "similarity": 1.0,
+                                "body_hash": _h,
+                                "function_a": a.name,
+                                "function_b": b.name,
+                                "file_a": a.file_path.as_posix(),
+                                "file_b": b.file_path.as_posix(),
+                            },
                         )
                     )
 
@@ -257,7 +265,13 @@ class MutantDuplicateSignal(BaseSignal):
                             file_path=a.file_path,
                             start_line=a.start_line,
                             related_files=[b.file_path],
-                            metadata={"similarity": round(sim, 3)},
+                            metadata={
+                                "similarity": round(sim, 3),
+                                "function_a": a.name,
+                                "function_b": b.name,
+                                "file_a": a.file_path.as_posix(),
+                                "file_b": b.file_path.as_posix(),
+                            },
                         )
                     )
 

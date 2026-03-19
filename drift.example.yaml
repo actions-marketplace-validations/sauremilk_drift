@@ -19,12 +19,12 @@ exclude:
 
 # Signal weights (should sum to ~1.0)
 weights:
-  pattern_fragmentation: 0.20
-  architecture_violation: 0.20
-  mutant_duplicate: 0.15
-  temporal_volatility: 0.15
-  explainability_deficit: 0.10
-  doc_impl_drift: 0.10
+  pattern_fragmentation: 0.22
+  architecture_violation: 0.22
+  mutant_duplicate: 0.17
+  temporal_volatility: 0.17
+  explainability_deficit: 0.12
+  doc_impl_drift: 0.00 # Phase 2 stub — zero weight until fully implemented
   system_misalignment: 0.10
 
 # Architecture policies

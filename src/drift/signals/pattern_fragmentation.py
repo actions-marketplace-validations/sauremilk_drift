@@ -134,7 +134,10 @@ class PatternFragmentationSignal(BaseSignal):
                         metadata={
                             "category": category.value,
                             "num_variants": num_variants,
+                            "variant_count": num_variants,
                             "canonical_count": canonical_count,
+                            "canonical_variant": canonical[:60],
+                            "module": module_path.as_posix(),
                             "total_instances": total,
                         },
                     )

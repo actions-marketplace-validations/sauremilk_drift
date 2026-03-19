@@ -7,6 +7,7 @@ from drift.models import (
     ParseResult,
     PatternCategory,
     PatternInstance,
+    Severity,
     SignalType,
 )
 from drift.signals.pattern_fragmentation import PatternFragmentationSignal
@@ -126,18 +127,17 @@ def test_separate_modules_separate_findings():
 
 
 def test_score_aggregation():
-    signal = PatternFragmentationSignal()
     findings = [
         Finding(
             signal_type=SignalType.PATTERN_FRAGMENTATION,
-            severity=signal.signal_type,
+            severity=Severity.MEDIUM,
             score=0.5,
             title="a",
             description="",
         ),
         Finding(
             signal_type=SignalType.PATTERN_FRAGMENTATION,
-            severity=signal.signal_type,
+            severity=Severity.MEDIUM,
             score=0.7,
             title="b",
             description="",
