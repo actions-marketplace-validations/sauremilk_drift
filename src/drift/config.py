@@ -46,13 +46,13 @@ class SignalWeights(BaseModel):
     but a warning is emitted if they deviate significantly.
     """
 
-    pattern_fragmentation: float = 0.22
-    architecture_violation: float = 0.22
-    mutant_duplicate: float = 0.17
+    pattern_fragmentation: float = 0.20
+    architecture_violation: float = 0.20
+    mutant_duplicate: float = 0.15
     explainability_deficit: float = 0.12
-    doc_impl_drift: float = 0.00  # Phase 2 stub — zero weight until implemented
-    temporal_volatility: float = 0.17
-    system_misalignment: float = 0.10
+    doc_impl_drift: float = 0.10  # structural doc/code drift checks
+    temporal_volatility: float = 0.15
+    system_misalignment: float = 0.08
 
     def as_dict(self) -> dict[str, float]:
         return self.model_dump()

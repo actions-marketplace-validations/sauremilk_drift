@@ -3,9 +3,9 @@
 Detects divergence between architectural documentation (ADRs, README)
 and actual code implementation.
 
-MVP implementation: structural checks — missing README, missing ADRs,
-modules referenced in docs but absent from code, and vice versa.
-Full NLP-based claim extraction is deferred to Phase 2.
+Structural checks: missing README, phantom directory references in docs,
+and source directories absent from documentation.
+Full NLP-based claim extraction is deferred to a future release.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from drift.models import FileHistory, Finding, ParseResult, Severity, SignalType
 from drift.signals.base import BaseSignal
 
 # Regex to extract top-level directory names referenced in markdown
-_DIR_REF_RE = re.compile(r"`?(\w[\w\-]*)/"  r"`?", re.MULTILINE)
+_DIR_REF_RE = re.compile(r"`?(\w[\w\-]*)/" r"`?", re.MULTILINE)
 
 
 class DocImplDriftSignal(BaseSignal):
