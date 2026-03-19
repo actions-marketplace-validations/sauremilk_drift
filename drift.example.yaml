@@ -8,6 +8,7 @@ include:
   - "**/*.tsx"
 
 exclude:
+  # Build artifacts & environment
   - "**/node_modules/**"
   - "**/__pycache__/**"
   - "**/venv/**"
@@ -15,7 +16,14 @@ exclude:
   - "**/dist/**"
   - "**/build/**"
   - "**/.git/**"
+  - "**/.tox/**"
   - "**/*.egg-info/**"
+  # Documentation & example code — often contains intentional duplicates
+  # that inflate drift scores without reflecting production architecture.
+  # Remove these lines if you want to analyze docs/examples too.
+  - "**/docs/**"
+  - "**/docs_src/**"
+  - "**/examples/**"
 
 # Signal weights (should sum to ~1.0)
 weights:

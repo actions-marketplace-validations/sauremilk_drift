@@ -452,14 +452,28 @@ A `calibrate_weights()` function was added to `drift.scoring.engine` that comput
 
 **Current limitation:** Weights are fitted on the same fixture corpus used for evaluation. A train/validation split should be introduced as the fixture suite grows beyond ~30 cases per signal.
 
-### 11.5 Known Gaps and Next Steps
+### 11.5 Real-World Smoke Tests (2026-03-19, commit 8d93bd6)
+
+To validate signal behavior beyond curated fixtures, we ran `analyze_repo()` on the drift codebase itself and two external open-source repositories (shallow-cloned, `docs/`, `examples/`, `tests/` excluded):
+
+| Repository | Score | Files | Findings | Dominant Signal | Key Observation |
+| ---------- | ----: | ----: | -------: | --------------- | -------------------------------------------------------------------------- |
+| **drift**  | 0.450 |    61 |       84 | DIA (33), EDS (32) | Self-analysis near STUDY.md baseline (0.442). 6/7 signals fire. |
+| **httpx**  | 0.486 |    23 |       64 | MDS (27), EDS (18) | Known FP: Decorator-pattern (`DeflateDecoder.flush ↔ GZipDecoder.flush`) — structurally identical implementations of distinct codecs. MDS cannot distinguish intentional interface-conformance from copy-paste. |
+| **fastapi** | 0.585 |   520 |      419 | MDS (200), SMS (100) | `docs_src/` dominates: tutorial code intentionally duplicated across Python-version variants. Findings are **true positives** but from a non-production source. Without excluding `docs_src/`, the score overstates production drift. |
+
+**Consequence:** `docs/`, `docs_src/`, and `examples/` were added to the default exclude list in `DriftConfig` and `drift.example.yaml`. This prevents tutorial/example code — which is intentionally duplicated — from inflating scores for users who analyze framework repositories.
+
+**Decorator-Pattern Blind Spot (MDS):** When two classes implement the same interface with structurally identical method bodies (e.g., codec `.flush()` methods), MDS correctly detects the duplication but cannot infer that it is intentional. This is a known limitation. Mitigation paths: (1) document `exclude_patterns` for interface implementations in project-level `drift.yaml`, (2) future: add structural-intent heuristic to MDS that detects interface-conformance patterns (e.g., sibling classes inheriting from the same ABC).
+
+### 11.6 Known Gaps and Next Steps
 
 | Gap                                    | Risk                                 | Next Step                                                |
 | -------------------------------------- | ------------------------------------ | -------------------------------------------------------- |
 | n=15 fixtures (2 per signal avg.)      | Too small for generalization claims  | Scale to ≥30 fixtures per signal type                    |
-| Only synthetic/curated fixtures        | No real-world signal                 | Add ≥3 open-source repos as smoke tests                  |
 | `calibrate_weights()` without hold-out | Weights fitted on training data      | Introduce train/val split                                |
 | DIA weight still 0.00                  | Signal has 59% precision, not scored | Increase to 0.05 once precision > 70% on external corpus |
+| MDS Decorator-Pattern FP               | Inflates score on codec/adapter code | Add ABC-sibling heuristic or per-file suppressions       |
 
 ---
 

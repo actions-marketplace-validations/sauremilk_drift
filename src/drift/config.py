@@ -87,6 +87,9 @@ class DriftConfig(BaseModel):
             "**/build/**",
             "**/.tox/**",
             "**/*.egg-info/**",
+            "**/docs/**",
+            "**/docs_src/**",
+            "**/examples/**",
         ]
     )
     policies: PolicyConfig = Field(default_factory=PolicyConfig)
