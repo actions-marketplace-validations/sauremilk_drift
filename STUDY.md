@@ -662,7 +662,11 @@ which appear in the 15-repo benchmark corpus.
 **Methodology:** `scripts/unknown_repo_audit.py` clones each repo at depth 1,
 runs full analysis, and exports a JSON file with one entry per MEDIUM+ finding.
 Each finding was annotated as TP or FP based on whether it identifies a genuine
-structural issue a code reviewer would want flagged.
+structural issue a code reviewer would want flagged. **Annotation was performed
+by the tool author alone (single-rater) using `annotation_script.py`; no second
+reviewer participated. All 353 frappe findings were re-annotated after SMS
+calibration was applied — the re-audit was performed post-calibration on the
+same corpus.**
 
 **Per-signal breakdown (aggregate):**
 
@@ -702,6 +706,12 @@ actionability regex.
 | Shallow-clone novel imports   | SMS    |    28 | Baseline coverage guard |
 | Stdlib as novel dependency    | SMS    |     — | `_STDLIB_MODULES` set |
 
+**Note:** The 28 SMS FPs were discovered during an initial frappe run, then
+eliminated by implementing the shallow-clone guard, and frappe was re-run
+post-calibration. This constitutes calibration on the test corpus, not
+independent validation. Pre-calibration frappe precision was approximately
+92.6% (353 TP / 381 total findings).
+
 ---
 
 ## 12. Conclusion
@@ -709,7 +719,7 @@ actionability regex.
 drift v0.2 demonstrates that deterministic static analysis — without LLM involvement — can detect meaningful structural erosion in Python codebases. Across 8 repositories (score range 0.376–0.599):
 
 - **85% precision** (strict) on 269 classified findings, with only **6 false positives** (down from 31 in v0.1)
-- **100% precision** on 373 findings across 3 previously unseen repositories (httpie, arrow, frappe) — externally validated
+- **100% precision** on 373 findings across 3 previously unseen repositories (httpie, arrow, frappe) — single-rater annotation, post-calibration measurement
 - **100% fix-text actionability** (76/76) on self-analysis after calibration (baseline: 74%)
 - **86% recall** on 14 controlled mutations, with misses occurring at threshold boundaries
 - **3 actionable findings** in a production codebase, including copy-pasted functions, error-handling fragmentation, and API inconsistency
