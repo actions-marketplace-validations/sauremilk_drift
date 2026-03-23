@@ -10,7 +10,7 @@ from rich.console import Console
 # stdout is a standard stream.  This crashes on Unicode box-drawing chars.
 # Reconfigure both streams to UTF-8 before any Console is created.
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
 
 console = Console()

@@ -76,6 +76,20 @@ Every PR should pass these checks before merge:
 - [ ] Kein direkter DB/Git-Import außerhalb von `ingestion/`
 - [ ] pre-commit hooks laufen durch (`ruff check`, `mypy`)
 
+## Proactive Quality Loop (Required)
+
+Drift behandelt Qualität nicht nur reaktiv über Bug-Reports. Für jede Release-Runde gilt:
+
+1. **Risk Sweep:** Definiere mindestens 3 plausible "unknown unknown"-Fehlerklassen
+	(z. B. Cache-Korruption, subprocess-Injection, Empty-Input-Scoring).
+2. **Executable Proof:** Für jede Fehlerklasse mindestens einen reproduzierbaren Test
+	(Regression oder Property-Test) hinzufügen.
+3. **Gate Integration:** Neuer Test muss in CI laufen; optionaler Test ohne Gate zählt nicht.
+4. **Ratchet statt Plateau:** Coverage/Typing-Gates dürfen nur steigen oder gleich bleiben,
+	nie absinken ohne dokumentierten Grund.
+
+Ziel: Jede Iteration reduziert die Menge ungetesteter Risikoflächen systematisch.
+
 ## Submitting a PR
 
 1. Open an issue first for non-trivial changes (saves everyone time)

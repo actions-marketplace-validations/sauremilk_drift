@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     import numpy as np
@@ -205,7 +205,7 @@ class EmbeddingService:
     @staticmethod
     def cosine_similarity_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
         """Pairwise cosine similarity matrix between two sets of vectors."""
-        return a @ b.T
+        return a @ b.T  # type: ignore[no-any-return]
 
     # -- FAISS index ---------------------------------------------------------
 
@@ -215,18 +215,22 @@ class EmbeddingService:
 
         Returns None when *vectors* is empty.
         """
+        matrix: np.ndarray
         if isinstance(vectors, list):
             if not vectors:
                 return None
-            vectors = np.stack(vectors)
-        if vectors.size == 0:
+            matrix = cast(np.ndarray, np.stack(vectors))
+        else:
+            matrix = vectors
+
+        if matrix.size == 0:
             return None
-        if _FAISS_AVAILABLE and vectors.shape[0] >= 32:
-            index = faiss.IndexFlatIP(vectors.shape[1])
-            index.add(vectors)
-            return index
+        if _FAISS_AVAILABLE and matrix.shape[0] >= 32:
+            index = faiss.IndexFlatIP(matrix.shape[1])
+            index.add(matrix)
+            return index  # type: ignore[no-any-return]
         # Fallback: store raw matrix for numpy-based search
-        return vectors
+        return matrix  # type: ignore[no-any-return]
 
     @staticmethod
     def search_index(index: object, query: np.ndarray, top_k: int = 10) -> list[tuple[int, float]]:

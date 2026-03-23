@@ -60,8 +60,8 @@ def analysis_to_json(analysis: RepoAnalysis, indent: int = 2) -> str:
 
 def findings_to_sarif(analysis: RepoAnalysis) -> str:
     """Export findings in SARIF format for GitHub Code Scanning integration."""
-    rules = []
-    results = []
+    rules: list[dict[str, object]] = []
+    results: list[dict[str, object]] = []
 
     rule_ids: dict[str, int] = {}
     for f in analysis.findings:

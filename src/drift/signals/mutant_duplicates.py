@@ -128,7 +128,7 @@ class MutantDuplicateSignal(BaseSignal):
     """Detect near-duplicate functions that diverge in subtle ways."""
 
     def __init__(self, repo_path: Path, **kwargs: object) -> None:
-        super().__init__(repo_path=repo_path, **kwargs)
+        super().__init__(repo_path=repo_path, **kwargs)  # type: ignore[arg-type]
 
     @property
     def signal_type(self) -> SignalType:
@@ -305,6 +305,7 @@ class MutantDuplicateSignal(BaseSignal):
 
                 # Compute hybrid similarity if embeddings available
                 if use_hybrid and key_a in embedding_cache and key_b in embedding_cache:
+                    assert emb is not None
                     emb_sim = emb.cosine_similarity(embedding_cache[key_a], embedding_cache[key_b])
                     sim = 0.6 * ast_sim + 0.4 * emb_sim
                 else:

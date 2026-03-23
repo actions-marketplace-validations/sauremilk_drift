@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# pre-push hook — mirrors CI checks (version-check + lint + test + self-analysis)
+# pre-push hook — mirrors CI checks (version-check + lint + typecheck + test + self-analysis)
 # Install once with: git config core.hooksPath .githooks
 set -e
 
@@ -11,19 +11,23 @@ echo ">>> [pre-push] Starting local CI checks..."
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_COMMON_DIR
 
 # 1. Version format (SemVer)
-echo ">>> [1/4] Checking SemVer version..."
+echo ">>> [1/5] Checking SemVer version..."
 python scripts/check_version.py --check-semver
 
 # 2. Lint
-echo ">>> [2/4] Running ruff lint..."
+echo ">>> [2/5] Running ruff lint..."
 ruff check src/ tests/
 
-# 3. Tests (exclude slow smoke tests that clone external repos)
-echo ">>> [3/4] Running pytest (excl. smoke tests)..."
-pytest -v --tb=short --ignore=tests/test_smoke_real_repos.py
+# 3. Type checking
+echo ">>> [3/5] Running mypy..."
+python -m mypy src/drift
 
-# 4. Self-analysis
-echo ">>> [4/4] Running self-analysis..."
+# 4. Tests with coverage (exclude slow smoke tests that clone external repos)
+echo ">>> [4/5] Running pytest + coverage (excl. smoke tests)..."
+pytest -v --tb=short --cov --cov-report=term-missing --ignore=tests/test_smoke_real_repos.py
+
+# 5. Self-analysis
+echo ">>> [5/5] Running self-analysis..."
 drift analyze --repo . --format json > /dev/null
 
 echo ">>> [pre-push] All checks passed. Push continues."

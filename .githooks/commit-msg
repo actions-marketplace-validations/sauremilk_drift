@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+# commit-msg hook — enforce Conventional Commits format
+# Install with: git config core.hooksPath .githooks
+#
+# Allowed prefixes: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+# Format: type(scope): description  OR  type: description
+
+commit_msg_file="$1"
+commit_msg=$(head -1 "$commit_msg_file")
+
+# Allow merge commits and fixup/squash commits
+if echo "$commit_msg" | grep -qE "^(Merge|fixup!|squash!) "; then
+    exit 0
+fi
+
+pattern="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .{1,}"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+    echo ">>> [commit-msg] ERROR: Commit message does not follow Conventional Commits."
+    echo ""
+    echo "    Expected format:  type(scope): description"
+    echo "    Example:          feat(scoring): add count dampening"
+    echo ""
+    echo "    Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+    echo ""
+    echo "    Your message:     $commit_msg"
+    exit 1
+fi

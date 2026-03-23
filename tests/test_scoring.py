@@ -116,6 +116,11 @@ def test_module_ai_ratio():
     assert modules[0].ai_ratio == 0.5
 
 
+def test_module_scores_empty_findings_returns_empty_list():
+    modules = compute_module_scores([], SignalWeights())
+    assert modules == []
+
+
 # ── Severity gate ─────────────────────────────────────────────────────────
 
 

@@ -68,7 +68,13 @@ class ParseCache:
     def put(self, content_hash: str, result: ParseResult) -> None:
         """Store a parse result in the cache."""
         data = _serialize(result)
-        self._cache_path(content_hash).write_text(json.dumps(data, default=str), encoding="utf-8")
+        try:
+            self._cache_path(content_hash).write_text(
+                json.dumps(data, default=str), encoding="utf-8"
+            )
+        except OSError:
+            # Cache is an optimization only; analysis must proceed without it.
+            return
 
 
 def _serialize(pr: ParseResult) -> dict[str, Any]:

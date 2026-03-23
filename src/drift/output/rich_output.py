@@ -332,13 +332,13 @@ def render_timeline(
         clean = str(mt.clean_until) if mt.clean_until else "[dim]—[/dim]"
         started = f"[red]{mt.drift_started}[/red]" if mt.drift_started else "[dim]—[/dim]"
         triggers = str(len(mt.trigger_commits))
-        burst = "[red]yes[/red]" if mt.ai_burst else "[dim]no[/dim]"
+        burst_label = "[red]yes[/red]" if mt.ai_burst else "[dim]no[/dim]"
         color = (
             "red" if mt.current_score >= 0.6 else ("yellow" if mt.current_score >= 0.3 else "green")
         )
         score = f"[{color}]{mt.current_score:.2f}[/{color}]"
 
-        table.add_row(mt.module_path, clean, started, triggers, burst, score)
+        table.add_row(mt.module_path, clean, started, triggers, burst_label, score)
 
     console.print(table)
 

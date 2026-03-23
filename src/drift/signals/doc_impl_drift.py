@@ -135,8 +135,8 @@ def _extract_dir_refs_from_ast(markdown_text: str) -> set[str]:
         cleaned = re.sub(r"```[^`]*```", "", markdown_text, flags=re.DOTALL)
         # Strip inline links [text](url) to avoid extracting URL segments
         cleaned = re.sub(r"\[([^\]]*)\]\([^)]+\)", r"\1", cleaned)
-        refs = set(_FALLBACK_DIR_RE.findall(cleaned))
-        return {r for r in refs if not _is_url_segment(r)}
+        fallback_refs = set(_FALLBACK_DIR_RE.findall(cleaned))
+        return {r for r in fallback_refs if not _is_url_segment(r)}
 
     md = mistune.create_markdown(renderer="ast")
     try:
@@ -218,8 +218,10 @@ class DocImplDriftSignal(BaseSignal):
     4. (Optional, with embeddings) Semantic claim validation.
     """
 
+    _repo_path: Path  # type: ignore[assignment]  # Always set via __init__(repo_path=...)
+
     def __init__(self, repo_path: Path, **kwargs: object) -> None:
-        super().__init__(repo_path=repo_path, **kwargs)
+        super().__init__(repo_path=repo_path, **kwargs)  # type: ignore[arg-type]
 
     @property
     def signal_type(self) -> SignalType:

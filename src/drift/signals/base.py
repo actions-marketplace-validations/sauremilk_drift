@@ -98,7 +98,7 @@ def create_signals(ctx: AnalysisContext) -> list[BaseSignal]:
             kwargs["repo_path"] = ctx.repo_path
         if "embedding_service" in params:
             kwargs["embedding_service"] = ctx.embedding_service
-        inst = cls(**kwargs)
+        inst = cls(**kwargs)  # type: ignore[arg-type]
         signals.append(inst)
     return signals
 

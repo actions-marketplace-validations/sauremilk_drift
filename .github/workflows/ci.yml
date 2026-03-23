@@ -45,6 +45,10 @@ jobs:
       - name: Lint with ruff
         run: ruff check src/ tests/
 
+      - name: Type-check with mypy
+        if: matrix.python-version == '3.12'
+        run: python -m mypy src/drift
+
       - name: Run tests with coverage
         run: pytest -v --tb=short --cov=drift --cov-report=xml --cov-report=term-missing
 

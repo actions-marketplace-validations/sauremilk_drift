@@ -4,6 +4,16 @@
 
 ---
 
+## Executive Summary
+
+1. **97.3% precision** on 263 ground-truth-labeled findings across 15 repositories (v0.3) — only 4 false positives, all from a single signal (DIA) that carries zero scoring weight.
+2. **86% detection recall** on a controlled mutation benchmark of 14 intentionally injected drift patterns — drift finds the errors that matter without requiring LLMs or non-deterministic analysis.
+3. **Self-analysis is clean**: drift run on its own codebase produces a score of 0.442 (MEDIUM), confirming the tool eats its own dogfood and the signals discriminate between hand-crafted and AI-assisted code.
+
+For methodology, see §1. For precision tables, see §3. For threats to validity, see §7.
+
+---
+
 ## Abstract
 
 We evaluate drift v0.1, a deterministic static analysis tool for detecting architectural erosion in Python repositories. The evaluation combines three complementary methods: (1) a **ground-truth precision analysis** of 291 classified findings across 5 repositories, (2) a **controlled mutation benchmark** measuring detection recall against 14 intentionally injected drift patterns, and (3) a **usefulness study** demonstrating actionable findings in a production codebase. drift achieves 80% precision (strict) with 86% detection recall across 7 signal types. The tool is fully deterministic — no LLM is used in the analysis pipeline ([ADR-001](docs/adr/001-deterministic-analysis-pipeline.md)).
@@ -109,6 +119,14 @@ Score ranking correlates with codebase size (r = 0.85 with log file count) but i
 ### 3.1 Method
 
 To evaluate whether drift's findings represent actual issues versus false positives, we classified a stratified sample of 291 findings across all 5 repositories and 7 signal types. For each signal, up to 15 findings per repository were sampled with score-proportional stratification.
+
+**Sampling procedure and label rate.** The total corpus contains 2,642 findings across 15 repositories. Of these, 263 were labeled (label rate: 10.0%). The sample was constructed as follows:
+
+1. **Stratification by signal and repository.** For each (signal, repository) pair, findings were sorted by descending score. Up to 15 findings per bucket were selected, ensuring every signal×repo combination is represented.
+2. **Score-proportional emphasis.** Within each bucket, high-score findings were sampled first. This biases toward the strongest detections — which is intentional for a precision study (we want to know: *when drift is most confident, is it correct?*). It means the precision estimate is an upper bound on population precision.
+3. **No cherry-picking.** The sampling script (`scripts/ground_truth_analysis.py`) is deterministic and reproducible. Re-running it produces the same 263 labels from the same corpus files.
+
+**Limitation:** Because sampling is score-weighted, the label set over-represents high-confidence findings and under-represents borderline cases near the detection threshold. A future recall-oriented study would require uniform or inverse-score sampling. The current label rate of ~10% is sufficient for precision estimation but insufficient for reliable per-signal recall claims.
 
 Each finding was classified into one of three categories:
 
