@@ -26,11 +26,12 @@ def test_assigns_each_fixture_source_to_exactly_one_package() -> None:
     assignments = assign_ts_sources_to_workspace_packages(repo_path)
 
     assert assignments == {
+        "vite.config.ts": "root",
         "packages/app/src/main.ts": "packages/app",
         "packages/ui/src/button.tsx": "packages/ui",
     }
-    assert len(assignments) == 2
-    assert len(set(assignments.values())) == 2
+    assert len(assignments) == 3
+    assert len(set(assignments.values())) == 3
 
 
 def test_exposes_package_membership_for_rule_modules() -> None:
@@ -39,6 +40,7 @@ def test_exposes_package_membership_for_rule_modules() -> None:
     membership = build_workspace_package_membership(repo_path)
 
     assert membership == {
+        "root": {"vite.config.ts"},
         "packages/app": {"packages/app/src/main.ts"},
         "packages/ui": {"packages/ui/src/button.tsx"},
     }

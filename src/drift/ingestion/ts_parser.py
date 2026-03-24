@@ -541,7 +541,7 @@ def parse_typescript_file(
         # Delegate to the regex stub in ast_parser
         from drift.ingestion.ast_parser import _parse_typescript_stub
 
-        return _parse_typescript_stub(file_path, repo_path)
+        return _parse_typescript_stub(file_path, repo_path, language=language)
 
     full_path = repo_path / file_path
     source_text = full_path.read_text(encoding="utf-8", errors="replace")

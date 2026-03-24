@@ -159,3 +159,13 @@ class TestTypeScriptFallback:
             result = parse_typescript_file(Path("app.ts"), tmp_path, "typescript")
             assert result.language == "typescript"
             assert len(result.imports) >= 1
+
+    def test_fallback_preserves_requested_language(self, tmp_path: Path) -> None:
+        tsx_code = 'import React from "react";\n'
+        (tmp_path / "view.tsx").write_text(tsx_code)
+
+        with patch("drift.ingestion.ts_parser._ts_available", False):
+            from drift.ingestion.ts_parser import parse_typescript_file
+
+            result = parse_typescript_file(Path("view.tsx"), tmp_path, "tsx")
+            assert result.language == "tsx"

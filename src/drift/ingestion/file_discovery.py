@@ -78,6 +78,9 @@ def discover_files(
     """Walk the repo and return all source files matching include/exclude patterns."""
     if include is None:
         include = ["**/*.py"]
+        supported = _detect_supported_languages()
+        if "typescript" in supported:
+            include.extend(["**/*.ts", "**/*.tsx"])
     if exclude is None:
         exclude = [
             "**/node_modules/**",

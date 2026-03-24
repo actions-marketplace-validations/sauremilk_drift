@@ -71,7 +71,7 @@ def assign_ts_sources_to_workspace_packages(repo_path: Path) -> dict[str, str]:
         repository-relative POSIX strings.
 
     Raises:
-        ValueError: If a source matches zero or multiple package roots.
+        ValueError: If a source matches multiple package roots.
     """
     package_roots = discover_workspace_package_roots(repo_path)
     assignments: dict[str, str] = {}
@@ -86,9 +86,8 @@ def assign_ts_sources_to_workspace_packages(repo_path: Path) -> dict[str, str]:
             candidates.append(package_root)
 
         if not candidates:
-            raise ValueError(
-                f"No workspace package for source file: {source_path.as_posix()}"
-            )
+            assignments[source_path.as_posix()] = "root"
+            continue
 
         # If globs overlap, prefer the deepest root that still contains the file.
         candidates.sort(key=lambda p: len(p.parts), reverse=True)

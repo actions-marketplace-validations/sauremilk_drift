@@ -1,8 +1,8 @@
 """Relative TypeScript import graph builder.
 
 Builds a directed file-level graph from static ``import`` statements in
-``.ts`` and ``.tsx`` files. Only relative imports (``./`` or ``../``) are
-resolved and included.
+``.ts`` and ``.tsx`` files. Relative imports (``./`` or ``../``) and
+``tsconfig`` path aliases are resolved and included.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from drift.analyzers.typescript.alias_resolver import resolve_tsconfig_alias_import
 from drift.analyzers.typescript.barrel_resolver import resolve_index_barrel_target
 
 _IMPORT_FROM_RE = re.compile(
@@ -132,16 +133,17 @@ def _resolve_relative_target(
         if (repo_path / candidate).is_file():
             return candidate
 
-    # Directory import: resolve to index.ts only.
-    index_candidate = _normalize_rel_path(base_candidate / "index.ts")
-    if (repo_path / index_candidate).is_file():
-        return index_candidate
+    # Directory import: resolve to index.ts or index.tsx.
+    for index_name in ("index.ts", "index.tsx"):
+        index_candidate = _normalize_rel_path(base_candidate / index_name)
+        if (repo_path / index_candidate).is_file():
+            return index_candidate
 
     return None
 
 
 def build_relative_import_graph(repo_path: Path) -> dict[str, set[str]]:
-    """Build a directed graph of relative TypeScript imports.
+    """Build a directed graph of resolved TypeScript imports.
 
     Returns:
         Mapping ``source_path -> {target_path, ...}`` where paths are
@@ -156,6 +158,12 @@ def build_relative_import_graph(repo_path: Path) -> dict[str, set[str]]:
 
         for statement in _extract_import_statements(source_text):
             target = _resolve_relative_target(repo_path, source_path, statement.module_spec)
+            if target is None:
+                target = resolve_tsconfig_alias_import(
+                    repo_path=repo_path,
+                    source_path=source_path,
+                    module_spec=statement.module_spec,
+                )
             if target is None:
                 continue
 

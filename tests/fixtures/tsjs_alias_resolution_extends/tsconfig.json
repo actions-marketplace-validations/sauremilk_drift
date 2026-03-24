@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.mid",
+  "compilerOptions": {
+    "paths": {
+      "@leaf/*": ["src/leaf/*"]
+    }
+  }
+}

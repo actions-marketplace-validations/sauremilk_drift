@@ -107,7 +107,7 @@ def resolve_index_barrel_target(
     Returns a repository-relative target file only when a single unambiguous
     re-export target can be selected.
     """
-    if index_path.name != "index.ts":
+    if index_path.name not in {"index.ts", "index.tsx"}:
         return None
 
     index_text = (repo_path / index_path).read_text(encoding="utf-8", errors="replace")

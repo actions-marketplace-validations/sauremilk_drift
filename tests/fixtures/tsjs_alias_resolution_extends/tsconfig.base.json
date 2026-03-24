@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@base/*": ["src/base/*"],
+      "@shared/config": ["src/shared/config"]
+    }
+  }
+}

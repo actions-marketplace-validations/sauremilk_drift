@@ -472,7 +472,11 @@ def parse_file(file_path: Path, repo_path: Path, language: str) -> ParseResult:
     )
 
 
-def _parse_typescript_stub(file_path: Path, repo_path: Path) -> ParseResult:
+def _parse_typescript_stub(
+    file_path: Path,
+    repo_path: Path,
+    language: str = "typescript",
+) -> ParseResult:
     """Minimal TypeScript parsing — imports and line count only.
 
     Full TypeScript AST parsing requires tree-sitter (optional dependency).
@@ -503,7 +507,7 @@ def _parse_typescript_stub(file_path: Path, repo_path: Path) -> ParseResult:
 
     return ParseResult(
         file_path=file_path,
-        language="typescript",
+        language=language,
         imports=imports,
         line_count=len(lines),
     )

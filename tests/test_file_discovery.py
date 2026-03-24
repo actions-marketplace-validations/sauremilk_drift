@@ -178,3 +178,17 @@ class TestDiscoverFiles:
         (tmp_path / "app.py").write_text("x = 1")
         files = discover_files(tmp_path, include=["**/*.py", "*.py"])
         assert len(files) == 1
+
+    def test_default_include_adds_ts_when_supported(self, tmp_path, monkeypatch):
+        (tmp_path / "app.py").write_text("x = 1")
+        (tmp_path / "app.ts").write_text("export const x = 1;")
+
+        monkeypatch.setattr(
+            "drift.ingestion.file_discovery._detect_supported_languages",
+            lambda: {"python", "typescript", "tsx", "javascript", "jsx"},
+        )
+
+        files = discover_files(tmp_path)
+        paths = {f.path.as_posix() for f in files}
+        assert "app.py" in paths
+        assert "app.ts" in paths
