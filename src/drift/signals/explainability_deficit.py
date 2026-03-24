@@ -104,13 +104,19 @@ class ExplainabilityDeficitSignal(BaseSignal):
 
                 # TS/JS test patterns: describe("Foo", ...), it("should ...", ...)
                 # Functions named it/test/describe inside test files hint at testing
-                if fn.language in ("typescript", "tsx", "javascript", "jsx"):
-                    if is_test_file:
-                        # All non-test-framework functions in spec files
-                        # mark the subjects they exercise as "tested"
-                        if fn.name not in ("describe", "it", "test", "beforeEach",
-                                           "afterEach", "beforeAll", "afterAll"):
-                            test_targets.add(fn.name)
+                if fn.language in ("typescript", "tsx", "javascript", "jsx") and is_test_file:
+                    # All non-test-framework functions in spec files
+                    # mark the subjects they exercise as "tested"
+                    if fn.name not in (
+                        "describe",
+                        "it",
+                        "test",
+                        "beforeEach",
+                        "afterEach",
+                        "beforeAll",
+                        "afterAll",
+                    ):
+                        test_targets.add(fn.name)
 
         # Resolve thresholds from config
         min_complexity = MEDIUM_COMPLEXITY
