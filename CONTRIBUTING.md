@@ -57,6 +57,7 @@ Signals must be:
 - Python 3.11+, type annotations everywhere
 - `ruff check src/ tests/` must pass
 - `pytest` must pass
+- Private/worklog paths (for example `tagesplanung/`) must never be committed or pushed
 
 ## Pre-Merge Checklist
 

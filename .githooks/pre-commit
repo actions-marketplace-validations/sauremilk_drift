@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# pre-commit hook — block private/non-tool paths
+# Install once with: git config core.hooksPath .githooks
+set -e
+
+blocked_pattern='^(tagesplanung/)'
+
+staged_blocked=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "$blocked_pattern" || true)
+
+if [ -n "$staged_blocked" ]; then
+    echo ">>> [pre-commit] ERROR: Blocked paths detected in staged changes:"
+    echo "$staged_blocked"
+    echo ">>> [pre-commit] Remove these files from staging before commit."
+    exit 1
+fi

@@ -15,3 +15,7 @@ htmlcov/
 out.json
 benchmark_pwbs.json
 scripts/_*
+tagesplanung/
+action_rate_err.txt
+action_rate_test.txt
+diag_err.txt

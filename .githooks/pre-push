@@ -3,6 +3,41 @@
 # Install once with: git config core.hooksPath .githooks
 set -e
 
+# Block private/non-tool paths from being pushed.
+blocked_pattern='^(tagesplanung/)'
+
+reject_push_for_blocked_paths() {
+	local_ref="$1"
+	local_sha="$2"
+	remote_ref="$3"
+	remote_sha="$4"
+
+	# Deletion push (local ref removed) can be ignored here.
+	if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+		return 0
+	fi
+
+	if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+		commit_list=$(git rev-list "$local_sha" --not --all)
+	else
+		commit_list=$(git rev-list "$remote_sha..$local_sha")
+	fi
+
+	for commit in $commit_list; do
+		blocked_hits=$(git diff-tree --no-commit-id --name-only --diff-filter=ACMR -r "$commit" | grep -E "$blocked_pattern" || true)
+		if [ -n "$blocked_hits" ]; then
+			echo ">>> [pre-push] ERROR: Blocked paths detected in commits for $local_ref -> $remote_ref"
+			echo "$blocked_hits"
+			echo ">>> [pre-push] Remove these files from the commit history before pushing."
+			exit 1
+		fi
+	done
+}
+
+while read local_ref local_sha remote_ref remote_sha; do
+	reject_push_for_blocked_paths "$local_ref" "$local_sha" "$remote_ref" "$remote_sha"
+done
+
 echo ">>> [pre-push] Starting local CI checks..."
 
 # Unset git context variables that git injects when running hooks.
