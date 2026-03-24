@@ -10,8 +10,10 @@ include:
 exclude:
   - "**/node_modules/**"
   - "**/venv/**"
-fail_on: high
+fail_on: none
 ```
+
+Start with `fail_on: none` so the first rollout teaches the team how to read findings before CI starts blocking merges.
 
 ## Full Configuration Reference
 
@@ -54,7 +56,7 @@ policies:
       deny_import: ["api.*", "routes.*"]
 
 # CI severity gate
-fail_on: high
+fail_on: none
 ```
 
 ## Signal Weights

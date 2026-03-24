@@ -6,6 +6,13 @@
 
 ## Executive Summary
 
+### Public Claims Safe To Repeat For v0.5.0
+
+- Drift uses 6 scoring signals in the composite score.
+- DIA remains visible in output, but carries weight 0.00 and should be treated as report-only until extraction precision improves.
+- The current study corpus covers 15 real-world repositories.
+- All analysis is deterministic; no LLM is used in the detector pipeline.
+
 1. **97.3% precision** on 263 ground-truth-labeled findings across 15 repositories (v0.3) — only 4 false positives, all from a single signal (DIA) that carries zero scoring weight.
 2. **86% detection recall** on a controlled mutation benchmark of 14 intentionally injected drift patterns — drift finds the errors that matter without requiring LLMs or non-deterministic analysis.
 3. **Self-analysis is clean**: drift run on its own codebase produces a score of 0.442 (MEDIUM), confirming the tool eats its own dogfood and the signals discriminate between hand-crafted and AI-assisted code.

@@ -4,6 +4,14 @@
 
 Drift is a deterministic static analyzer for teams that want to catch architectural erosion before it becomes normal: fragmented patterns, boundary violations, near-duplicates, and unstable hotspots that accumulate when code is optimized for local delivery but not for global coherence.
 
+> Repo: `sauremilk/drift` · Package: `drift-analyzer` · Command: `drift` · Requires: Python 3.11+
+
+## Why teams add drift next to existing checks
+
+- Ruff, formatting, and typing keep local code clean.
+- Semgrep, CodeQL, and security tooling catch risky flows.
+- Drift adds a deterministic view of cross-file coherence: pattern fragmentation, boundary erosion, and drift hotspots.
+
 ## Start Here
 
 ```bash
@@ -16,6 +24,8 @@ Recommended next steps:
 - [Quick Start](getting-started/quickstart.md)
 - [Team Rollout](getting-started/team-rollout.md)
 - [Finding Triage](getting-started/finding-triage.md)
+
+Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and DIA kept report-only with weight 0.00 until extraction precision improves.
 
 ## What Drift Is Good At
 

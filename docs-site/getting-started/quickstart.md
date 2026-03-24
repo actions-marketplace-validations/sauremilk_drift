@@ -1,5 +1,15 @@
 # Quick Start
 
+> Repo: `sauremilk/drift` · Package: `drift-analyzer` · Command: `drift`
+
+## 0. Before you try it
+
+```bash
+python --version
+```
+
+Drift currently requires Python 3.11+. If your shell or CI runner is still on 3.10, fix that first so the first run is a signal test, not an environment failure.
+
 ## 1. Install
 
 ```bash
@@ -37,6 +47,12 @@ drift analyze --repo .
 
 Each finding links to a specific file and line. Start with the highest-scored findings and check if the pattern matches your understanding of the codebase.
 
+Typical first-run decisions:
+
+- **You see repeated pattern variants in one module** → standardize on one implementation shape before adding more features there.
+- **You see a boundary violation at a stable layer edge** → add or tighten an architecture rule before it spreads.
+- **You mostly see weak findings in a small repo** → keep drift in observation mode and revisit after the codebase grows.
+
 ## 5. Verify your installation
 
 Drift can analyze its own codebase — useful to confirm everything works:
@@ -52,6 +68,8 @@ The recommended first step is report-only CI (no build failures):
 ```bash
 drift check --fail-on none    # report findings, never exit 1
 ```
+
+The GitHub Action now follows the same safe default. Tighten to `high` only after the team has reviewed a few real runs.
 
 See [Team Rollout](team-rollout.md) for the full progressive adoption path.
 

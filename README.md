@@ -13,11 +13,17 @@
 [![Stars](https://img.shields.io/github/stars/sauremilk/drift?style=social)](https://github.com/sauremilk/drift)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue)](https://sauremilk.github.io/drift/)
 
-> **Install:** `pip install drift-analyzer` · **Command:** `drift` · **Requires:** Python 3.11+
+> **Repo:** `sauremilk/drift` · **Package:** `drift-analyzer` · **Command:** `drift` · **Requires:** Python 3.11+
 
-**AI coding tools ship code fast — but they fragment patterns, cross boundaries, and create structural debt your linter won't catch. Drift finds it. Deterministic, no LLM required.**
+**Drift is the deterministic coherence check for AI-assisted Python teams. Ruff finds local rule violations. Semgrep and CodeQL find security and policy issues. Drift finds the cross-file architectural erosion those tools do not model.**
 
-Benchmarked on FastAPI, Django, Pydantic and 12 more real-world repos. [Full study →](STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
+### What drift catches that other checks usually don't
+
+- **Ruff / formatters / type checkers:** local correctness and style signals, not cross-module coherence.
+- **Semgrep / CodeQL / security scanners:** risky flows and policy violations, not whether patterns fragment across a codebase.
+- **Sonar / maintainability dashboards:** broad quality heuristics, not a drift-specific score grounded in reproducible signal families.
+
+Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 1 report-only signal kept out of the composite score until its precision improves. [Full study →](STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
 
 ## Try it now
 
@@ -27,6 +33,11 @@ drift analyze --repo .
 ```
 
 That's it — you'll see a drift score, module ranking, and actionable findings in seconds.
+
+Before you try it on a work repo:
+
+- Run `python --version` first. Drift currently requires Python 3.11+.
+- If you only have Python 3.10 in CI today, wait to roll it out there until the runtime is available.
 
 ![drift CLI demo](demos/demo.gif)
 
@@ -139,7 +150,7 @@ More setup paths:
 └──┴────────┴───────┴──────────────────────────────────────┴──────────────────────┘
 ```
 
-Drift currently reports six active signal families:
+Drift currently scores six signal families and reports one additional report-only signal:
 
 - `PFS` Pattern Fragmentation
 - `AVS` Architecture Violations
@@ -147,6 +158,7 @@ Drift currently reports six active signal families:
 - `EDS` Explainability Deficit
 - `TVS` Temporal Volatility
 - `SMS` System Misalignment
+- `DIA` Doc-Implementation Drift (reported, weight `0.00` in the composite score)
 
 Signal details and scoring model:
 
@@ -159,6 +171,18 @@ Signal details and scoring model:
 - **Python teams using AI coding tools** (Copilot, Cursor, Cody) in existing codebases
 - **Tech leads** who want to catch structural erosion before it becomes team habit
 - **CI pipelines** that need a deterministic architecture check without LLM infrastructure
+
+## Who should adopt now
+
+- teams with Python 3.11+ already available locally and in CI
+- repositories with 20+ files and recurring refactors across modules
+- teams using AI assistance enough that copy-modify drift and boundary erosion are real review problems
+
+## Who should wait
+
+- tiny repos where a few findings would dominate the score
+- teams looking for bug finding, security review, or strict pass/fail quality gates on day one
+- teams without Python 3.11+ in their execution path yet
 
 ## Best first target
 
@@ -193,7 +217,7 @@ Recommended guides:
 
 ## Trust and limitations
 
-> **What's validated:** Drift has been benchmarked on 15 real-world repos (FastAPI, Django, Pydantic, etc.) with documented precision and recall per signal. All analysis is deterministic and reproducible.
+> **Public claims safe to repeat for v0.5.0:** Drift is deterministic, benchmarked on 15 real-world repositories in the current study corpus, and uses 6 scoring signals plus DIA as a report-only signal with weight `0.00` until precision improves.
 >
 > **What's limited:** Benchmark validation is single-rater; not yet independently replicated. Small repos can be noisy. Temporal signals depend on clone depth. The composite score is orientation, not a verdict.
 >

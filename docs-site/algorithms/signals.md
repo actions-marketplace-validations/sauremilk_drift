@@ -52,4 +52,4 @@ Drift measures 6 active detection signals, each targeting a different dimension 
 
 **What it detects:** Documented architecture that no longer matches actual code.
 
-**Status:** Included in codebase, excluded from default pipeline (weight 0.0).
+**Status:** Reported by default, but excluded from the composite score (weight 0.0) until extraction precision improves.

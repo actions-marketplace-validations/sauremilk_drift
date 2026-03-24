@@ -3,6 +3,14 @@
 Fertige Texte zum Copy-Paste für externe Plattformen.
 Reihenfolge = empfohlene Priorität.
 
+## Naming + Claim Guardrails
+
+- Repo: `sauremilk/drift`
+- Package: `drift-analyzer`
+- Command: `drift`
+- Safe signal claim: 6 scoring signals plus DIA as a report-only signal with weight 0.00.
+- Safe rollout claim: start report-only in CI, then tighten to `high` only after reviewing real findings.
+
 ---
 
 ## 1. Show HN (Hacker News)
@@ -26,7 +34,7 @@ near-identical functions accumulate with subtle differences.
 
 Drift doesn't detect bugs. It detects the loss of design intent.
 
-It runs 6 detection signals:
+It runs 6 scoring signals today, plus a report-only DIA signal kept out of the composite score until its precision improves:
 - Pattern Fragmentation: same pattern implemented N different ways in one module
 - Architecture Violations: imports crossing layer boundaries (DB → API, etc.)
 - Mutant Duplicates: near-identical functions that diverged after copy-paste
@@ -37,8 +45,10 @@ It runs 6 detection signals:
 All signals are deterministic, LLM-free, fast. Uses Python's built-in `ast`
 module, so there are zero dependencies on ML infrastructure.
 
-CLI:  pip install drift-analyzer && drift analyze --repo .
-CI:   uses: sauremilk/drift@v1  (GitHub Action)
+Repo: sauremilk/drift
+Package: drift-analyzer
+CLI:  drift analyze --repo .
+CI:   uses: sauremilk/drift@v1  (GitHub Action, report-only by default)
 Hook: pre-commit hook available
 
 Repo: https://github.com/sauremilk/drift
@@ -65,7 +75,7 @@ I built drift – a static analyzer to measure how much AI code erodes your arch
 TL;DR: `pip install drift-analyzer && drift analyze --repo .`
 
 Copilot and Cursor write code that solves local tasks correctly but weakens
-global design. Drift measures this with 6 signals:
+global design. Drift measures this with 6 scoring signals:
 
 1. Pattern Fragmentation – same thing done N ways in one module
 2. Architecture Violations – wrong-direction imports
@@ -327,7 +337,7 @@ Or in CI:
 ```yaml
 - uses: sauremilk/drift@v1
   with:
-    fail-on: high
+    fail-on: none
     upload-sarif: "true"
 ```
 

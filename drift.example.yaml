@@ -32,7 +32,7 @@ weights:
   mutant_duplicate: 0.17
   temporal_volatility: 0.17
   explainability_deficit: 0.12
-  doc_impl_drift: 0.10 # Doc-implementation drift (README + ADR validation)
+  doc_impl_drift: 0.00 # Report-only until README/ADR extraction is more selective
   system_misalignment: 0.10
 
 # Architecture policies
@@ -61,7 +61,7 @@ policies:
 
 # CI severity gate: exit 1 if findings meet or exceed this level
 # Options: critical, high, medium, low
-fail_on: high
+fail_on: none  # recommended for the first rollout pass
 
 # Tunable thresholds
 thresholds:
