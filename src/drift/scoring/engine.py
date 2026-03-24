@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
+from collections.abc import Mapping
 from pathlib import Path
 
 from drift.config import SignalWeights
@@ -164,6 +165,25 @@ def severity_gate_pass(
     blocking = threshold_map.get(fail_on, {Severity.CRITICAL, Severity.HIGH})
 
     return all(f.severity not in blocking for f in findings)
+
+
+def delta_gate_pass(
+    current_score: float,
+    history: list[Mapping[str, float]],
+    fail_on_delta: float,
+    window: int = 5,
+) -> bool:
+    """Check if score degradation exceeds the delta threshold (ADR-005).
+
+    Compares *current_score* against the mean of the last *window* snapshots.
+    Returns ``True`` if the gate passes (degradation within budget).
+    If no history exists, the gate always passes.
+    """
+    recent = [s["drift_score"] for s in history[-window:]]
+    if not recent:
+        return True
+    baseline = sum(recent) / len(recent)
+    return (current_score - baseline) <= fail_on_delta
 
 
 # ---------------------------------------------------------------------------
