@@ -19,12 +19,15 @@ from pathlib import Path
 import pytest
 
 import drift.signals.architecture_violation  # noqa: F401
+import drift.signals.broad_exception_monoculture  # noqa: F401
 import drift.signals.doc_impl_drift  # noqa: F401
 import drift.signals.explainability_deficit  # noqa: F401
+import drift.signals.guard_clause_deficit  # noqa: F401
 import drift.signals.mutant_duplicates  # noqa: F401
 import drift.signals.pattern_fragmentation  # noqa: F401
 import drift.signals.system_misalignment  # noqa: F401
 import drift.signals.temporal_volatility  # noqa: F401
+import drift.signals.test_polarity_deficit  # noqa: F401
 from drift.config import DriftConfig
 from drift.ingestion.ast_parser import parse_file
 from drift.ingestion.file_discovery import discover_files

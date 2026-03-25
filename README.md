@@ -1,4 +1,4 @@
-# Drift — Find the architecture damage AI coding tools leave behind
+# Drift — Find architectural drift before it becomes normal
 
 [![CI](https://github.com/sauremilk/drift/actions/workflows/ci.yml/badge.svg)](https://github.com/sauremilk/drift/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/sauremilk/drift/graph/badge.svg)](https://codecov.io/gh/sauremilk/drift)
@@ -15,37 +15,47 @@
 
 > **Repo:** `sauremilk/drift` · **Package:** `drift-analyzer` · **Command:** `drift` · **Requires:** Python 3.11+
 
-## What is drift?
+## Start here
 
-Drift is a deterministic architectural linter and static analysis tool for Python that detects cross-file technical debt, dependency cycle violations, and pattern fragmentation in AI-assisted codebases. It runs six scoring signals on your repository — without any LLM in the pipeline — and produces a composite drift score that tracks architectural erosion over time. Drift is designed for Python teams using AI coding tools in monorepos and multi-module projects where import analysis and architecture enforcement matter.
+**What is drift?**
 
-**Drift is the deterministic coherence check and architectural linter for AI-assisted Python teams. Ruff finds local rule violations. Semgrep and CodeQL find security and policy issues. Drift finds the cross-file architectural erosion, architecture degradation, and technical debt patterns those tools do not model.**
+Drift is a deterministic architectural linter for Python repositories. It finds cross-file coherence problems such as pattern fragmentation, architecture violations, and structural erosion before they become normal team habits.
 
-### What drift catches that other checks usually don't
+**Who is it for?**
 
-- **Ruff / formatters / type checkers:** local correctness and style signals, not cross-module coherence.
-- **Semgrep / CodeQL / security scanners:** risky flows and policy violations, not whether patterns fragment across a codebase.
-- **Sonar / maintainability dashboards:** broad quality heuristics, not a drift-specific score grounded in reproducible signal families.
+- Python teams with multi-file codebases where architecture matters
+- Tech leads who want fast structural feedback, not just style or type checks
+- Teams using AI coding tools and seeing more copy-modify drift across modules
 
-Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 1 report-only signal kept out of the composite score until its precision improves. [Full study →](STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
-
-## Try it now
+### 1-minute quickstart
 
 ```bash
-pip install drift-analyzer   # requires Python 3.11+
+pip install drift-analyzer
 drift analyze --repo .
 ```
 
-That's it — you'll see a drift score, module ranking, and actionable findings in seconds.
+That gives you a drift score, the hottest modules, and actionable findings in one run.
 
-Before you try it on a work repo:
+### Example output
 
-- Run `python --version` first. Drift currently requires Python 3.11+.
-- If you only have Python 3.10 in CI today, wait to roll it out there until the runtime is available.
+```text
+DRIFT SCORE  0.52
+Top finding: PFS 0.85  Error handling split 4 ways  at src/api/routes.py:42
+Next action: consolidate variants into one shared pattern
+```
 
-![drift CLI demo](demos/demo.gif)
+### If you want CI, use this
 
-### Try on a demo project (2 minutes)
+```yaml
+- uses: sauremilk/drift@v1
+  with:
+    fail-on: none
+    upload-sarif: "true"
+```
+
+Start report-only first. Tighten to `fail-on: high` once the team understands the signal quality in its own repo.
+
+### Try it on a demo project
 
 ```bash
 git clone https://github.com/sauremilk/drift.git
@@ -54,18 +64,28 @@ pip install drift-analyzer
 drift analyze --repo .
 ```
 
-The [demo project](examples/demo-project/) contains intentional drift patterns — you'll see pattern fragmentation, architecture violations, and duplicated logic in the output.
+The [demo project](examples/demo-project/) contains intentional drift patterns, so you get useful findings immediately.
+
+![drift CLI demo](demos/demo.gif)
 
 ## Why drift
 
-When your team uses GitHub Copilot, Cursor, or other AI coding tools, code passes CI — but the architecture quietly degrades:
+When your team uses GitHub Copilot, Cursor, or other AI coding tools, code passes CI while the architecture quietly degrades:
 
 - **Pattern fragmentation:** error handling is implemented 4 different ways across the same service
 - **Boundary violations:** the API layer imports directly from the database layer
 - **Silent duplication:** AI generates a new validator instead of finding the existing one
 - **Churn hotspots:** the same files change every sprint because the structure is unclear
 
-Your linter, type checker, and test suite won't catch this. Drift does — deterministically, without any LLM in the pipeline. That makes drift useful for architecture degradation detection and technical debt detection in AI-assisted Python codebases.
+Your linter, type checker, and test suite won't catch this. Drift does — deterministically, without any LLM in the pipeline. That makes drift useful for detecting architectural erosion and cross-file coherence problems, including structural technical debt in AI-assisted Python codebases.
+
+## What drift catches that other checks usually don't
+
+- **Ruff / formatters / type checkers:** local correctness and style signals, not cross-module coherence.
+- **Semgrep / CodeQL / security scanners:** risky flows and policy violations, not whether patterns fragment across a codebase.
+- **Sonar / maintainability dashboards:** broad quality heuristics, not a drift-specific score grounded in reproducible signal families.
+
+Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 4 report-only signals kept out of the composite score until their precision improves. [Full study →](STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
 
 ## Use cases
 
@@ -102,9 +122,9 @@ drift analyze --repo . --format json | jq '.findings[] | select(.signal=="MDS")'
 
 **Output:** MDS findings listing all 6 locations with similarity scores ≥ 0.95, enabling a single extract-to-shared-module refactoring.
 
-## Setup
+## More setup options
 
-### GitHub Action (recommended: start report-only)
+### Full GitHub Action (recommended: start report-only)
 
 ```yaml
 name: Drift
@@ -189,7 +209,7 @@ More setup paths:
 └──┴────────┴───────┴──────────────────────────────────────┴──────────────────────┘
 ```
 
-Drift currently scores six signal families and reports one additional report-only signal:
+Drift currently scores six signal families and reports four additional report-only signals:
 
 - `PFS` Pattern Fragmentation
 - `AVS` Architecture Violations
@@ -197,7 +217,10 @@ Drift currently scores six signal families and reports one additional report-onl
 - `EDS` Explainability Deficit
 - `TVS` Temporal Volatility
 - `SMS` System Misalignment
-- `DIA` Doc-Implementation Drift (reported, weight `0.00` in the composite score)
+- `DIA` Doc-Implementation Drift (report-only, weight `0.00`)
+- `BEM` Broad Exception Monoculture (report-only, weight `0.00`)
+- `TPD` Test Polarity Deficit (report-only, weight `0.00`)
+- `GCD` Guard Clause Deficit (report-only, weight `0.00`)
 
 Signal details and scoring model:
 
@@ -280,7 +303,7 @@ Recommended guides:
 
 ## Trust and limitations
 
-> **Public claims safe to repeat for v0.5.0:** Drift is deterministic, benchmarked on 15 real-world repositories in the current study corpus, and uses 6 scoring signals plus DIA as a report-only signal with weight `0.00` until precision improves.
+> **Public claims safe to repeat for v0.5.0:** Drift is deterministic, benchmarked on 15 real-world repositories in the current study corpus, and uses 6 scoring signals plus 4 report-only signals (DIA, BEM, TPD, GCD) with weight `0.00` until precision improves.
 >
 > **What's limited:** Benchmark validation is single-rater; not yet independently replicated. Small repos can be noisy. Temporal signals depend on clone depth. The composite score is orientation, not a verdict.
 >

@@ -1,0 +1,46 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Tests: quick no-smoke",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/",
+        "--tb=short",
+        "--ignore=tests/test_smoke.py",
+        "-q",
+        "--maxfail=1"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: precision-recall",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_precision_recall.py",
+        "-v",
+        "--tb=short",
+        "--maxfail=1"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mutation benchmark",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/_mutation_benchmark.py"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

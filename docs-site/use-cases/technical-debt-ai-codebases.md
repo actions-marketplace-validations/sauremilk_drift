@@ -1,4 +1,4 @@
-# Technical Debt Detection for AI-Assisted Codebases
+# Architectural Technical Debt in AI-Assisted Codebases
 
 Drift is useful when a team already knows that AI-assisted delivery is increasing output, but cannot yet see where structural technical debt is accumulating.
 

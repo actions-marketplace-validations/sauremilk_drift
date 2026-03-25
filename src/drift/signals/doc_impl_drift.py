@@ -351,8 +351,8 @@ class DocImplDriftSignal(BaseSignal):
                             ),
                             file_path=Path(src_dir),
                             fix=(
-                                f"Ergänze '{src_dir}/' in README"
-                                " mit kurzer Beschreibung des Moduls."
+                                f"Erstelle einen Abschnitt für '{src_dir}/' in README.md"
+                                f" mit kurzer Beschreibung des Moduls."
                             ),
                             metadata={"undocumented_dir": src_dir},
                         )

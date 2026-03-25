@@ -6,11 +6,11 @@ It is intentionally compact so that third parties can describe drift consistentl
 
 ## One-sentence description
 
-Drift is a deterministic architectural linter for Python teams that detects structural erosion, architecture drift, and coherence-related technical debt in fast-moving and AI-assisted codebases.
+Drift is a deterministic architectural linter for Python teams that detects architectural erosion, structural drift, and cross-file coherence problems in Python codebases.
 
 ## Short description
 
-Drift is an open-source static analyzer for Python repositories. It surfaces cross-file architectural erosion such as pattern fragmentation, architecture violations, mutant duplicates, explainability gaps, temporal volatility, and system misalignment. It complements linters, type checkers, and security tools with deterministic architectural findings, plus JSON and SARIF output for automation.
+Drift is an open-source static analyzer for Python repositories. It surfaces cross-file architectural erosion such as pattern fragmentation, architecture violations, mutant duplicates, explainability gaps, temporal volatility, and system misalignment. It complements linters, type checkers, and security tools with deterministic findings about structural coherence, plus JSON and SARIF output for automation.
 
 ## Extended boilerplate
 
@@ -25,7 +25,7 @@ Drift helps teams inspect architectural erosion before it becomes normalized. Th
 - outputs: rich terminal, JSON, SARIF
 - GitHub Action support: yes
 - analysis style: deterministic, no LLM in the detector pipeline
-- scoring model: 6 scoring signals plus DIA as report-only with weight 0.00
+- scoring model: 6 scoring signals plus 4 report-only signals (DIA, BEM, TPD, GCD) with weight 0.00
 
 ## Suggested directory blurb
 

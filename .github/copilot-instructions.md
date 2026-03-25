@@ -137,7 +137,7 @@ Vollständiger Developer Guide: **[DEVELOPER.md](../DEVELOPER.md)**
 
 ```
 ingestion/ → signals/ → scoring/ → output/
-  AST + Git     7 Detektoren   Score+Severity   Rich/JSON/SARIF
+  AST + Git     10 Detektoren  Score+Severity   Rich/JSON/SARIF
 ```
 
 ### Wichtigste Kommandos
@@ -155,7 +155,7 @@ ingestion/ → signals/ → scoring/ → output/
 
 | Pfad | Inhalt |
 |------|--------|
-| `src/drift/signals/` | 7 Signale (PFS, AVS, MDS, EDS, TVS, SMS, DIA) |
+| `src/drift/signals/` | 10 Signale (PFS, AVS, MDS, EDS, TVS, SMS, DIA, BEM, TPD, GCD) |
 | `src/drift/ingestion/` | AST-Parsing, Git-History, File-Discovery |
 | `src/drift/scoring/` | Composite-Score, Module-Scores, Severity |
 | `src/drift/output/` | Rich-Terminal, JSON, SARIF |

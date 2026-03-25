@@ -6,7 +6,7 @@ Drift is a deterministic static analyzer for architectural erosion and cross-fil
 
 ## What does drift detect?
 
-Drift detects six scoring signal families: pattern fragmentation, architecture violations, mutant duplicates, explainability deficit, temporal volatility, and system misalignment. DIA is visible as a report-only signal with weight 0.00.
+Drift detects six scoring signal families: pattern fragmentation, architecture violations, mutant duplicates, explainability deficit, temporal volatility, and system misalignment. Four additional signals (DIA, BEM, TPD, GCD) are visible as report-only with weight 0.00.
 
 See [Signal Reference](algorithms/signals.md).
 

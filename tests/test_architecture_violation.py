@@ -147,9 +147,8 @@ def test_high_blast_radius_finding():
     findings = signal.analyze(prs, {}, None)
 
     blast = [f for f in findings if "blast radius" in f.title.lower()]
-    # With 9 nodes and hub having 0 descendants, individual modules
-    # each have 1 descendant (hub) → no high blast. This test verifies
-    # no false positives on normal fan-in.
+    # With ancestors (correct direction): hub has 8 dependents → finding.
+    # Modules with many dependents are correctly flagged.
     assert all(f.metadata.get("blast_radius", 0) >= 5 for f in blast)
 
 

@@ -1,6 +1,6 @@
 # Signal Reference
 
-Drift measures 6 active detection signals, each targeting a different dimension of architectural erosion.
+Drift measures 6 active detection signals, each targeting a different dimension of architectural erosion, plus 4 report-only signals that surface consistency patterns without affecting the composite score.
 
 ## Active Signals
 
@@ -46,10 +46,28 @@ Drift measures 6 active detection signals, each targeting a different dimension 
 
 **Example:** A utility module suddenly importing from an HTTP client library.
 
-## Phase 2 Signal (Inactive)
+## Phase 2 Signals (Report-Only)
 
 ### Doc-Implementation Drift (DIA)
 
 **What it detects:** Documented architecture that no longer matches actual code.
 
 **Status:** Reported by default, but excluded from the composite score (weight 0.0) until extraction precision improves.
+
+### Broad Exception Monoculture (BEM)
+
+**What it detects:** Modules where exception handling is uniformly broad (bare except, catch-all Exception) with high swallowing ratios.
+
+**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/master/docs/adr/007-consistency-proxy-signals.md).
+
+### Test Polarity Deficit (TPD)
+
+**What it detects:** Test suites with near-zero negative assertions — only happy-path testing, no failure-path coverage.
+
+**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/master/docs/adr/007-consistency-proxy-signals.md).
+
+### Guard Clause Deficit (GCD)
+
+**What it detects:** Modules where public functions uniformly lack early guard clauses (parameter validation, precondition checks).
+
+**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/master/docs/adr/007-consistency-proxy-signals.md).

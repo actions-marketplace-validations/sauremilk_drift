@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **3 Consistency Proxy Signals (ADR-007)**: BEM (Broad Exception Monoculture), TPD (Test Polarity Deficit), GCD (Guard Clause Deficit) — all report-only with weight `0.00`. Detects uniform broad exception handling, happy-path-only test suites, and modules uniformly missing early guard clauses. See [ADR-007](docs/adr/007-consistency-proxy-signals.md).
 - **CLI `--sort-by` + `--max-findings`**: `analyze` command now accepts `--sort-by impact|score` (default: impact) and `--max-findings N` (default: 20) for prioritised output.
 - **AVS Mutation Tests** (`tests/test_avs_mutations.py`): 41 new tests across 8 classes covering DB→API violations, omnilayer directions, circular-dependency detection, hub-dampening calibration, and policy-boundary enforcement.
 - **Benchmark corpus ×15**: Extended from 5 to 15 real-world repositories (+Flask, Starlette, Django, Celery, Poetry, Requests, SQLModel, Uvicorn, Sanic, Rich). 2 642 total findings. Precision strict 97.3%.

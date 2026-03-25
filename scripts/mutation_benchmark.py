@@ -424,7 +424,8 @@ def _create_synthetic_repo(repo_dir: Path) -> dict[str, list[str]]:
         "                price *= 0.95\n"
         "        for discount in discounts:\n"
         '            if discount["type"] == "percentage":\n'
-        '                if discount.get("category") is None or discount["category"] == item.get("category"):\n'
+        '                if discount.get("category") is None '
+        'or discount["category"] == item.get("category"):\n'
         '                    price *= (1 - discount["value"] / 100)\n'
         '            elif discount["type"] == "fixed":\n'
         '                price -= discount["value"]\n'
@@ -434,7 +435,8 @@ def _create_synthetic_repo(repo_dir: Path) -> dict[str, list[str]]:
         "        subtotal = price * qty\n"
         "        for rule in tax_rules:\n"
         '            if rule["region"] == region:\n'
-        '                if rule.get("category") is None or rule["category"] == item.get("category"):\n'
+        '                if rule.get("category") is None '
+        'or rule["category"] == item.get("category"):\n'
         '                    subtotal *= (1 + rule["rate"])\n'
         "                    break\n"
         "        total += subtotal\n"
@@ -461,7 +463,8 @@ def _create_synthetic_repo(repo_dir: Path) -> dict[str, list[str]]:
         '                    value = spec.get("default", 0)\n'
         '            elif spec.get("type") == "float":\n'
         "                try:\n"
-        '                    value = float(value) if value is not None else spec.get("default", 0.0)\n'
+        '                    value = float(value) if value is not None '
+        'else spec.get("default", 0.0)\n'
         "                except (ValueError, TypeError):\n"
         '                    value = spec.get("default", 0.0)\n'
         '            elif spec.get("type") == "str":\n'
@@ -545,14 +548,18 @@ def _create_synthetic_repo(repo_dir: Path) -> dict[str, list[str]]:
         "                tolerance = tolerances.get(local.get('type'), 0.01)\n"
         "                if diff > tolerance:\n"
         "                    if rules.get('strict'):\n"
-        "                        mismatches.append({'local': local, 'remote': remote, 'diff': diff})\n"
+        "                        mismatches.append({'local': local, "
+        "'remote': remote, 'diff': diff})\n"
         "                    elif diff > tolerance * 10:\n"
-        "                        mismatches.append({'local': local, 'remote': remote, 'diff': diff})\n"
+        "                        mismatches.append({'local': local, "
+        "'remote': remote, 'diff': diff})\n"
         "                matched.add(remote['id'])\n"
         "                break\n"
-        "    unmatched_local = [r for r in local_records if r.get('ref') not in {rm.get('ref') for rm in remote_records}]\n"
+        "    unmatched_local = [r for r in local_records if r.get('ref') "
+        "not in {rm.get('ref') for rm in remote_records}]\n"
         "    unmatched_remote = [r for r in remote_records if r['id'] not in matched]\n"
-        "    return {'mismatches': mismatches, 'unmatched_local': unmatched_local, 'unmatched_remote': unmatched_remote}\n",
+        "    return {'mismatches': mismatches, 'unmatched_local': "
+        "unmatched_local, 'unmatched_remote': unmatched_remote}\n",
     )
     eds_mutations.append("Unexplained complexity: reconcile_accounts (CC>=10, no docstring)")
 
@@ -702,6 +709,128 @@ def _create_synthetic_repo(repo_dir: Path) -> dict[str, list[str]]:
         "    return {**user, **token}\n",
     )
     avs_mutations.append("Cross-layer: services/ imports from handlers/ (upward)")
+
+    # ----- AVS: Circular dependency (3-module cycle) -----
+    cycle_dir = src / "cycle"
+    cycle_dir.mkdir(parents=True, exist_ok=True)
+    _write(cycle_dir / "__init__.py", "")
+    _write(
+        cycle_dir / "alpha.py",
+        "from src.myapp.cycle.gamma import gamma_fn\n\n"
+        "def alpha_fn():\n"
+        "    return gamma_fn()\n",
+    )
+    _write(
+        cycle_dir / "beta.py",
+        "from src.myapp.cycle.alpha import alpha_fn\n\n"
+        "def beta_fn():\n"
+        "    return alpha_fn()\n",
+    )
+    _write(
+        cycle_dir / "gamma.py",
+        "from src.myapp.cycle.beta import beta_fn\n\n"
+        "def gamma_fn():\n"
+        "    return beta_fn()\n",
+    )
+    avs_mutations.append("Circular dependency: cycle/alpha → beta → gamma → alpha (3-cycle)")
+
+    # ----- AVS: High blast radius (central module with many dependents) -----
+    blast_dir = src / "blast"
+    blast_dir.mkdir(parents=True, exist_ok=True)
+    _write(blast_dir / "__init__.py", "")
+    _write(
+        blast_dir / "core.py",
+        "def core_function(): return 42\n",
+    )
+    for i in range(1, 7):
+        _write(
+            blast_dir / f"user_{i}.py",
+            f"from src.myapp.blast.core import core_function\n\n"
+            f"def use_{i}(): return core_function() + {i}\n",
+        )
+    avs_mutations.append(
+        "High blast radius: blast/core.py (6 dependents)"
+    )
+
+    # ----- AVS: Zone of Pain (concrete, stable, many dependents) -----
+    pain_dir = src / "pain"
+    pain_dir.mkdir(parents=True, exist_ok=True)
+    _write(pain_dir / "__init__.py", "")
+    _write(
+        pain_dir / "core.py",
+        "# Concrete module with no abstractions\n"
+        "DATA = {'version': 1}\n\n"
+        "def get_data(): return DATA.copy()\n"
+        "def set_data(k, v): DATA[k] = v\n",
+    )
+    for i in range(1, 4):
+        _write(
+            pain_dir / f"consumer_{i}.py",
+            f"from src.myapp.pain.core import get_data\n\n"
+            f"def consume_{i}(): return get_data()\n",
+        )
+    avs_mutations.append(
+        "Zone of Pain: pain/core.py (I=0.0, D=1.0, 3 dependents, concrete)"
+    )
+
+    # ----- AVS: God module (high fan-in + fan-out) -----
+    god_dir = src / "god"
+    god_dir.mkdir(parents=True, exist_ok=True)
+    _write(god_dir / "__init__.py", "")
+    _write(god_dir / "dep_a.py", "def dep_a(): return 'a'\n")
+    _write(god_dir / "dep_b.py", "def dep_b(): return 'b'\n")
+    _write(god_dir / "dep_c.py", "def dep_c(): return 'c'\n")
+    _write(
+        god_dir / "central.py",
+        "from src.myapp.god.dep_a import dep_a\n"
+        "from src.myapp.god.dep_b import dep_b\n"
+        "from src.myapp.god.dep_c import dep_c\n\n"
+        "def orchestrate(): return dep_a() + dep_b() + dep_c()\n",
+    )
+    for i in range(1, 4):
+        _write(
+            god_dir / f"client_{i}.py",
+            f"from src.myapp.god.central import orchestrate\n\n"
+            f"def client_{i}(): return orchestrate()\n",
+        )
+    avs_mutations.append(
+        "God module: god/central.py (Ca=3, Ce=3, total=6, br=3)"
+    )
+
+    # ----- AVS: Unstable dependency (stable → volatile) -----
+    udep_dir = src / "udep"
+    udep_dir.mkdir(parents=True, exist_ok=True)
+    _write(udep_dir / "__init__.py", "")
+    # Volatile target: many outgoing deps, few incoming → high I
+    _write(udep_dir / "ext_1.py", "EXT_1 = 1\n")
+    _write(udep_dir / "ext_2.py", "EXT_2 = 2\n")
+    _write(udep_dir / "ext_3.py", "EXT_3 = 3\n")
+    _write(
+        udep_dir / "volatile_target.py",
+        "from src.myapp.udep.ext_1 import EXT_1\n"
+        "from src.myapp.udep.ext_2 import EXT_2\n"
+        "from src.myapp.udep.ext_3 import EXT_3\n\n"
+        "def volatile_fn(): return EXT_1 + EXT_2 + EXT_3\n",
+    )
+    # Stable source: many incoming, few outgoing → low I
+    _write(
+        udep_dir / "stable_src.py",
+        "from src.myapp.udep.volatile_target import volatile_fn\n\n"
+        "def stable_fn(): return volatile_fn()\n",
+    )
+    _write(
+        udep_dir / "user_1.py",
+        "from src.myapp.udep.stable_src import stable_fn\n\n"
+        "def use_1(): return stable_fn()\n",
+    )
+    _write(
+        udep_dir / "user_2.py",
+        "from src.myapp.udep.stable_src import stable_fn\n\n"
+        "def use_2(): return stable_fn()\n",
+    )
+    avs_mutations.append(
+        "Unstable dependency: udep/stable_src (I=0.33) → volatile_target (I=0.75)"
+    )
 
     mutations["architecture_violation"] = avs_mutations
 
@@ -859,6 +988,39 @@ def _create_synthetic_repo(repo_dir: Path) -> dict[str, list[str]]:
 
     mutations["temporal_volatility"] = tvs_mutations
 
+    # =========================================================
+    # AVS (continued): Co-change coupling — requires git history
+    # =========================================================
+    # Two files changed together in 5 commits, no import edge between them.
+    co_a = src / "co_file_a.py"
+    co_b = src / "co_file_b.py"
+    for i in range(5):
+        co_a.write_text(
+            f"# Revision {i}\n"
+            f"def co_a_fn(): return {i}\n",
+            encoding="utf-8",
+        )
+        co_b.write_text(
+            f"# Revision {i}\n"
+            f"def co_b_fn(): return {i * 10}\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", str(co_a), str(co_b)], cwd=repo_dir, capture_output=True)
+        commit_date = (base_date + timedelta(days=12 + i)).strftime("%Y-%m-%dT16:00:00")
+        env = os.environ.copy()
+        env["GIT_AUTHOR_DATE"] = commit_date
+        env["GIT_COMMITTER_DATE"] = commit_date
+        subprocess.run(
+            ["git", "commit", "-m", f"Update co-files v{i}"],
+            cwd=repo_dir,
+            capture_output=True,
+            env=env,
+        )
+
+    mutations.setdefault("architecture_violation", []).append(
+        "Co-change coupling: co_file_a.py ↔ co_file_b.py (5 co-commits, no import)"
+    )
+
     # Test files
     _write(
         tests / "test_services.py",
@@ -934,18 +1096,87 @@ def _check_detection(mutations, findings):
                 "migrate_schema", "route_events", "check_permissions",
             ]
             count = sum(1 for n in targets if any(n in f.get("title", "") for f in detected))
+        elif signal == "architecture_violation":
+            # Precise per-mutation-type matching for AVS diagnostics
+            avs_detail = {}
+            titles_lower = [f.get("title", "").lower() for f in detected]
+
+            # Upward layer imports (check for "upward" keyword)
+            upward_count = sum(1 for t in titles_lower if "upward" in t)
+            # Circular dependency
+            circular_count = sum(1 for t in titles_lower if "circular" in t)
+            # Blast radius
+            blast_count = sum(1 for t in titles_lower if "blast radius" in t)
+            # Zone of Pain
+            pain_count = sum(1 for t in titles_lower if "zone of pain" in t)
+            # God module
+            god_count = sum(1 for t in titles_lower if "god module" in t)
+            # Unstable dependency
+            unstable_count = sum(1 for t in titles_lower if "unstable dependency" in t)
+            # Hidden coupling (co-change)
+            cochange_count = sum(1 for t in titles_lower if "hidden coupling" in t)
+            # Policy violations
+            policy_count = sum(1 for t in titles_lower if "policy violation" in t)
+
+            avs_detail = {
+                "upward_layer": upward_count,
+                "circular_deps": circular_count,
+                "blast_radius": blast_count,
+                "zone_of_pain": pain_count,
+                "god_module": god_count,
+                "unstable_dep": unstable_count,
+                "co_change": cochange_count,
+                "policy": policy_count,
+            }
+
+            # Match mutations to detected categories
+            # Check more specific patterns FIRST to avoid false matches
+            count = 0
+            for m in injected:
+                ml = m.lower()
+                if "circular" in ml:
+                    if circular_count > 0:
+                        count += 1
+                        circular_count -= 1
+                elif "blast radius" in ml:
+                    if blast_count > 0:
+                        count += 1
+                        blast_count -= 1
+                elif "zone of pain" in ml:
+                    if pain_count > 0:
+                        count += 1
+                        pain_count -= 1
+                elif "god module" in ml:
+                    if god_count > 0:
+                        count += 1
+                        god_count -= 1
+                elif "unstable dependency" in ml:
+                    if unstable_count > 0:
+                        count += 1
+                        unstable_count -= 1
+                elif "co-change" in ml:
+                    if cochange_count > 0:
+                        count += 1
+                        cochange_count -= 1
+                elif "upward" in ml or "cross-layer" in ml or "transitive" in ml:
+                    if upward_count > 0:
+                        count += 1
+                        upward_count -= 1
         else:
             count = min(len(detected), len(injected))
 
         recall = count / len(injected) if injected else 0.0
-        results[signal] = {
+        result_entry = {
             "injected": len(injected),
             "detected": count,
             "recall": recall,
             "finding_count": len(detected),
             "mutation_descriptions": injected,
-            "finding_titles": [f.get("title", "?") for f in detected[:10]],
+            "finding_titles": [f.get("title", "?") for f in detected[:20]],
         }
+        if signal == "architecture_violation":
+            result_entry["avs_detail"] = avs_detail
+        results[signal] = result_entry
     return results
 
 
@@ -1033,6 +1264,10 @@ def main():
         print(f"  Findings ({d['finding_count']}):")
         for t in d["finding_titles"]:
             print(f"    - {t}")
+        if "avs_detail" in d:
+            print("  AVS Detection Breakdown:")
+            for cat, cnt in d["avs_detail"].items():
+                print(f"    {cat}: {cnt}")
 
     shutil.rmtree(tmpdir, ignore_errors=True)
     print(f"\nCleaned up {tmpdir}")

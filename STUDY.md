@@ -8,13 +8,13 @@
 
 ### Public Claims Safe To Repeat For v0.5.0
 
-- Drift uses 6 scoring signals in the composite score.
-- DIA remains visible in output, but carries weight 0.00 and should be treated as report-only until extraction precision improves.
+- Drift uses 6 scoring signals in the composite score, plus 4 report-only signals (DIA, BEM, TPD, GCD) with weight 0.00.
+- DIA, BEM, TPD, and GCD remain visible in output, but carry weight 0.00 and should be treated as report-only until extraction precision improves.
 - The current study corpus covers 15 real-world repositories.
 - All analysis is deterministic; no LLM is used in the detector pipeline.
 
-1. **97.3% precision** on 263 ground-truth-labeled findings across 15 repositories (v0.3) — only 4 false positives, all from a single signal (DIA) that carries zero scoring weight.
-2. **86% detection recall** on a controlled mutation benchmark of 14 intentionally injected drift patterns — drift finds the errors that matter without requiring LLMs or non-deterministic analysis.
+1. **77% strict precision** on a score-weighted sample of 286 findings across 5 repositories (v0.5 non-circular heuristic classification). Of 15 total FPs, 9 come from DIA (weight 0.00) and 6 from active signals (4 AVS, 2 MDS). 51 findings are classified as Disputed (score-only evidence, no structural confirmation). Independent multi-rater validation is pending — treat as upper-bound estimate.
+2. **86% detection rate** on a controlled mutation benchmark of 14 author-designed synthetic patterns — not a population-recall estimate. See §4 for methodology and §7 for limitations.
 3. **Self-analysis is clean**: drift run on its own codebase produces a score of 0.442 (MEDIUM), confirming the tool eats its own dogfood and the signals discriminate between hand-crafted and AI-assisted code.
 
 For methodology, see §1. For precision tables, see §3. For threats to validity, see §7.
@@ -23,7 +23,7 @@ For methodology, see §1. For precision tables, see §3. For threats to validity
 
 ## Abstract
 
-We evaluate drift v0.1, a deterministic static analysis tool for detecting architectural erosion in Python repositories. The evaluation combines three complementary methods: (1) a **ground-truth precision analysis** of 291 classified findings across 5 repositories, (2) a **controlled mutation benchmark** measuring detection recall against 14 intentionally injected drift patterns, and (3) a **usefulness study** demonstrating actionable findings in a production codebase. drift achieves 80% precision (strict) with 86% detection recall across 7 signal types. The tool is fully deterministic — no LLM is used in the analysis pipeline ([ADR-001](docs/adr/001-deterministic-analysis-pipeline.md)).
+We evaluate drift v0.1, a deterministic static analysis tool for detecting architectural erosion in Python repositories. The evaluation combines three complementary methods: (1) a **ground-truth precision analysis** of 286 classified findings across 5 repositories, (2) a **controlled mutation benchmark** measuring detection recall against 14 intentionally injected drift patterns, and (3) a **usefulness study** demonstrating actionable findings in a production codebase. drift achieves 77% precision (strict) / 95% lenient with 86% detection recall across 7 signal types, using non-circular classification criteria. The tool is fully deterministic — no LLM is used in the analysis pipeline ([ADR-001](docs/adr/001-deterministic-analysis-pipeline.md)).
 
 ---
 
@@ -37,17 +37,20 @@ $$S_i = \frac{\sum f_{ij}}{n_i} \cdot \min\!\left(1,\; \frac{\ln(1 + n_i)}{\ln(1
 
 **Signal weights** (default, active in scoring):
 
-| Signal                   | Code | Weight | Status         |
-| ------------------------ | ---- | ------ | -------------- |
-| Pattern Fragmentation    | PFS  | 0.22   | Active         |
-| Architecture Violations  | AVS  | 0.22   | Active         |
-| Mutant Duplicates        | MDS  | 0.17   | Active         |
-| Temporal Volatility      | TVS  | 0.17   | Active         |
-| Explainability Deficit   | EDS  | 0.12   | Active         |
-| System Misalignment      | SMS  | 0.10   | Active         |
-| Doc-Implementation Drift | DIA  | 0.00   | Reporting only |
+| Signal                       | Code | Weight | Status         |
+| ---------------------------- | ---- | ------ | -------------- |
+| Pattern Fragmentation        | PFS  | 0.22   | Active         |
+| Architecture Violations      | AVS  | 0.22   | Active         |
+| Mutant Duplicates            | MDS  | 0.17   | Active         |
+| Temporal Volatility          | TVS  | 0.17   | Active         |
+| Explainability Deficit       | EDS  | 0.12   | Active         |
+| System Misalignment          | SMS  | 0.10   | Active         |
+| Doc-Implementation Drift     | DIA  | 0.00   | Reporting only |
+| Broad Exception Monoculture  | BEM  | 0.00   | Reporting only |
+| Test Polarity Deficit        | TPD  | 0.00   | Reporting only |
+| Guard Clause Deficit         | GCD  | 0.00   | Reporting only |
 
-DIA is included in the analysis output but contributes 0.0 to the composite score. It is a Phase 2 signal with known precision limitations (see §3.1).
+DIA, BEM, TPD, and GCD are included in the analysis output but contribute 0.0 to the composite score. They are Phase 2 signals with known precision limitations (see §3.1 for DIA; see [ADR-007](docs/adr/007-consistency-proxy-signals.md) for BEM/TPD/GCD).
 
 ### 1.2 Repository Selection
 
@@ -143,42 +146,49 @@ Each finding was classified into one of three categories:
 | **FP** (False Positive) | Finding is incorrect or describes something that is not a real issue                                                       |
 | **Disputed**            | Technically correct detection, but debatable whether it represents a problem (e.g., intentional code duplication in tests) |
 
-Classification used signal-specific criteria:
+Classification used signal-specific structural criteria designed to avoid circular validation (i.e., the tool's own score is not used as the primary TP criterion). Where no structural confirmation is possible, findings are classified as Disputed:
 
-- **MDS**: similarity score ≥ 0.85 and functions are structurally near-identical → TP
-- **PFS**: title contains concrete pattern variants (e.g., "26 error_handling variants") → TP
-- **EDS**: complex function (score ≥ 0.35) genuinely lacks documentation → TP (structural by definition)
-- **AVS**: circular dependency → TP; upward dependency into config module → Disputed
-- **TVS**: measurable churn above threshold → TP
-- **SMS**: module genuinely diverges from codebase norms → TP
-- **DIA**: directory reference from README actually missing in source tree → TP; URL fragment, digit-only, or CamelCase proper noun falsely matched → FP
+- **MDS**: title contains "exact"/"identical" → TP; dunder methods or test helpers → FP; otherwise score ≥ 0.85 → TP, below → Disputed
+- **PFS**: title contains "variant(s)" → TP; test directories or single-variant → FP; otherwise → Disputed
+- **EDS**: title contains "complexity"/"no docstring"/"undocumented" → TP; test files or trivial `__init__` → FP; otherwise → Disputed
+- **AVS**: circular/god module/zone of pain/blast radius → TP; upward imports into config/utils/shared → FP; `__init__` re-exports → FP; otherwise → Disputed
+- **TVS**: title contains "hotspot"/"churn"/"volatile" → TP; migrations/lockfiles/changelogs → FP; otherwise → Disputed
+- **SMS**: title contains "novel"/"outlier"/"unusual" → TP; stdlib modules → FP; otherwise → Disputed
+- **DIA**: missing directory reference with real dir name → TP; URL fragments/port numbers/CamelCase proper nouns → FP
+
+**Methodology note:** Score-only classifications (where no structural keyword or path confirms the finding) are marked Disputed to make circular validation risk visible. The strict precision therefore represents a lower bound on true precision.
 
 ### 3.2 Results
 
 | Signal          | Sample (n) |      TP |     FP | Disputed | Precision (strict) | Precision (lenient) |
 | --------------- | ---------: | ------: | -----: | -------: | -----------------: | ------------------: |
-| PFS             |         49 |      49 |      0 |        0 |           **100%** |                100% |
-| SMS             |         19 |      18 |      0 |        1 |            **95%** |                100% |
-| TVS             |         34 |      32 |      0 |        2 |            **94%** |                100% |
-| MDS             |         51 |      47 |      0 |        4 |            **92%** |                100% |
-| EDS             |         72 |      58 |      0 |       14 |            **81%** |                100% |
-| AVS             |          5 |       1 |      0 |        4 |            **20%** |                100% |
-| DIA             |         61 |      29 |     31 |        1 |            **48%** |                 49% |
-| **All signals** |    **291** | **234** | **31** |   **26** |            **80%** |             **89%** |
+| PFS             |         48 |      48 |      0 |        0 |           **100%** |                100% |
+| EDS             |         72 |      72 |      0 |        0 |           **100%** |                100% |
+| SMS             |         21 |      21 |      0 |        0 |           **100%** |                100% |
+| MDS             |         68 |      56 |      2 |       10 |            **82%** |                 97% |
+| DIA             |         27 |      17 |      9 |        1 |            **63%** |                 67% |
+| AVS             |         20 |       6 |      4 |       10 |            **30%** |                 80% |
+| TVS             |         30 |       0 |      0 |       30 |             **0%** |                100% |
+| **All signals** |    **286** | **220** | **15** |   **51** |            **77%** |             **95%** |
+| Active only¹    |        259 |     203 |      6 |       50 |            **78%** |                 98% |
 
-**Strict precision** counts only TP as correct. **Lenient precision** counts TP + Disputed as correct.
+¹ Excludes DIA (weight 0.00). Active signals: PFS, AVS, MDS, TVS, EDS, SMS.
+
+**Strict precision** counts only TP as correct. **Lenient precision** counts TP + Disputed as correct. The large Disputed count (51) reflects the non-circular methodology: findings where only the tool's own score supports classification are conservatively marked Disputed rather than TP.
 
 ### 3.3 Interpretation
 
-**High-confidence signals (≥ 90% strict precision):** PFS, SMS, TVS, and MDS are reliable. When drift reports pattern fragmentation or near-duplicate code, the finding is almost certainly real.
+**Structurally confirmed signals (100% strict):** PFS, EDS, and SMS achieve 100% strict precision because every finding in the sample contains structural keywords that confirm the detection independently of the score. These signals are highly reliable.
 
-**Structural signals (EDS, 81%):** Explainability Deficit is structurally correct — the function is genuinely complex and undocumented — but some developers may consider this an acceptable trade-off for internal code. The 14 disputed cases were all valid detections of complex undocumented functions where the developer might argue documentation is unnecessary.
+**MDS (82% strict):** Most near-duplicate findings are structurally confirmed via "exact"/"identical" keywords or high similarity (≥ 0.85). 2 FPs are async/sync transport pairs (intentional structural duplicates). 10 Disputed findings lack structural keywords but may still be correct.
 
-**AVS (20% strict, n=5):** The small sample (only 5 AVS findings across all repos) makes this precision estimate unreliable. The 4 disputed cases were upward imports into configuration modules — technically a layer violation, but a common and accepted pattern. True circular dependencies (the 1 TP) are always actionable.
+**AVS (30% strict, n=20):** 6 true positives include circular dependencies and god-module patterns. 4 false positives are upward imports into config/settings modules — architecturally common and not harmful. 10 Disputed findings lack structural keywords. The sample size (n=20) remains below n=30 — precision estimate should be treated with caution.
 
-**DIA (48% strict):** The Doc-Implementation Drift signal has the lowest precision, with 31 false positives from URL-fragment matching. The underlying regex extracts directory-like segments from README content (e.g., `actions/`, `api/`, `badge/` from GitHub URLs) and incorrectly flags them as undocumented source directories. This confirms the decision to assign DIA a weight of 0.00 in the composite score — the signal needs a more selective extraction heuristic before it can contribute to scoring.
+**TVS (0% strict, 100% lenient):** All 30 TVS findings are classified Disputed because TVS titles do not contain structural keywords ("hotspot", "churn", "volatile"). This reflects a limitation of the non-circular classification method, not necessarily a problem with TVS detections. TVS findings may be correct but cannot be confirmed structurally from title/path alone.
 
-**Overall:** Excluding DIA, the remaining 6 active signals achieve **89% strict precision** (205/230). All 31 false positives in the entire sample come from a single signal (DIA) that does not affect the composite score.
+**DIA (63% strict):** Improved from prior estimates due to better URL-fragment filtering. 9 false positives remain from README directory references that match port numbers, script directories, or ambiguous names. DIA remains at weight 0.00 until precision improves further.
+
+**Overall:** The 77% strict / 95% lenient split reflects the conservative non-circular methodology. The 51 Disputed findings are not confirmed false positives — they are findings where only the tool's score provides evidence. Excluding DIA, the 6 active scoring signals achieve **78% strict / 98% lenient** precision (n=259, 6 FP).
 
 ---
 

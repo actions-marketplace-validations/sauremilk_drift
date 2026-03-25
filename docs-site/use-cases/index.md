@@ -157,4 +157,4 @@ violation (AVS), and mutant duplicates (MDS) — all intentionally planted.
 - [Architecture Drift Detection for Python](architecture-drift-python.md)
 - [Architectural Linter for AI Coding Teams](architectural-linter-ai-teams.md)
 - [CI Architecture Checks with SARIF](ci-architecture-checks-sarif.md)
-- [Technical Debt Detection for AI-Assisted Codebases](technical-debt-ai-codebases.md)
+- [Architectural Technical Debt in AI-Assisted Codebases](technical-debt-ai-codebases.md)

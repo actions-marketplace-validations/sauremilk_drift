@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "drift-analyzer"
 version = "0.5.0"
-description = "Detect architectural erosion, architecture degradation, and technical debt from AI-generated code with a deterministic architectural linter for AI-accelerated development"
+description = "Detect architectural erosion and cross-file coherence problems in Python repositories with a deterministic architectural linter"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
@@ -14,29 +14,22 @@ authors = [
 ]
 keywords = [
     "code-analysis",
-    "technical-debt",
-    "technical-debt-detection",
     "architecture",
     "architecture-drift",
-    "architecture-degradation",
     "architectural-erosion",
     "architectural-linter",
-    "ai-code",
-    "copilot",
-    "github-copilot",
-    "cursor",
+    "codebase-coherence",
+    "technical-debt",
     "github-action",
     "sarif",
     "static-analysis",
-    "code-quality",
-    "codebase-health",
-    "design-erosion",
+    "structural-analysis",
     "dependency-analysis",
     "monorepo",
     "dependency-cycle-detection",
     "import-analysis",
     "python-linter",
-    "architecture-enforcement",
+    "coherence-check",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -84,6 +77,7 @@ markdown = [
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
+    "pytest-timeout>=2.3",
     "mypy>=1.10",
     "ruff>=0.4",
     "mistune>=3.0",
@@ -115,6 +109,7 @@ exclude = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = "--maxfail=1 --timeout=180 --timeout-method=thread"
 markers = [
     "slow: marks tests that clone external repos (deselect with '-m \"not slow\"')",
 ]

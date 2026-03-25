@@ -262,11 +262,15 @@ class ArchitectureViolationSignal(BaseSignal):
         # Compute hub nodes for score dampening
         hub_nodes = _compute_hub_nodes(graph)
 
-        # Pre-compute transitive blast radius for internal nodes
+        # Pre-compute transitive blast radius for internal nodes.
+        # In the import graph edges go from importer → imported, so
+        # *ancestors* of a node are all modules that transitively depend
+        # on it — i.e. the set of modules affected by a change.
         blast_radius: dict[str, int] = {}
         internal_nodes = [n for n in graph.nodes if not graph.nodes.get(n, {}).get("external")]
+        internal_set = set(internal_nodes)
         for node in internal_nodes:
-            blast_radius[node] = len(nx.descendants(graph, node))
+            blast_radius[node] = len(nx.ancestors(graph, node) & internal_set)
 
         # Collect allowed_cross_layer patterns
         policies = getattr(config, "policies", None) if config else None
@@ -598,10 +602,10 @@ class ArchitectureViolationSignal(BaseSignal):
 
             # Zone of Pain: low instability (stable) + low abstraction
             # (concrete) → D ≈ 1.0 and I < 0.3
-            if distance < 0.6 or instability > 0.5:
+            if distance < 0.7 or instability > 0.5:
                 continue
             # Only flag if enough dependents to matter
-            if ca < 2:
+            if ca < 3:
                 continue
 
             score = min(1.0, round(distance * 0.7, 2))

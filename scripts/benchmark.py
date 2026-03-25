@@ -3,10 +3,35 @@
 import json
 import subprocess
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 OUT_DIR = Path(__file__).parent.parent / "benchmark_results"
 OUT_DIR.mkdir(exist_ok=True)
+
+
+def _get_head_sha(repo_path: str) -> str:
+    """Return the HEAD commit SHA of a repo, or 'unknown' on failure."""
+    try:
+        r = subprocess.run(
+            ["git", "-C", repo_path, "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        return r.stdout.strip() if r.returncode == 0 else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _get_drift_version() -> str:
+    """Return the installed drift version string."""
+    try:
+        from drift import __version__
+
+        return __version__
+    except Exception:
+        return "unknown"
 
 
 def analyze(repo_path: str, name: str) -> dict | None:
@@ -36,6 +61,9 @@ def analyze(repo_path: str, name: str) -> dict | None:
 
     summary = {
         "name": name,
+        "repo_sha": _get_head_sha(repo_path),
+        "drift_version": _get_drift_version(),
+        "analyzed_at": datetime.now(timezone.utc).isoformat(),
         "drift_score": data["drift_score"],
         "severity": data["severity"],
         "files": data["summary"]["total_files"],
@@ -87,8 +115,10 @@ def main():
     if drift_self:
         results.append(drift_self)
         print(
-            f"OK {drift_self['name']}: score={drift_self['drift_score']} sev={drift_self['severity']} "
-            f"files={drift_self['files']} findings={drift_self['findings']} {drift_self['wall_s']}s"
+            f"OK {drift_self['name']}: "
+            f"score={drift_self['drift_score']} sev={drift_self['severity']} "
+            f"files={drift_self['files']} findings={drift_self['findings']} "
+            f"{drift_self['wall_s']}s"
         )
 
     # 3) Public repos
@@ -129,8 +159,16 @@ def main():
                     f"files={result['files']} findings={result['findings']} {result['wall_s']}s"
                 )
 
-    # Combined
-    (OUT_DIR / "all_results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
+    # Combined — with reproducibility metadata
+    output = {
+        "_metadata": {
+            "drift_version": _get_drift_version(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "clone_depth": 50,
+        },
+        "results": results,
+    }
+    (OUT_DIR / "all_results.json").write_text(json.dumps(output, indent=2), encoding="utf-8")
 
     # Summary table
     print(

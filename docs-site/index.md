@@ -1,8 +1,8 @@
 # Drift — Codebase Coherence Analyzer
 
-**Surface architectural drift, architecture degradation, and technical debt patterns that often appear in fast-moving and AI-assisted codebases.**
+**Surface architectural drift, architectural erosion, and cross-file coherence problems in Python codebases.**
 
-Drift is a deterministic static analyzer and architectural linter for teams that want to catch architectural erosion before it becomes normal: fragmented patterns, boundary violations, near-duplicates, and unstable hotspots that accumulate when code is optimized for local delivery but not for global coherence. It is especially useful for repositories shaped by GitHub Copilot and other AI coding tools.
+Drift is a deterministic static analyzer and architectural linter for teams that want to catch architectural erosion before it becomes normal: fragmented patterns, boundary violations, near-duplicates, and unstable hotspots that accumulate when code is optimized for local delivery but not for global coherence. It is especially useful in fast-moving repositories, including teams that use AI coding tools.
 
 > Repo: `sauremilk/drift` · Package: `drift-analyzer` · Command: `drift` · Requires: Python 3.11+
 
@@ -30,14 +30,14 @@ If you are evaluating drift for a specific job-to-be-done, start here instead:
 - [Architecture Drift Detection for Python](use-cases/architecture-drift-python.md)
 - [Architectural Linter for AI Coding Teams](use-cases/architectural-linter-ai-teams.md)
 - [CI Architecture Checks with SARIF](use-cases/ci-architecture-checks-sarif.md)
-- [Technical Debt Detection for AI-Assisted Codebases](use-cases/technical-debt-ai-codebases.md)
+- [Architectural Technical Debt in AI-Assisted Codebases](use-cases/technical-debt-ai-codebases.md)
 
-Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and DIA kept report-only with weight 0.00 until extraction precision improves.
+Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 4 report-only signals (DIA, BEM, TPD, GCD) with weight 0.00 until extraction precision improves.
 
 ## What Drift Is Good At
 
 - surfacing architecture and coherence issues that linters do not model
-- complementing fast-moving or AI-assisted development with deterministic checks
+- complementing fast-moving development, including AI-assisted workflows, with deterministic checks
 - helping teams review hotspots, modules, and trends instead of isolated style violations
 
 ## What Drift Is Not

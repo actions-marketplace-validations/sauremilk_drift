@@ -40,7 +40,7 @@ drift analyze --repo fastapi/ --config drift.example.yaml
 
 See [drift.example.yaml](../drift.example.yaml) for all configuration options including:
 - `include` / `exclude` glob patterns
-- Signal weights (PFS, AVS, MDS, EDS, TVS, SMS, DIA)
+- Signal weights (PFS, AVS, MDS, EDS, TVS, SMS, DIA, BEM, TPD, GCD)
 - Layer boundary policies (e.g. deny `db.*` imports from `api/`)
 - Similarity and complexity thresholds
 
@@ -68,7 +68,7 @@ drift analyze --repo fastapi/ --show-suppressed
 
 ## Expected Finding Types
 
-Based on drift's 7 signal detectors, a large framework like FastAPI typically surfaces:
+Based on drift's 10 signal detectors, a large framework like FastAPI typically surfaces:
 
 | Signal | Code | What it detects |
 |--------|------|-----------------|

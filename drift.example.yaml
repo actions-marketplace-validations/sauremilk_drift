@@ -34,6 +34,9 @@ weights:
   explainability_deficit: 0.12
   doc_impl_drift: 0.00 # Report-only until README/ADR extraction is more selective
   system_misalignment: 0.10
+  broad_exception_monoculture: 0.00  # ADR-007: report-only until ablation validates
+  test_polarity_deficit: 0.00        # ADR-007: report-only until ablation validates
+  guard_clause_deficit: 0.00         # ADR-007: report-only until ablation validates
 
 # Architecture policies
 policies:

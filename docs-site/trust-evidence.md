@@ -6,15 +6,16 @@ It is designed for teams that need to answer a practical question before rollout
 
 ## Public claims safe to repeat
 
-- drift uses 6 scoring signals in the composite score
-- DIA remains report-only with weight 0.00 until extraction precision improves
+- drift uses 6 scoring signals in the composite score, plus 4 report-only signals (DIA, BEM, TPD, GCD)
+- DIA, BEM, TPD, and GCD remain report-only with weight 0.00 until extraction precision improves
 - the current study corpus covers 15 real-world repositories
 - all analysis is deterministic and does not use an LLM in the detector pipeline
 
 ## Benchmark evidence
 
-- 97.3% precision on 263 ground-truth-labeled findings across 15 repositories
-- 86% detection recall on a controlled mutation benchmark of 14 injected drift patterns
+- 80% strict precision on a score-weighted sample of 291 findings across 5 repositories (automated heuristic classification; upper-bound estimate — independent multi-rater validation pending)
+- 0 confirmed false positives for the 6 active scoring signals (n=202); all FPs from DIA (weight 0.00)
+- 86% detection rate on a controlled mutation benchmark of 14 author-designed synthetic patterns (not a population recall estimate)
 - self-analysis of drift reports a score of 0.442 (MEDIUM)
 
 These numbers are summarized from [Benchmark Study](study.md) and should be interpreted together with the limitations below.

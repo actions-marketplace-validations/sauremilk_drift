@@ -1070,6 +1070,593 @@ SMS_ML_IN_WEB_TP = GroundTruthFixture(
 )
 
 
+# ── Broad Exception Monoculture (BEM) ────────────────────────────────────
+
+BEM_TRUE_POSITIVE = GroundTruthFixture(
+    name="bem_tp",
+    description="Module with uniformly broad exception handling → should fire BEM",
+    files={
+        "connectors/__init__.py": "",
+        "connectors/db.py": """\
+            import logging
+            logger = logging.getLogger(__name__)
+
+            def get_user(uid):
+                try:
+                    return {"id": uid}
+                except Exception:
+                    logger.error("db get failed")
+        """,
+        "connectors/cache.py": """\
+            import logging
+            logger = logging.getLogger(__name__)
+
+            def invalidate(key):
+                try:
+                    return True
+                except Exception:
+                    logger.error("cache invalidate failed")
+        """,
+        "connectors/queue.py": """\
+            import logging
+            logger = logging.getLogger(__name__)
+
+            def publish(topic, msg):
+                try:
+                    return True
+                except Exception:
+                    logger.error("queue publish failed")
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BROAD_EXCEPTION_MONOCULTURE,
+            file_path="connectors/",
+            should_detect=True,
+            description="3 handlers all catch Exception + log-only",
+        ),
+    ],
+)
+
+BEM_TRUE_NEGATIVE = GroundTruthFixture(
+    name="bem_tn",
+    description="Module with specific exception handling → should NOT fire BEM",
+    files={
+        "services/__init__.py": "",
+        "services/mailer.py": """\
+            def send_email(to, subject, body):
+                try:
+                    return True
+                except ConnectionRefusedError:
+                    raise RuntimeError("SMTP down") from None
+        """,
+        "services/storage.py": """\
+            def upload(data):
+                try:
+                    return "/uploaded"
+                except FileNotFoundError as e:
+                    raise ValueError("bad path") from e
+        """,
+        "services/notifier.py": """\
+            def notify(user_id, msg):
+                try:
+                    return True
+                except TimeoutError:
+                    raise IOError("notification timeout") from None
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BROAD_EXCEPTION_MONOCULTURE,
+            file_path="services/",
+            should_detect=False,
+            description="All handlers catch specific exceptions and re-raise",
+        ),
+    ],
+)
+
+BEM_MIXED_TP = GroundTruthFixture(
+    name="bem_mixed_tp",
+    description="Module with mostly broad handlers + swallowing → should fire BEM",
+    files={
+        "adapters/__init__.py": "",
+        "adapters/http_client.py": """\
+            import logging
+            logger = logging.getLogger(__name__)
+
+            def fetch_data(url):
+                try:
+                    return {"data": []}
+                except Exception:
+                    logger.error("HTTP fetch failed")
+
+            def post_data(url, payload):
+                try:
+                    return True
+                except Exception:
+                    pass
+        """,
+        "adapters/ftp_client.py": """\
+            import logging
+            logger = logging.getLogger(__name__)
+
+            def download(host, path):
+                try:
+                    return b""
+                except Exception:
+                    logger.error("FTP download failed")
+        """,
+        "adapters/smtp_client.py": """\
+            def send(to, body):
+                try:
+                    return True
+                except Exception:
+                    pass
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BROAD_EXCEPTION_MONOCULTURE,
+            file_path="adapters/",
+            should_detect=True,
+            description="4 handlers catch Exception, all swallow (log/pass)",
+        ),
+    ],
+)
+
+BEM_BOUNDARY_TN = GroundTruthFixture(
+    name="bem_boundary_tn",
+    description="Error-boundary module with broad handlers → should NOT fire BEM",
+    files={
+        "middleware/__init__.py": "",
+        "middleware/error_handler.py": """\
+            import logging
+            logger = logging.getLogger(__name__)
+
+            def handle_request(req):
+                try:
+                    return process(req)
+                except Exception:
+                    logger.error("Request failed")
+                    return {"error": "internal"}
+        """,
+        "middleware/error_middleware.py": """\
+            import logging
+            logger = logging.getLogger(__name__)
+
+            def wrap_response(resp):
+                try:
+                    return resp
+                except Exception:
+                    logger.error("Response wrap failed")
+
+            def log_error(exc):
+                try:
+                    return str(exc)
+                except Exception:
+                    logger.error("Error logging failed")
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BROAD_EXCEPTION_MONOCULTURE,
+            file_path="middleware/",
+            should_detect=False,
+            description="Error-boundary modules are excluded by design",
+        ),
+    ],
+)
+
+
+# ── Test Polarity Deficit (TPD) ──────────────────────────────────────────
+
+TPD_TRUE_POSITIVE = GroundTruthFixture(
+    name="tpd_tp",
+    description="Test suite with only positive assertions → should fire TPD",
+    files={
+        "tests/__init__.py": "",
+        "tests/test_math.py": """\
+            def test_add():
+                assert 1 + 1 == 2
+
+            def test_sub():
+                assert 5 - 3 == 2
+
+            def test_mul():
+                assert 2 * 3 == 6
+
+            def test_div():
+                assert 10 / 2 == 5.0
+
+            def test_pow():
+                assert 2 ** 3 == 8
+
+            def test_mod():
+                assert 10 % 3 == 1
+                assert 15 % 5 == 0
+                assert 7 % 2 == 1
+                assert 9 % 4 == 1
+                assert 100 % 10 == 0
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.TEST_POLARITY_DEFICIT,
+            file_path="tests/",
+            should_detect=True,
+            description="6 test functions, 10 positive assertions, 0 negative",
+        ),
+    ],
+)
+
+TPD_TRUE_NEGATIVE = GroundTruthFixture(
+    name="tpd_tn",
+    description="Test suite with balanced positive/negative assertions → should NOT fire TPD",
+    files={
+        "tests/__init__.py": "",
+        "tests/test_validation.py": """\
+            import pytest
+
+            def test_valid_input():
+                assert validate("hello") is True
+                assert validate("world") is True
+
+            def test_invalid_raises():
+                with pytest.raises(ValueError):
+                    validate(None)
+                with pytest.raises(ValueError):
+                    validate("")
+
+            def test_edge_case():
+                assert validate("x") is True
+
+            def test_type_error():
+                with pytest.raises(TypeError):
+                    validate(42)
+
+            def test_boundary():
+                assert validate("a" * 100) is True
+
+            def test_overflow_raises():
+                with pytest.raises(OverflowError):
+                    validate("a" * 10000)
+                assert True
+                assert True
+                assert True
+                assert True
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.TEST_POLARITY_DEFICIT,
+            file_path="tests/",
+            should_detect=False,
+            description="4 negative assertions out of ~11 → ratio > 10%",
+        ),
+    ],
+)
+
+TPD_LARGE_SUITE_TP = GroundTruthFixture(
+    name="tpd_large_tp",
+    description="Large test suite with no negative tests → should fire TPD",
+    files={
+        "tests/unit/__init__.py": "",
+        "tests/__init__.py": "",
+        "tests/unit/test_models.py": """\
+            def test_create_user():
+                user = {"name": "Alice"}
+                assert user["name"] == "Alice"
+                assert "name" in user
+
+            def test_create_order():
+                order = {"id": 1, "total": 99.0}
+                assert order["id"] == 1
+                assert order["total"] == 99.0
+
+            def test_create_product():
+                prod = {"sku": "A1", "price": 10}
+                assert prod["sku"] == "A1"
+                assert prod["price"] == 10
+
+            def test_format_name():
+                assert "Alice".upper() == "ALICE"
+
+            def test_calculate_tax():
+                assert round(100 * 0.19, 2) == 19.0
+                assert round(200 * 0.19, 2) == 38.0
+
+            def test_merge_dicts():
+                a = {"x": 1}
+                b = {"y": 2}
+                merged = {**a, **b}
+                assert merged == {"x": 1, "y": 2}
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.TEST_POLARITY_DEFICIT,
+            file_path="tests/unit/",
+            should_detect=True,
+            description="6 test functions, 10 positive assertions, 0 negative",
+        ),
+    ],
+)
+
+TPD_FEW_TESTS_TN = GroundTruthFixture(
+    name="tpd_few_tests_tn",
+    description="Test suite with only 3 test functions → below threshold, should NOT fire TPD",
+    files={
+        "tests/__init__.py": "",
+        "tests/test_tiny.py": """\
+            def test_one():
+                assert True
+
+            def test_two():
+                assert 1 == 1
+
+            def test_three():
+                assert "a" == "a"
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.TEST_POLARITY_DEFICIT,
+            file_path="tests/",
+            should_detect=False,
+            description="Only 3 test functions — below min_test_functions=5 threshold",
+        ),
+    ],
+)
+
+
+# ── Guard Clause Deficit (GCD) ──────────────────────────────────────────
+
+GCD_TRUE_POSITIVE = GroundTruthFixture(
+    name="gcd_tp",
+    description="Module with unguarded complex public functions → should fire GCD",
+    files={
+        "core/__init__.py": "",
+        "core/processor.py": """\
+            def transform(data, schema, options):
+                result = []
+                for item in data:
+                    out = {}
+                    for key, spec in schema.items():
+                        val = item.get(key)
+                        if spec == "upper":
+                            out[key] = val.upper()
+                        elif spec == "lower":
+                            out[key] = val.lower()
+                        elif spec == "strip":
+                            out[key] = val.strip()
+                        else:
+                            out[key] = val
+                    if options.get("filter_key"):
+                        if out.get(options["filter_key"]):
+                            result.append(out)
+                    else:
+                        result.append(out)
+                return result
+
+            def aggregate(records, dimensions, funcs):
+                groups = {}
+                for r in records:
+                    key = tuple(r.get(d) for d in dimensions)
+                    if key not in groups:
+                        groups[key] = []
+                    groups[key].append(r)
+                out = []
+                for key, rows in groups.items():
+                    entry = dict(zip(dimensions, key))
+                    for fn in funcs:
+                        vals = [r.get(fn, 0) for r in rows]
+                        if vals:
+                            entry[fn] = sum(vals) / len(vals)
+                    out.append(entry)
+                return out
+
+            def export_report(data, columns, fmt):
+                lines = []
+                header = [str(c) for c in columns]
+                lines.append(",".join(header))
+                for row in data:
+                    cells = []
+                    for col in columns:
+                        val = row.get(col, "")
+                        if fmt == "quoted":
+                            cells.append(f'"{val}"')
+                        elif fmt == "raw":
+                            cells.append(str(val))
+                        else:
+                            cells.append(str(val).strip())
+                    lines.append(",".join(cells))
+                return "\\n".join(lines)
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.GUARD_CLAUSE_DEFICIT,
+            file_path="core/",
+            should_detect=True,
+            description="3 public functions with >=2 params, CC>=5, no guards",
+        ),
+    ],
+)
+
+GCD_TRUE_NEGATIVE = GroundTruthFixture(
+    name="gcd_tn",
+    description="Module with guarded public functions → should NOT fire GCD",
+    files={
+        "core/__init__.py": "",
+        "core/safe_processor.py": """\
+            def transform(data, schema, options):
+                if not isinstance(data, list):
+                    raise TypeError("data must be a list")
+                if not isinstance(schema, dict):
+                    raise TypeError("schema must be a dict")
+                result = []
+                for item in data:
+                    out = {}
+                    for key, spec in schema.items():
+                        val = item.get(key)
+                        if spec == "upper":
+                            out[key] = val.upper()
+                        elif spec == "lower":
+                            out[key] = val.lower()
+                        elif spec == "strip":
+                            out[key] = val.strip()
+                        else:
+                            out[key] = val
+                    result.append(out)
+                return result
+
+            def aggregate(records, dimensions, funcs):
+                if not records:
+                    return []
+                assert isinstance(dimensions, (list, tuple))
+                groups = {}
+                for r in records:
+                    key = tuple(r.get(d) for d in dimensions)
+                    if key not in groups:
+                        groups[key] = []
+                    groups[key].append(r)
+                out = []
+                for key, rows in groups.items():
+                    entry = dict(zip(dimensions, key))
+                    for fn in funcs:
+                        vals = [r.get(fn, 0) for r in rows]
+                        if vals:
+                            entry[fn] = sum(vals) / len(vals)
+                    out.append(entry)
+                return out
+
+            def export_report(data, columns, fmt):
+                if data is None:
+                    raise ValueError("data cannot be None")
+                if not columns:
+                    return ""
+                lines = []
+                header = [str(c) for c in columns]
+                lines.append(",".join(header))
+                for row in data:
+                    cells = []
+                    for col in columns:
+                        val = row.get(col, "")
+                        if fmt == "quoted":
+                            cells.append(f'"{val}"')
+                        elif fmt == "raw":
+                            cells.append(str(val))
+                        else:
+                            cells.append(str(val).strip())
+                    lines.append(",".join(cells))
+                return "\\n".join(lines)
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.GUARD_CLAUSE_DEFICIT,
+            file_path="core/",
+            should_detect=False,
+            description="All 3 functions have guard clauses in first 30% of body",
+        ),
+    ],
+)
+
+GCD_COMPLEX_TP = GroundTruthFixture(
+    name="gcd_complex_tp",
+    description="Multiple unguarded high-complexity public functions → should fire GCD",
+    files={
+        "engine/__init__.py": "",
+        "engine/pipeline.py": """\
+            def run_pipeline(stages, context, config):
+                for stage in stages:
+                    if stage["type"] == "filter":
+                        context = [c for c in context if stage["fn"](c)]
+                    elif stage["type"] == "map":
+                        context = [stage["fn"](c) for c in context]
+                    elif stage["type"] == "reduce":
+                        val = context[0]
+                        for c in context[1:]:
+                            val = stage["fn"](val, c)
+                        context = [val]
+                    elif stage["type"] == "sort":
+                        context = sorted(context, key=stage.get("key"))
+                    else:
+                        context = list(context)
+                return context
+
+            def validate_schema(data, rules, strict):
+                errors = []
+                for key, rule in rules.items():
+                    val = data.get(key)
+                    if rule == "required" and val is None:
+                        errors.append(f"{key} is required")
+                    elif rule == "int" and not isinstance(val, int):
+                        errors.append(f"{key} must be int")
+                    elif rule == "str" and not isinstance(val, str):
+                        errors.append(f"{key} must be str")
+                    elif rule == "positive" and (not isinstance(val, (int, float)) or val <= 0):
+                        errors.append(f"{key} must be positive")
+                    else:
+                        pass
+                if strict and errors:
+                    raise ValueError(errors)
+                return errors
+
+            def build_response(result, headers, status):
+                body = {}
+                for key in result:
+                    if isinstance(result[key], list):
+                        body[key] = len(result[key])
+                    elif isinstance(result[key], dict):
+                        body[key] = list(result[key].keys())
+                    elif isinstance(result[key], str):
+                        body[key] = result[key][:100]
+                    else:
+                        body[key] = result[key]
+                for h_key, h_val in headers.items():
+                    if h_key.startswith("X-"):
+                        body[f"header_{h_key}"] = h_val
+                return {"status": status, "body": body}
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.GUARD_CLAUSE_DEFICIT,
+            file_path="engine/",
+            should_detect=True,
+            description="3 public functions, all unguarded, high complexity",
+        ),
+    ],
+)
+
+GCD_SIMPLE_TN = GroundTruthFixture(
+    name="gcd_simple_tn",
+    description="Public functions with low complexity → below CC threshold, should NOT fire GCD",
+    files={
+        "utils/__init__.py": "",
+        "utils/helpers.py": """\
+            def add(a, b):
+                return a + b
+
+            def multiply(a, b):
+                return a * b
+
+            def format_name(first, last):
+                return f"{first} {last}"
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.GUARD_CLAUSE_DEFICIT,
+            file_path="utils/",
+            should_detect=False,
+            description="All functions have complexity < 5",
+        ),
+    ],
+)
+
+
 # ── Registry of all fixtures ─────────────────────────────────────────────
 
 ALL_FIXTURES: list[GroundTruthFixture] = [
@@ -1098,6 +1685,18 @@ ALL_FIXTURES: list[GroundTruthFixture] = [
     DIA_TRUE_NEGATIVE,
     DIA_ADR_MISMATCH_TP,
     DIA_ADR_FILE_TP,
+    BEM_TRUE_POSITIVE,
+    BEM_TRUE_NEGATIVE,
+    BEM_MIXED_TP,
+    BEM_BOUNDARY_TN,
+    TPD_TRUE_POSITIVE,
+    TPD_TRUE_NEGATIVE,
+    TPD_LARGE_SUITE_TP,
+    TPD_FEW_TESTS_TN,
+    GCD_TRUE_POSITIVE,
+    GCD_TRUE_NEGATIVE,
+    GCD_COMPLEX_TP,
+    GCD_SIMPLE_TN,
 ]
 
 FIXTURES_BY_SIGNAL: dict[SignalType, list[GroundTruthFixture]] = {}

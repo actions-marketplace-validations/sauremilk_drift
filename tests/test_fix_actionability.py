@@ -48,10 +48,12 @@ ACTION_VERBS = re.compile(
     r"[Vv]erschiebe|[Aa]nleg[en]|[Ii]mportiere|[Ss]telle\s+sicher|"
     r"[Ee]rstelle|[Hh]inzuf\u00fcgen|[Aa]ktualisiere|[Bb]ehalte|"
     r"[Ee]xtrahiere|[Rr]eduziere|[Ss]tabilisiere|[Ee]rh\u00f6he|"
+    r"[Ee]ntkopple|[Uu]ntersuche|[Bb]reche|[Tt]eile|[Ee]rg\u00e4nze|"
     # English
     r"[Rr]emove|[Aa]dd|[Ee]xtract|[Cc]onsolidate|[Ss]plit|[Mm]ove|"
     r"[Rr]efactor|[Rr]eplace|[Ii]ntroduce|[Cc]reate|[Dd]elete|"
-    r"[Mm]erge|[Ii]nline|[Ww]rap|[Uu]nify|[Cc]ombine"
+    r"[Mm]erge|[Ii]nline|[Ww]rap|[Uu]nify|[Cc]ombine|"
+    r"[Dd]ifferentiate|[Cc]atch"
     r")\b",
     re.UNICODE,
 )
@@ -297,9 +299,9 @@ class TestFixTextActionability:
     def test_self_analysis_actionability_rate(
         self, self_analysis_findings: list[Finding]
     ) -> None:
-        """On drift's own codebase: >=75% of fix texts should be actionable.
+        """On drift's own codebase: >=90% of fix texts should be actionable.
 
-        Baseline (2026-03): 76%. Target: 90%.
+        Baseline (2026-03): 76%. Achieved (2026-03): 100%.
         Track this metric over time — improving fix-text quality directly
         impacts customer trust.
         """
@@ -309,8 +311,8 @@ class TestFixTextActionability:
 
         actionable_count = sum(1 for f in with_fix if _is_actionable(f.fix)[0])
         rate = actionable_count / len(with_fix)
-        assert rate >= 0.75, (
-            f"Actionability rate {rate:.0%} < 75% ({actionable_count}/{len(with_fix)})"
+        assert rate >= 0.90, (
+            f"Actionability rate {rate:.0%} < 90% ({actionable_count}/{len(with_fix)})"
         )
 
     def test_no_fix_is_purely_vague(self, fixture_findings: list[Finding]) -> None:

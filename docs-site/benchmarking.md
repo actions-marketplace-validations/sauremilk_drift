@@ -49,7 +49,7 @@ Use a three-level answer to avoid mixing taxonomy size with tool coverage:
 
 1. **Research taxonomy level:** literature reports hundreds of named architecture smells (for example, 549 names condensed to 19 essential categories in one mapping study).
 2. **Static determinism level:** only a subset is deterministically detectable with static analysis; runtime-only and intent-only violations are outside this boundary.
-3. **Drift modeling level:** drift currently models 7 signal families (6 scoring + 1 report-only), covering a subset of cross-file erosion patterns with strong reproducibility.
+3. **Drift modeling level:** drift currently models 10 signal families (6 scoring + 4 report-only), covering a subset of cross-file erosion patterns with strong reproducibility.
 
 This means a large research count does **not** imply that all patterns are statically detectable, and static detectability does **not** imply that all detectable patterns are already modeled in drift.
 

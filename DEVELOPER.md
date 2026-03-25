@@ -23,20 +23,20 @@ ingestion/          signals/            scoring/           output/
 ┌──────────────┐    ┌──────────────┐    ┌─────────────┐    ┌─────────────┐
 │ file_discovery│───▶│ PFS  AVS  MDS│───▶│ composite   │───▶│ rich (CLI)  │
 │ ast_parser   │    │ EDS  TVS  SMS│    │ score       │    │ json        │
-│ ts_parser    │    │ DIA          │    │ impact      │    │ sarif       │
-│ git_history  │───▶│              │    │ module      │    │             │
+│ ts_parser    │    │ DIA  BEM  TPD│    │ impact      │    │ sarif       │
+│ git_history  │───▶│ GCD          │    │ module      │    │             │
 └──────────────┘    └──────────────┘    └─────────────┘    └─────────────┘
      Parse              Detect              Score              Format
 ```
 
-**Data flow:** File Discovery → AST Parsing (parallel, cached) + Git History (concurrent) → 7 Signals → Composite Scoring → Output Rendering
+**Data flow:** File Discovery → AST Parsing (parallel, cached) + Git History (concurrent) → 10 Signals (6 scoring + 4 report-only) → Composite Scoring → Output Rendering
 
 **Key directories:**
 
 | Directory | Purpose |
 |---|---|
 | `src/drift/ingestion/` | File discovery, AST parsing (Python + TypeScript), git log parsing |
-| `src/drift/signals/` | 7 detection signals, each implementing `BaseSignal` |
+| `src/drift/signals/` | 10 detection signals, each implementing `BaseSignal` |
 | `src/drift/scoring/` | Weighted composite score, severity gating, module scores |
 | `src/drift/output/` | Rich terminal dashboard, JSON, SARIF formatters |
 | `src/drift/commands/` | Click CLI subcommands |
@@ -45,7 +45,7 @@ ingestion/          signals/            scoring/           output/
 
 ---
 
-## Signals (7 detectors)
+## Signals (10 detectors)
 
 | Abbrev | Signal | Detects |
 |--------|--------|---------|
@@ -56,6 +56,9 @@ ingestion/          signals/            scoring/           output/
 | **TVS** | Temporal Volatility | Unusually high churn in recent commits |
 | **SMS** | System Misalignment | Module-level structural inconsistencies |
 | **DIA** | Doc-Implementation Drift | Documentation claims that diverge from code |
+| **BEM** | Broad Exception Monoculture | Uniform broad exception handling across a module |
+| **TPD** | Test Polarity Deficit | Test suites lacking negative / failure path tests |
+| **GCD** | Guard Clause Deficit | Public functions uniformly missing early guards |
 
 Adding a new signal: see [CONTRIBUTING.md → Adding a new signal](CONTRIBUTING.md#adding-a-new-signal).
 
