@@ -145,5 +145,4 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 check_untyped_defs = true
-# Existing errors captured in mypy_baseline.txt — new code must pass clean.
-# To regenerate baseline: mypy src/drift --ignore-missing-imports 2>mypy_baseline.txt
+# CI and pre-push run mypy on src/drift directly; keep type checks clean.

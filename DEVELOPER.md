@@ -132,7 +132,7 @@ drift badge      Generate shields.io badge URL
 | Windows UTF-8 crashes in Rich output | Handled automatically in `commands/__init__.py` |
 | Tests fail with `exit 128` (not a git repository) | pre-push hook unsets `GIT_DIR` — ensure hooks are active: `git config core.hooksPath .githooks` |
 | `sentence-transformers` not found | Install with `pip install -e ".[embeddings]"` or use `--no-embeddings` flag |
-| mypy baseline errors | Known errors in `mypy_baseline.txt` — new code must be clean |
+| mypy failures | Run `python -m mypy src/drift` locally; CI and pre-push enforce a clean type check |
 
 ---
 
