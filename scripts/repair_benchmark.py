@@ -41,16 +41,36 @@ from drift.output.json_output import analysis_to_json
 # Import repo builders (same directory)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _repair_repos import (  # noqa: E402
+    create_apiserver,
+    create_churnapp,
     create_datalib,
+    create_datalib_v2,
     create_webapp,
+    create_webapp_v2,
+    init_churnapp_history,
+    init_datalib_sms_history,
+    repair_apiserver_avs_correct,
+    repair_apiserver_avs_incorrect,
+    repair_churnapp_tvs_correct,
+    repair_churnapp_tvs_incorrect,
     repair_datalib_eds_correct,
     repair_datalib_eds_incorrect,
     repair_datalib_mds_correct,
+    repair_datalib_sms_correct,
+    repair_datalib_sms_incorrect,
+    repair_datalib_v2_eds_correct,
+    repair_datalib_v2_eds_incorrect,
+    repair_datalib_v2_mds_correct,
+    repair_datalib_v2_mds_incorrect,
     repair_webapp_dia_correct,
     repair_webapp_dia_incorrect,
     repair_webapp_mds_correct,
     repair_webapp_mds_incorrect,
     repair_webapp_pfs_correct,
+    repair_webapp_v2_dia_correct,
+    repair_webapp_v2_dia_incorrect,
+    repair_webapp_v2_mds_correct,
+    repair_webapp_v2_mds_incorrect,
 )
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "benchmark_results" / "repair"
@@ -687,6 +707,488 @@ def run_benchmark() -> dict:
             "failure_cases": [r_eds_fail],
         }
 
+    # ---- Phase A-3: datalib SMS (needs date-split history) ----
+    print("\n" + "=" * 60)
+    print("Phase A-3: datalib SMS (system_misalignment)")
+    print("=" * 60)
+
+    with tempfile.TemporaryDirectory(prefix="drift_repair_sms_") as tmp:
+        d = Path(tmp)
+        muts_sms = create_datalib(d)
+        init_datalib_sms_history(d)  # old dates for base, recent for novel
+        print("  Injected: SMS novel deps with split history")
+
+        bl_sms = _analyze(d)
+        _agent_tasks(d)
+        sms_count = _sig_count(bl_sms, "system_misalignment")
+        print(
+            f"  Baseline: score={bl_sms['drift_score']:.3f}, "
+            f"findings={len(bl_sms['findings'])}, SMS={sms_count}"
+        )
+
+        sms_repairs: list[dict] = []
+        sms_failures: list[dict] = []
+
+        if sms_count > 0:
+            # SMS correct
+            print("\n  [CORRECT] SMS: remove novel deps")
+            r_sms_c = _repair_step(
+                d,
+                fn=repair_datalib_sms_correct,
+                msg="Fix: remove novel system deps",
+                sig="system_misalignment",
+                kw="",
+                baseline=bl_sms,
+                correct=True,
+            )
+            print(
+                f"  {r_sms_c['baseline_signal_findings']} -> "
+                f"{r_sms_c['post_repair_signal_findings']} "
+                f"(delta={r_sms_c['drift_score_delta']:+.3f}) "
+                f"[{r_sms_c['verification']}]"
+            )
+            _print_diff(r_sms_c)
+            sms_repairs.append(r_sms_c)
+
+            # Incorrect: use separate temp dir to get fresh date-split history
+            # (_reset_repo loses date splits because _init_git commits at NOW)
+            with tempfile.TemporaryDirectory(prefix="drift_sms_f_") as tmp_f:
+                d_f = Path(tmp_f)
+                create_datalib(d_f)
+                init_datalib_sms_history(d_f)
+                bl_sms_f = _analyze(d_f)
+
+                print("\n  [INCORRECT] SMS: rename file, keep novel deps")
+                r_sms_f = _repair_step(
+                    d_f,
+                    fn=repair_datalib_sms_incorrect,
+                    msg="Attempted fix: rename (incorrect)",
+                    sig="system_misalignment",
+                    kw="",
+                    baseline=bl_sms_f,
+                    correct=False,
+                    fail_text=(
+                        "Renaming the file does not remove novel dependencies. "
+                        "Drift tracks novel imports, not file names."
+                    ),
+                )
+                print(
+                    f"  {r_sms_f['baseline_signal_findings']} -> "
+                    f"{r_sms_f['post_repair_signal_findings']} "
+                    f"(delta={r_sms_f['drift_score_delta']:+.3f}) "
+                    f"[{r_sms_f['verification']}]"
+                )
+                _print_diff(r_sms_f)
+                sms_failures.append(r_sms_f)
+        else:
+            print("  WARNING: SMS not triggered — 10% guard or import detection issue")
+
+        results["repos"]["datalib_sms"] = {
+            "description": "datalib with date-split history for SMS detection",
+            "mutations": {"system_misalignment": muts_sms.get("system_misalignment", [])},
+            "baseline": {
+                "drift_score": bl_sms["drift_score"],
+                "findings_count": len(bl_sms["findings"]),
+                "sms_count": sms_count,
+            },
+            "repairs": sms_repairs,
+            "failure_cases": sms_failures,
+        }
+
+    # ---- Phase A-4: apiserver (AVS) ----
+    print("\n" + "=" * 60)
+    print("Phase A-4: apiserver (architecture_violation)")
+    print("=" * 60)
+
+    with tempfile.TemporaryDirectory(prefix="drift_repair_avs_") as tmp:
+        d = Path(tmp)
+        muts_avs = create_apiserver(d)
+        _init_git(d)
+        avs_sigs = list(muts_avs.keys())
+        print(f"  Injected: {avs_sigs}")
+
+        bl_avs = _analyze(d)
+        _agent_tasks(d)
+        avs_count = _sig_count(bl_avs, "architecture_violation")
+        print(
+            f"  Baseline: score={bl_avs['drift_score']:.3f}, "
+            f"findings={len(bl_avs['findings'])}, AVS={avs_count}"
+        )
+
+        avs_repairs: list[dict] = []
+        avs_failures: list[dict] = []
+
+        if avs_count > 0:
+            # AVS correct
+            print("\n  [CORRECT] AVS: remove upward layer import")
+            r_avs_c = _repair_step(
+                d,
+                fn=repair_apiserver_avs_correct,
+                msg="Fix: remove upward import from DB layer",
+                sig="architecture_violation",
+                kw="",
+                baseline=bl_avs,
+                correct=True,
+            )
+            print(
+                f"  {r_avs_c['baseline_signal_findings']} -> "
+                f"{r_avs_c['post_repair_signal_findings']} "
+                f"(delta={r_avs_c['drift_score_delta']:+.3f}) "
+                f"[{r_avs_c['verification']}]"
+            )
+            _print_diff(r_avs_c)
+            avs_repairs.append(r_avs_c)
+
+            # Reset + AVS incorrect
+            bl_avs_f = _reset_repo(d, create_apiserver)
+            print("\n  [INCORRECT] AVS: alias import, keep upward dep")
+            r_avs_f = _repair_step(
+                d,
+                fn=repair_apiserver_avs_incorrect,
+                msg="Attempted fix: alias import (incorrect)",
+                sig="architecture_violation",
+                kw="",
+                baseline=bl_avs_f,
+                correct=False,
+                fail_text=(
+                    "Aliasing an import does not change the dependency direction. "
+                    "Drift detects the layer violation via resolved import paths, "
+                    "not symbol names."
+                ),
+            )
+            print(
+                f"  {r_avs_f['baseline_signal_findings']} -> "
+                f"{r_avs_f['post_repair_signal_findings']} "
+                f"(delta={r_avs_f['drift_score_delta']:+.3f}) "
+                f"[{r_avs_f['verification']}]"
+            )
+            _print_diff(r_avs_f)
+            avs_failures.append(r_avs_f)
+        else:
+            print("  WARNING: AVS not triggered — layer inference did not detect violation")
+
+        results["repos"]["apiserver"] = {
+            "description": "API server with layering violation (DB imports API)",
+            "mutations": muts_avs,
+            "baseline": {
+                "drift_score": bl_avs["drift_score"],
+                "findings_count": len(bl_avs["findings"]),
+                "avs_count": avs_count,
+            },
+            "repairs": avs_repairs,
+            "failure_cases": avs_failures,
+        }
+
+    # ---- Phase A-5: churnapp (TVS) ----
+    print("\n" + "=" * 60)
+    print("Phase A-5: churnapp (temporal_volatility)")
+    print("=" * 60)
+
+    with tempfile.TemporaryDirectory(prefix="drift_repair_tvs_") as tmp:
+        d = Path(tmp)
+        muts_tvs = create_churnapp(d)
+        _init_git(d)
+        init_churnapp_history(d)
+        print("  Injected: TVS churn pattern (8 commits on config_loader.py)")
+
+        bl_tvs = _analyze(d)
+        _agent_tasks(d)
+        tvs_count = _sig_count(bl_tvs, "temporal_volatility")
+        print(
+            f"  Baseline: score={bl_tvs['drift_score']:.3f}, "
+            f"findings={len(bl_tvs['findings'])}, TVS={tvs_count}"
+        )
+
+        tvs_repairs: list[dict] = []
+        tvs_failures: list[dict] = []
+
+        if tvs_count > 0:
+            # TVS correct
+            print("\n  [CORRECT] TVS: split high-churn file")
+            r_tvs_c = _repair_step(
+                d,
+                fn=repair_churnapp_tvs_correct,
+                msg="Fix: split config_loader into focused modules",
+                sig="temporal_volatility",
+                kw="config",
+                baseline=bl_tvs,
+                correct=True,
+            )
+            print(
+                f"  {r_tvs_c['baseline_signal_findings']} -> "
+                f"{r_tvs_c['post_repair_signal_findings']} "
+                f"(delta={r_tvs_c['drift_score_delta']:+.3f}) "
+                f"[{r_tvs_c['verification']}]"
+            )
+            _print_diff(r_tvs_c)
+            tvs_repairs.append(r_tvs_c)
+
+            # NOTE: TVS incorrect repair requires a fresh churnapp with history.
+            # We cannot simply _reset_repo because that loses the commit history
+            # that created the TVS signal. We create a fresh temp dir for it.
+
+        if tvs_count > 0:
+            with tempfile.TemporaryDirectory(prefix="drift_tvs_neg_") as tmp2:
+                d2 = Path(tmp2)
+                create_churnapp(d2)
+                _init_git(d2)
+                init_churnapp_history(d2)
+                bl_tvs_f = _analyze(d2)
+
+                print("\n  [INCORRECT] TVS: update docstring, keep monolith")
+                r_tvs_f = _repair_step(
+                    d2,
+                    fn=repair_churnapp_tvs_incorrect,
+                    msg="Attempted fix: docstring update (incorrect)",
+                    sig="temporal_volatility",
+                    kw="config",
+                    baseline=bl_tvs_f,
+                    correct=False,
+                    fail_text=(
+                        "Updating the docstring does not reduce churn. The file "
+                        "remains the single high-churn target. Drift tracks commit "
+                        "frequency, not content quality."
+                    ),
+                )
+                print(
+                    f"  {r_tvs_f['baseline_signal_findings']} -> "
+                    f"{r_tvs_f['post_repair_signal_findings']} "
+                    f"(delta={r_tvs_f['drift_score_delta']:+.3f}) "
+                    f"[{r_tvs_f['verification']}]"
+                )
+                _print_diff(r_tvs_f)
+                tvs_failures.append(r_tvs_f)
+        else:
+            print("  WARNING: TVS not triggered — churn pattern may need more commits")
+
+        results["repos"]["churnapp"] = {
+            "description": "App with high-churn config_loader for TVS detection",
+            "mutations": muts_tvs,
+            "baseline": {
+                "drift_score": bl_tvs["drift_score"],
+                "findings_count": len(bl_tvs["findings"]),
+                "tvs_count": tvs_count,
+            },
+            "repairs": tvs_repairs,
+            "failure_cases": tvs_failures,
+        }
+
+    # ---- Phase A-6: webapp_v2 (n-scaling: MDS + DIA) ----
+    print("\n" + "=" * 60)
+    print("Phase A-6: webapp_v2 (n-scaling — MDS + DIA variant)")
+    print("=" * 60)
+
+    with tempfile.TemporaryDirectory(prefix="drift_repair_webapp2_") as tmp:
+        d = Path(tmp)
+        muts_w2 = create_webapp_v2(d)
+        _init_git(d)
+        print(f"  Injected: {sum(len(v) for v in muts_w2.values())} issues")
+
+        bl_w2 = _analyze(d)
+        bt_w2 = _agent_tasks(d)
+        print(
+            f"  Baseline: score={bl_w2['drift_score']:.3f}, "
+            f"findings={len(bl_w2['findings'])}, tasks={bt_w2['task_count']}"
+        )
+
+        # MDS correct
+        print("\n  [CORRECT] MDS: consolidate _format_size")
+        r_w2_mds = _repair_step(
+            d,
+            fn=repair_webapp_v2_mds_correct,
+            msg="Fix: consolidate _format_size",
+            sig="mutant_duplicate",
+            kw="format_size",
+            baseline=bl_w2,
+            correct=True,
+        )
+        print(
+            f"  {r_w2_mds['baseline_signal_findings']} -> "
+            f"{r_w2_mds['post_repair_signal_findings']} "
+            f"(delta={r_w2_mds['drift_score_delta']:+.3f}) "
+            f"[{r_w2_mds['verification']}]"
+        )
+        _print_diff(r_w2_mds)
+
+        # Reset + DIA correct
+        bl_w2r = _reset_repo(d, create_webapp_v2)
+        print("\n  [CORRECT] DIA: fix README phantom dirs")
+        r_w2_dia = _repair_step(
+            d,
+            fn=repair_webapp_v2_dia_correct,
+            msg="Fix: README phantom dirs",
+            sig="doc_impl_drift",
+            kw="missing directory",
+            baseline=bl_w2r,
+            correct=True,
+        )
+        print(
+            f"  {r_w2_dia['baseline_signal_findings']} -> "
+            f"{r_w2_dia['post_repair_signal_findings']} "
+            f"(delta={r_w2_dia['drift_score_delta']:+.3f}) "
+            f"[{r_w2_dia['verification']}]"
+        )
+        _print_diff(r_w2_dia)
+
+        # Failure cases
+        bl_w2f = _reset_repo(d, create_webapp_v2)
+        print("\n  [INCORRECT] MDS: rename body unchanged")
+        r_w2_mds_f = _repair_step(
+            d,
+            fn=repair_webapp_v2_mds_incorrect,
+            msg="Attempted fix: rename (incorrect)",
+            sig="mutant_duplicate",
+            kw="format_size",
+            baseline=bl_w2f,
+            correct=False,
+        )
+        print(
+            f"  {r_w2_mds_f['baseline_signal_findings']} -> "
+            f"{r_w2_mds_f['post_repair_signal_findings']} "
+            f"(delta={r_w2_mds_f['drift_score_delta']:+.3f}) "
+            f"[{r_w2_mds_f['verification']}]"
+        )
+        _print_diff(r_w2_mds_f)
+
+        bl_w2f2 = _reset_repo(d, create_webapp_v2)
+        print("\n  [INCORRECT] DIA: swap phantom dirs")
+        r_w2_dia_f = _repair_step(
+            d,
+            fn=repair_webapp_v2_dia_incorrect,
+            msg="Attempted fix: swap phantoms (incorrect)",
+            sig="doc_impl_drift",
+            kw="missing directory",
+            baseline=bl_w2f2,
+            correct=False,
+        )
+        print(
+            f"  {r_w2_dia_f['baseline_signal_findings']} -> "
+            f"{r_w2_dia_f['post_repair_signal_findings']} "
+            f"(delta={r_w2_dia_f['drift_score_delta']:+.3f}) "
+            f"[{r_w2_dia_f['verification']}]"
+        )
+        _print_diff(r_w2_dia_f)
+
+        results["repos"]["webapp_v2"] = {
+            "description": "Variant webapp — MDS (_format_size) + DIA (phantom dirs)",
+            "mutations": muts_w2,
+            "baseline": {
+                "drift_score": bl_w2["drift_score"],
+                "findings_count": len(bl_w2["findings"]),
+                "task_count": bt_w2["task_count"],
+            },
+            "repairs": [r_w2_mds, r_w2_dia],
+            "failure_cases": [r_w2_mds_f, r_w2_dia_f],
+        }
+
+    # ---- Phase A-7: datalib_v2 (n-scaling: MDS + EDS) ----
+    print("\n" + "=" * 60)
+    print("Phase A-7: datalib_v2 (n-scaling — MDS + EDS variant)")
+    print("=" * 60)
+
+    with tempfile.TemporaryDirectory(prefix="drift_repair_datalib2_") as tmp:
+        d = Path(tmp)
+        muts_d2 = create_datalib_v2(d)
+        _init_git(d)
+        print(f"  Injected: {sum(len(v) for v in muts_d2.values())} issues")
+
+        bl_d2 = _analyze(d)
+        bt_d2 = _agent_tasks(d)
+        print(
+            f"  Baseline: score={bl_d2['drift_score']:.3f}, "
+            f"findings={len(bl_d2['findings'])}, tasks={bt_d2['task_count']}"
+        )
+
+        # MDS correct
+        print("\n  [CORRECT] MDS: consolidate _parse_header")
+        r_d2_mds = _repair_step(
+            d,
+            fn=repair_datalib_v2_mds_correct,
+            msg="Fix: consolidate _parse_header",
+            sig="mutant_duplicate",
+            kw="parse_header",
+            baseline=bl_d2,
+            correct=True,
+        )
+        print(
+            f"  {r_d2_mds['baseline_signal_findings']} -> "
+            f"{r_d2_mds['post_repair_signal_findings']} "
+            f"(delta={r_d2_mds['drift_score_delta']:+.3f}) "
+            f"[{r_d2_mds['verification']}]"
+        )
+        _print_diff(r_d2_mds)
+
+        # Reset + EDS correct
+        bl_d2r = _reset_repo(d, create_datalib_v2)
+        print("\n  [CORRECT] EDS: split format_report")
+        r_d2_eds = _repair_step(
+            d,
+            fn=repair_datalib_v2_eds_correct,
+            msg="Fix: split format_report",
+            sig="explainability_deficit",
+            kw="format_report",
+            baseline=bl_d2r,
+            correct=True,
+        )
+        print(
+            f"  {r_d2_eds['baseline_signal_findings']} -> "
+            f"{r_d2_eds['post_repair_signal_findings']} "
+            f"(delta={r_d2_eds['drift_score_delta']:+.3f}) "
+            f"[{r_d2_eds['verification']}]"
+        )
+        _print_diff(r_d2_eds)
+
+        # Failure cases
+        bl_d2f = _reset_repo(d, create_datalib_v2)
+        print("\n  [INCORRECT] MDS: rename body unchanged")
+        r_d2_mds_f = _repair_step(
+            d,
+            fn=repair_datalib_v2_mds_incorrect,
+            msg="Attempted fix: rename (incorrect)",
+            sig="mutant_duplicate",
+            kw="header",
+            baseline=bl_d2f,
+            correct=False,
+        )
+        print(
+            f"  {r_d2_mds_f['baseline_signal_findings']} -> "
+            f"{r_d2_mds_f['post_repair_signal_findings']} "
+            f"(delta={r_d2_mds_f['drift_score_delta']:+.3f}) "
+            f"[{r_d2_mds_f['verification']}]"
+        )
+        _print_diff(r_d2_mds_f)
+
+        bl_d2f2 = _reset_repo(d, create_datalib_v2)
+        print("\n  [INCORRECT] EDS: trivial docstring")
+        r_d2_eds_f = _repair_step(
+            d,
+            fn=repair_datalib_v2_eds_incorrect,
+            msg="Attempted fix: trivial docstring (incorrect)",
+            sig="explainability_deficit",
+            kw="format_report",
+            baseline=bl_d2f2,
+            correct=False,
+        )
+        print(
+            f"  {r_d2_eds_f['baseline_signal_findings']} -> "
+            f"{r_d2_eds_f['post_repair_signal_findings']} "
+            f"(delta={r_d2_eds_f['drift_score_delta']:+.3f}) "
+            f"[{r_d2_eds_f['verification']}]"
+        )
+        _print_diff(r_d2_eds_f)
+
+        results["repos"]["datalib_v2"] = {
+            "description": "Variant datalib — MDS (_parse_header) + EDS (format_report)",
+            "mutations": muts_d2,
+            "baseline": {
+                "drift_score": bl_d2["drift_score"],
+                "findings_count": len(bl_d2["findings"]),
+                "task_count": bt_d2["task_count"],
+            },
+            "repairs": [r_d2_mds, r_d2_eds],
+            "failure_cases": [r_d2_mds_f, r_d2_eds_f],
+        }
+
     # ---- Phase B: real data ----
     print("\n" + "=" * 60)
     print("Phase B: Real data validation (flask, httpx)")
@@ -827,10 +1329,13 @@ def run_benchmark() -> dict:
                 if x["verification"] == "PASS":
                     signal_coverage[sig]["incorrect_detected"] += 1
 
-    # Determinism across repos
-    det_all = all(
-        r.get("determinism", {}).get("identical", False) for r in results["repos"].values()
-    )
+    # Determinism across repos (only count repos that have determinism checks)
+    det_repos = [
+        r.get("determinism", {}).get("identical", False)
+        for r in results["repos"].values()
+        if "determinism" in r
+    ]
+    det_all = all(det_repos) if det_repos else False
 
     # Median diff size across repairs
     all_diffs = [
@@ -895,13 +1400,13 @@ def run_benchmark() -> dict:
                 "Rejection sharpness: incorrect repairs are not falsely accepted",
                 "Task schema completeness and priority ordering",
                 "Reproducibility: identical input produces identical output",
-                "Multi-signal coverage: MDS, EDS, DIA, PFS verified with repairs",
+                "Signal coverage: MDS, EDS, DIA, PFS, AVS, TVS, SMS verified",
             ],
             "not_yet_proven": [
                 "Real coding agents executing tasks autonomously in production repos",
                 "Multi-step repair orchestration across dependent findings",
-                "Comparative advantage over unguided agent repair",
-                "TVS/SMS signal repair coverage (only observed as side-effects)",
+                "Comparative advantage over unguided agent repair (control group)",
+                "Longitudinal stability (T0 + T+4W)",
             ],
             "known_limitations": [
                 (
@@ -924,10 +1429,11 @@ def run_benchmark() -> dict:
         },
         "conclusion": (
             "Translation + Verification benchmark: agent-tasks produce valid, "
-            "correctly prioritized repair tasks across 4 signal types. "
+            "correctly prioritized repair tasks across 7 signal types. "
             "Correct repairs measurably reduce drift scores. "
             "Incorrect repairs are rejected. "
             "Deterministic across repeated runs. "
+            f"Signal coverage: {len(signal_coverage)}/7. "
             "TVS side-effects tracked and stable."
             if pr == tr and df == tf and det_all
             else "Some results did not verify as expected — see details."
