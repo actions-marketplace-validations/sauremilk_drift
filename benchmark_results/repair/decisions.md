@@ -145,3 +145,82 @@ Signal, nicht nur den Gesamt-Score, und (b) Git-Diff-Statistiken
 Effekt.  Diff-Größe zeigt operative Realisierbarkeit: Ein Agent der
 3 Dateien und 28 Zeilen ändern muss, ist operationell anders als einer
 der 50 Dateien braucht.
+
+## D13: TVS-Side-Effects als bekannte Limitation
+
+**Decision**: TVS-Side-Effects (Temporal Volatility durch Repair-Commits)
+werden explizit als `known_limitation` in `claim_boundary` dokumentiert
+und durch einen dedizierten Phase-C-Kaskadentest kontrolliert.
+
+**Reason**: Jede MDS-Reparatur erzeugt einen Git-Commit.  Der Commit
+verändert die Git-Historie und kann neue `temporal_volatility`-Findings
+erzeugen.  Das ist kein Bug im Benchmark, sondern eine reale Eigenschaft
+von Drift: temporale Signale reagieren auf Codeänderungen.  Ein Agent
+der sequentiell repariert, muss damit rechnen.
+
+Der Kaskadentest (Phase C) zeigt:
+- TVS-Findings treten nach Repair-Commits auf (erwartetes Verhalten)
+- Sie divergieren nicht unbegrenzt (kein Kaskaden-Risiko)
+- Aber sie verzerren das Gesamt-Score-Delta einzelner Reparaturen
+
+Nicht als Bug, sondern als dokumentierte Eigenschaft behandelt.
+
+## D14: EDS-Verifikations-Semantik klargestellt
+
+**Decision**: Das Feld `finding_resolved` wird zu
+`targeted_finding_resolved` umbenannt.  Zusätzlich wird
+`net_finding_delta` (Differenz der Finding-Counts vor/nach Repair)
+erfasst.  Wenn das gezielte Finding verschwunden ist aber der
+Signal-Finding-Count gleich bleibt, wird ein `side_effect_note`
+hinzugefügt.
+
+**Reason**: Das bisherige `finding_resolved: true` bei
+`post_repair_signal_findings: 1` war für externe Prüfer verwirrend.
+Es entstand, weil das EDS-Repair das gezielte Finding (transform_records
+mit hoher Komplexität) tatsächlich beseitigt, aber ein neues, niedrigeres
+EDS-Finding für verbleibende Komplexität (z.B. Parameteranzahl) entsteht.
+
+Die neue Semantik macht den Unterschied explizit:
+- `targeted_finding_resolved`: Das spezifische Finding ist weg
+- `net_finding_delta`: Gesamtveränderung der Signal-Finding-Anzahl
+- `side_effect_note`: Erklärung wenn beides divergiert
+
+## D15: DIA- und PFS-Repairs für Signal-Coverage
+
+**Decision**: Signal-Coverage von 2/6 auf 4/6 erweitert durch:
+- DIA correct (webapp): README-Phantomreferenzen bereinigen
+- DIA incorrect (webapp): Phantomreferenzen austauschen statt entfernen
+- PFS correct (webapp): Error-Handling-Muster konsolidieren
+
+**Reason**: 2/6 war die sichtbarste Lücke im Benchmark.  Beide Repos
+enthielten bereits 3 DIA-Findings und 1 PFS-Finding die nie repariert
+wurden.  Die Repairs nutzen bestehende Findings — kein neues Repo nötig.
+
+DIA wurde gewählt weil:
+- 3 Findings pro Repo (höchste Count neben dem reparierten MDS)
+- Repair ist klar definierbar (Phantom-Dir-Refs entfernen/korrigieren)
+- Incorrect-Case natürlich konstruierbar (alte Phantoms ersetzen, neue einführen)
+
+PFS wurde gewählt weil:
+- webapp hat explizit 4 Error-Handling-Varianten injiziert
+- Konsolidierung ist ein realistischer Agenten-Task
+- Zeigt Cross-File-Repair (4 Dateien gleichzeitig ändern)
+
+## D16: FAR/FRR-Stichprobe vergrößert
+
+**Decision**: Von n=3 correct / n=1 incorrect auf n=5 correct /
+n=3 incorrect erweitert.  Stichprobengröße wird explizit in
+`verification_metrics.sample_sizes` dokumentiert.
+
+**Reason**: n=1 für den Negativ-Fall war statistisch nicht belastbar.
+Ein skeptischer Reviewer sieht sofort, dass FAR=0% bei n=1
+nicht verallgemeinerbar ist.
+
+Die Erweiterung auf n=3 incorrect (MDS, DIA, EDS) verteilt die
+Negativfälle über verschiedene Signaltypen, was die
+Verifikationsbreite erhöht.  n=5 correct (MDS×2, EDS, DIA, PFS)
+deckt 4 von 6 Recommender-Signalen ab.
+
+Verbleibendes Defizit: n<10 pro Klasse reicht nicht für formale
+statistische Signifikanz.  Das wird in `known_limitations` transparent
+als Limitation dokumentiert, nicht als Schwäche versteckt.

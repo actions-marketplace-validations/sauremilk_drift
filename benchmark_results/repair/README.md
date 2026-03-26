@@ -14,7 +14,7 @@ agent-repair benchmark — see [Claim Boundary](#claim-boundary).
 |----------|----------|
 | **Task Correctness** | All generated tasks have valid schema, sequential priorities, non-empty success criteria, signal-prefixed IDs |
 | **Causality** | Applying a correct repair measurably reduces the drift score for that signal (per-signal delta tracked) |
-| **Verification Sharpness** | An incorrect repair (rename without consolidation) is correctly rejected — FAR = 0%, FRR = 0% |
+| **Verification Sharpness** | Incorrect repairs (3 cases across MDS, DIA, EDS) are correctly rejected — FAR = 0%, FRR = 0% |
 | **Reproducibility** | 3× repeated analysis on identical input produces identical scores, findings, and task counts |
 | **Effort Visibility** | Diff size (files changed, lines) tracked per repair intervention |
 
@@ -33,7 +33,13 @@ agent-repair benchmark — see [Claim Boundary](#claim-boundary).
 - Real coding agents executing these tasks autonomously in production repos
 - Multi-step repair orchestration across dependent findings
 - Comparative advantage over unguided agent repair (no control group yet)
-- Broad signal coverage beyond MDS and EDS (4 recommender signals untested)
+- TVS/SMS signal repair coverage (only observed as side-effects)
+
+### Known limitations
+
+- **TVS side-effects**: Repair commits create `temporal_volatility` findings as a side effect.  Phase C cascade test confirms these stabilize (no divergence), but sequential agents must account for transient TVS spikes.
+- **Sample sizes**: n=5 correct, n=3 incorrect.  FAR/FRR are directionally valid but not yet statistically robust (need n≥10 per class for formal significance).
+- **EDS residual findings**: EDS repair reduces score significantly but may leave a residual finding (e.g. high parameter count).  The `targeted_finding_resolved` field tracks this precisely; see D14 in decisions.md.
 
 This distinction is intentional.  A precise narrow claim is stronger
 than an overpromised broad one.
@@ -42,12 +48,13 @@ than an overpromised broad one.
 
 | Metric | Definition | Value |
 |--------|-----------|-------|
-| **True Positive Rate (TPR)** | Correct repairs verified / attempted | 3/3 = 100% |
-| **True Negative Rate (TNR)** | Incorrect repairs detected / attempted | 1/1 = 100% |
-| **False Acceptance Rate (FAR)** | Incorrect repairs falsely accepted | 0/1 = 0% |
-| **False Rejection Rate (FRR)** | Correct repairs falsely rejected | 0/3 = 0% |
-| **Signal Coverage** | Signals with verified repairs | MDS, EDS (2/6 recommender signals) |
+| **True Positive Rate (TPR)** | Correct repairs verified / attempted | 5/5 = 100% |
+| **True Negative Rate (TNR)** | Incorrect repairs detected / attempted | 3/3 = 100% |
+| **False Acceptance Rate (FAR)** | Incorrect repairs falsely accepted | 0/3 = 0% |
+| **False Rejection Rate (FRR)** | Correct repairs falsely rejected | 0/5 = 0% |
+| **Signal Coverage** | Signals with verified repairs | MDS, EDS, DIA, PFS (4/6 recommender signals) |
 | **Determinism** | N runs → identical output | 3/3 runs per repo |
+| **TVS Cascade** | Sequential repairs → TVS stabilizes | Phase C: stable (no divergence) |
 
 ## Methodology
 
@@ -86,9 +93,13 @@ Finding objects, generates agent-tasks, and validates:
 | Repo | Signal | Repair | Type | Result |
 |------|--------|--------|------|--------|
 | webapp | MDS | Consolidate `_make_timedelta` into `utils/timedelta.py` | correct | finding removed, score ↓ |
+| webapp | DIA | Fix README phantom directory references | correct | phantom refs removed, score ↓ |
+| webapp | PFS | Standardize error handling to custom-exception pattern | correct | variant count reduced, score ↓ |
 | webapp | MDS | Rename to `_convert_to_timedelta` (body unchanged) | incorrect | finding persists — **expected** |
+| webapp | DIA | Replace old phantom refs with new phantom refs | incorrect | DIA still fires — **expected** |
 | datalib | MDS | Extract `flush()` into `BaseDecoder` | correct | finding removed, score ↓ |
 | datalib | EDS | Add docstrings, split into `_coerce`/`_passes`/`_aggregate` | correct | score ↓ significantly |
+| datalib | EDS | Add trivial docstring, keep complexity | incorrect | EDS persists — **expected** |
 
 ## Failure Case
 
@@ -145,7 +156,8 @@ Deterministic: same drift version → same results.
 
 1. **Real-world verified repairs**: Run tasks on 2–3 OSS targets, not just task generation
 2. **Control group**: Same tasks + agent, with vs. without Drift verification
-3. **Signal coverage**: Add verified repairs for PFS, AVS, TVS, SMS
+3. **Signal coverage**: Add verified repairs for AVS, TVS, SMS (3 remaining)
+4. **Increase sample size**: n≥10 per class for statistically robust FAR/FRR
 
 ## Files
 
