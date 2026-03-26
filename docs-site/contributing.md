@@ -1,6 +1,6 @@
 # Contributing
 
-See [CONTRIBUTING.md](https://github.com/sauremilk/drift/blob/master/CONTRIBUTING.md) for the full contributing guide.
+See [CONTRIBUTING.md](https://github.com/sauremilk/drift/blob/main/CONTRIBUTING.md) for the full contributing guide.
 
 ## Quick Start
 

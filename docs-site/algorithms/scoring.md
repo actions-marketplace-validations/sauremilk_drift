@@ -29,7 +29,7 @@ $$\text{signal\_score} = \overline{s} \times \min\!\left(1,\; \frac{\ln(1 + n)}{
 | Explainability Deficit (EDS) | 0.12 | Important but noisy |
 | System Misalignment (SMS) | 0.10 | Newest signal, still calibrating |
 
-Weights are calibrated via ablation study: remove each signal, measure F1 delta, assign proportional weight. See [ADR-003](https://github.com/sauremilk/drift/blob/master/docs/adr/003-composite-scoring-model.md).
+Weights are calibrated via ablation study: remove each signal, measure F1 delta, assign proportional weight. See [ADR-003](https://github.com/sauremilk/drift/blob/main/docs/adr/003-composite-scoring-model.md).
 
 ## Report-Only Signals (Weight 0.00)
 
@@ -40,7 +40,7 @@ Weights are calibrated via ablation study: remove each signal, measure F1 delta,
 | Test Polarity Deficit (TPD) | 0.00 | Report-only |
 | Guard Clause Deficit (GCD) | 0.00 | Report-only |
 
-These signals appear in analysis output but do not affect the composite score. See [ADR-007](https://github.com/sauremilk/drift/blob/master/docs/adr/007-consistency-proxy-signals.md) for BEM/TPD/GCD rationale.
+These signals appear in analysis output but do not affect the composite score. See [ADR-007](https://github.com/sauremilk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md) for BEM/TPD/GCD rationale.
 
 ## Severity Mapping
 

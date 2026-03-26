@@ -45,7 +45,7 @@ drift addresses a gap not covered by existing tools in this list:
 
 - Benchmarked on 15 real-world repositories (Django, FastAPI, Pydantic, etc.)
 - 97.3% strict precision on 263 ground-truth-labeled findings
-- Full study with methodology: https://github.com/sauremilk/drift/blob/master/STUDY.md
+- Full study with methodology: https://github.com/sauremilk/drift/blob/main/STUDY.md
 - GitHub Action + SARIF output for CI integration
 
 ### Suggested entry

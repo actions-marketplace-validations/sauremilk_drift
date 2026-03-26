@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
 
       - name: Validate pyproject.toml version is SemVer
         # Ensures the version in pyproject.toml is always MAJOR.MINOR.PATCH –
-        # a merge to master with an invalid or missing version is blocked.
+        # a merge to main with an invalid or missing version is blocked.
         run: python scripts/check_version.py --check-semver
 
   test:

@@ -34,6 +34,15 @@ If you are evaluating drift for a specific job-to-be-done, start here instead:
 
 Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 4 report-only signals (DIA, BEM, TPD, GCD) with weight 0.00 until extraction precision improves.
 
+Release posture is intentionally conservative: the PyPI classifier remains Alpha, while the core Python analysis and CI-facing workflows are already the most stable parts of the product. See [Stability and Release Status](stability.md) for the explicit maturity matrix.
+
+## Example Findings
+
+If you are evaluating drift, concrete findings are usually more persuasive than methodology alone.
+
+- [Example Findings](product/example-findings.md) shows 5 short, reproducible findings with code, the likely drift result, why it matters, and the fix path.
+- The examples cover pattern fragmentation, mutant duplicates, architecture violations, doc-implementation drift, and temporal volatility.
+
 ## What Drift Is Good At
 
 - surfacing architecture and coherence issues that linters do not model
@@ -59,6 +68,8 @@ Drift earns trust through reproducible analysis, explicit methodology, and signa
 See [Benchmarking and Trust](benchmarking.md) for methodology, known limitations, and how to read findings conservatively.
 
 If you need a compact evidence summary first, read [Trust and Evidence](trust-evidence.md).
+
+If you need the release-maturity breakdown first, read [Stability and Release Status](stability.md).
 
 ## Compare Drift to Adjacent Tools
 

@@ -98,6 +98,33 @@ _URL_PATH_SEGMENTS: set[str] = {
     "codecov",
     "coveralls",
     "readthedocs",
+    # Common short REST/API path segments and prose words that appear
+    # in README examples but are not real directories
+    "auth",
+    "db",
+    "en",
+    "de",
+    "fr",
+    "es",
+    "ja",
+    "zh",
+    "pt",
+    "login",
+    "logout",
+    "signup",
+    "token",
+    "oauth",
+    "callback",
+    "webhook",
+    "graphql",
+    "json",
+    "xml",
+    "csv",
+    "html",
+    "css",
+    "js",
+    "ts",
+    "py",
 }
 
 
@@ -145,7 +172,7 @@ def _is_version_or_numeric_segment(name: str) -> bool:
 
 def _is_noise_dir_reference(name: str) -> bool:
     """Return True if *name* is likely noise and should be ignored."""
-    if len(name) <= 1:
+    if len(name) <= 2:
         return True
     if _is_url_segment(name):
         return True
@@ -288,8 +315,8 @@ class DocImplDriftSignal(BaseSignal):
                         "A README is essential for architectural context."
                     ),
                     fix=(
-                        "Erstelle eine README.md im Repository-Wurzelverzeichnis"
-                        " mit Architekturüberblick."
+                            "Create a README.md at the repository root with"
+                            " an architecture overview."
                     ),
                 )
             )
@@ -326,7 +353,10 @@ class DocImplDriftSignal(BaseSignal):
                             f" exists. Documentation may be outdated."
                         ),
                         file_path=readme_path.relative_to(self._repo_path),
-                        fix=f"Entferne '{ref}/' aus README.md oder lege das Verzeichnis an.",
+                            fix=(
+                                f"Remove '{ref}/' from README.md or create the"
+                                f" directory."
+                            ),
                         metadata={"referenced_dir": ref},
                     )
                 )
@@ -351,8 +381,8 @@ class DocImplDriftSignal(BaseSignal):
                             ),
                             file_path=Path(src_dir),
                             fix=(
-                                f"Erstelle einen Abschnitt für '{src_dir}/' in README.md"
-                                f" mit kurzer Beschreibung des Moduls."
+                                    f"Add a section for '{src_dir}/' to README.md"
+                                    f" with a short description of the module."
                             ),
                             metadata={"undocumented_dir": src_dir},
                         )
@@ -410,8 +440,8 @@ class DocImplDriftSignal(BaseSignal):
                                 ),
                                 file_path=rel_path,
                                 fix=(
-                                    f"Aktualisiere {rel_path.name}:"
-                                    f" '{ref}/' existiert nicht mehr."
+                                        f"Update {rel_path.name}: remove or correct"
+                                        f" the stale '{ref}/' reference."
                                 ),
                                 metadata={
                                     "referenced_dir": ref,

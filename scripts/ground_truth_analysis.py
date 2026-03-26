@@ -17,7 +17,7 @@ Classification criteria per signal:
 
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 
@@ -287,6 +287,7 @@ def main():
         "doc_impl_drift",
     ]
 
+    small_sample_signals = []
     for sig in signal_order:
         if sig not in by_signal:
             continue
@@ -300,9 +301,12 @@ def main():
         prec_conservative = tp / n if n else 0
         # Optimistic precision: Disputed counted as TP
         prec_optimistic = (tp + disp) / n if n else 0
+        warn = " *" if n < 30 else ""
+        if n < 30:
+            small_sample_signals.append((sig, n))
         print(
             f"{sig:<25s} {n:>7d} {tp:>5d} {fp:>5d} {disp:>5d} "
-            f"{prec_conservative:>6.0%} {prec_optimistic:>6.0%}"
+            f"{prec_conservative:>6.0%} {prec_optimistic:>6.0%}{warn}"
         )
 
     print("-" * 65)
@@ -317,6 +321,10 @@ def main():
         "Prec* = (TP + Disputed) / Total"
         "    — lenient (disputed = debatable, not wrong)"
     )
+    if small_sample_signals:
+        print("\n * Small sample (n < 30): precision estimates unreliable")
+        for sig_name, sig_n in small_sample_signals:
+            print(f"   - {sig_name}: n={sig_n}")
 
     # Breakdown: FP examples per signal
     print("\n\nFP EXAMPLES (first 5 per signal):")
@@ -337,7 +345,7 @@ def main():
     output = {
         "_metadata": {
             "drift_version": drift_ver,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(datetime.UTC).isoformat(),
             "classification_method": "automated_heuristic",
             "methodology_note": (
                 "Classification uses structural title/path heuristics where "
@@ -356,6 +364,7 @@ def main():
                 "disputed": d["Disputed"],
                 "precision_strict": d["TP"] / d["total"] if d["total"] else 0,
                 "precision_lenient": (d["TP"] + d["Disputed"]) / d["total"] if d["total"] else 0,
+                "sample_sufficient": d["total"] >= 30,
             }
             for sig, d in by_signal.items()
         },

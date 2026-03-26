@@ -38,6 +38,22 @@ _BOUNDARY_STEMS: frozenset[str] = frozenset({
     "exception_handler",
     "error_boundary",
     "error_middleware",
+    "celery_error",
+    "task_error",
+    "signal_handler",
+    "fallback",
+    "recovery",
+})
+
+# Decorators that indicate intentional error-boundary design.
+_BOUNDARY_DECORATORS: frozenset[str] = frozenset({
+    "app.exception_handler",
+    "app.errorhandler",
+    "exception_handler",
+    "error_handler",
+    "receiver",
+    "task",
+    "shared_task",
 })
 
 
@@ -45,6 +61,16 @@ def _is_error_boundary(file_path: Path) -> bool:
     """Return True if a file is an intentional error-boundary module."""
     stem = file_path.stem.lower()
     return any(b in stem for b in _BOUNDARY_STEMS)
+
+
+def _has_boundary_decorator(parse_result: ParseResult) -> bool:
+    """Return True if any function in the file uses a boundary decorator."""
+    for fn in parse_result.functions:
+        for dec in fn.decorators:
+            dec_lower = dec.lower()
+            if any(bd in dec_lower for bd in _BOUNDARY_DECORATORS):
+                return True
+    return False
 
 
 @register_signal
@@ -69,15 +95,18 @@ class BroadExceptionMonocultureSignal(BaseSignal):
 
         # Group error-handling patterns by module directory
         module_handlers: dict[str, list[tuple[Path, dict]]] = defaultdict(list)
+        # Track parse results per module for decorator analysis
+        module_parse_results: dict[str, list[ParseResult]] = defaultdict(list)
 
         for pr in parse_results:
+            module_key = PurePosixPath(pr.file_path.parent).as_posix()
+            module_parse_results[module_key].append(pr)
             for pat in pr.patterns:
                 if pat.category != PatternCategory.ERROR_HANDLING:
                     continue
                 handlers = pat.fingerprint.get("handlers", [])
                 if not handlers:
                     continue
-                module_key = PurePosixPath(pr.file_path.parent).as_posix()
                 for h in handlers:
                     module_handlers[module_key].append((pr.file_path, h))
 
@@ -87,9 +116,12 @@ class BroadExceptionMonocultureSignal(BaseSignal):
             if len(handler_list) < min_handlers:
                 continue
 
-            # Skip error-boundary modules
+            # Skip error-boundary modules (by filename or decorator)
             files_in_module = {fp for fp, _ in handler_list}
             if all(_is_error_boundary(fp) for fp in files_in_module):
+                continue
+            prs_in_module = module_parse_results.get(module_key, [])
+            if prs_in_module and all(_has_boundary_decorator(pr) for pr in prs_in_module):
                 continue
 
             broad_count = 0

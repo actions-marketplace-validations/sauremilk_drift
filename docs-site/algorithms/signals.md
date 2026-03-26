@@ -58,16 +58,16 @@ Drift measures 6 active detection signals, each targeting a different dimension 
 
 **What it detects:** Modules where exception handling is uniformly broad (bare except, catch-all Exception) with high swallowing ratios.
 
-**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/master/docs/adr/007-consistency-proxy-signals.md).
+**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md).
 
 ### Test Polarity Deficit (TPD)
 
 **What it detects:** Test suites with near-zero negative assertions — only happy-path testing, no failure-path coverage.
 
-**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/master/docs/adr/007-consistency-proxy-signals.md).
+**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md).
 
 ### Guard Clause Deficit (GCD)
 
 **What it detects:** Modules where public functions uniformly lack early guard clauses (parameter validation, precondition checks).
 
-**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/master/docs/adr/007-consistency-proxy-signals.md).
+**Status:** Report-only (weight 0.0). See [ADR-007](https://github.com/sauremilk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md).

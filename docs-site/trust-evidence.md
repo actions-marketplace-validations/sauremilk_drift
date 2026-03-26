@@ -10,6 +10,7 @@ It is designed for teams that need to answer a practical question before rollout
 - DIA, BEM, TPD, and GCD remain report-only with weight 0.00 until extraction precision improves
 - the current study corpus covers 15 real-world repositories
 - all analysis is deterministic and does not use an LLM in the detector pipeline
+- the PyPI Alpha classifier is intentional and reflects mixed maturity across the full product surface, not weakness in the core Python path alone
 
 ## Benchmark evidence
 
@@ -44,6 +45,20 @@ The strongest current claim is that drift provides a deterministic and inspectab
 2. inspect findings per signal
 3. gate only on high-confidence cases
 4. tune based on recurring evidence in your own repo
+
+## How to talk about release maturity
+
+Use a split message instead of a single blanket adjective:
+
+- core Python analysis: stable
+- CI and SARIF workflow: stable
+- TypeScript support: experimental
+- embeddings-based parts: optional / experimental
+- benchmark methodology: evolving
+
+This keeps external communication conservative without understating the maturity of the primary Python workflow.
+
+See [Stability and Release Status](stability.md).
 
 ## Where the detailed material lives
 

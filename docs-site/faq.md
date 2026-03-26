@@ -32,6 +32,14 @@ Start locally, then move to report-only CI, then gate only on `high` findings af
 
 See [Team Rollout](getting-started/team-rollout.md).
 
+## Why does PyPI still classify drift as Alpha?
+
+Because the project uses a conservative release signal.
+
+The core Python analysis and the CI/SARIF rollout path are the most stable parts of drift today, but TypeScript support remains experimental, embeddings-based parts are optional and experimental, and the benchmark methodology is still evolving.
+
+See [Stability and Release Status](stability.md).
+
 ## Does drift use an LLM in the detector pipeline?
 
 No. The detector path is deterministic.
@@ -48,7 +56,7 @@ See [Scoring Model](algorithms/scoring.md).
 
 97.3% strict precision across 263 ground-truth-labeled findings on 15 repositories (v0.3). All false positives came from a single signal (DIA) that carries zero scoring weight.
 
-See [Benchmarking and Trust](benchmarking.md) and [STUDY.md](https://github.com/sauremilk/drift/blob/master/STUDY.md).
+See [Benchmarking and Trust](benchmarking.md) and [STUDY.md](https://github.com/sauremilk/drift/blob/main/STUDY.md).
 
 ## Can drift detect dependency cycles in Python?
 

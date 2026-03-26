@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import random
 import sys
 import tempfile
 from dataclasses import asdict, dataclass, field
@@ -205,10 +206,36 @@ class LOOCVResult:
     weight_means: dict[str, float]
     weight_stdevs: dict[str, float]
     full_set_weights: dict[str, float]
+    f1_ci_lower: float = 0.0
+    f1_ci_upper: float = 0.0
     folds: list[FoldResult] = field(default_factory=list)
 
 
 # ── Core LOOCV ───────────────────────────────────────────────────────────
+
+
+def _bootstrap_f1_ci(
+    folds: list[FoldResult],
+    n_boot: int = 2000,
+    alpha: float = 0.05,
+    seed: int = 42,
+) -> tuple[float, float]:
+    """Non-parametric bootstrap 95% CI for held-out F1."""
+    rng = random.Random(seed)
+    f1_samples: list[float] = []
+    for _ in range(n_boot):
+        boot = rng.choices(folds, k=len(folds))
+        tp = sum(f.held_out_tp for f in boot)
+        fp = sum(f.held_out_fp for f in boot)
+        fn = sum(f.held_out_fn for f in boot)
+        p = tp / (tp + fp) if (tp + fp) > 0 else 1.0
+        r = tp / (tp + fn) if (tp + fn) > 0 else 1.0
+        f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
+        f1_samples.append(f1)
+    f1_samples.sort()
+    lo = f1_samples[int(n_boot * alpha / 2)]
+    hi = f1_samples[int(n_boot * (1 - alpha / 2))]
+    return lo, hi
 
 
 def run_loocv() -> LOOCVResult:
@@ -311,6 +338,9 @@ def run_loocv() -> LOOCVResult:
     weight_means = {k: mean(f.weights[k] for f in folds) for k in weight_keys}
     weight_stdevs = {k: stdev(f.weights[k] for f in folds) if n > 1 else 0.0 for k in weight_keys}
 
+    # Bootstrap 95% CI for held-out F1
+    f1_ci_lo, f1_ci_hi = _bootstrap_f1_ci(folds)
+
     result = LOOCVResult(
         n_fixtures=n,
         n_folds=n,
@@ -322,6 +352,8 @@ def run_loocv() -> LOOCVResult:
         weight_means=weight_means,
         weight_stdevs=weight_stdevs,
         full_set_weights=full_weights_dict,
+        f1_ci_lower=f1_ci_lo,
+        f1_ci_upper=f1_ci_hi,
         folds=folds,
     )
 
@@ -331,6 +363,7 @@ def run_loocv() -> LOOCVResult:
     print(f"{'=' * 65}")
     print(f"  Full-set F1:    {full_f1:.3f}  (all {n} fixtures)")
     print(f"  Held-out F1:    {held_out_f1:.3f}  (aggregated across {n} folds)")
+    print(f"  95% Bootstrap CI: [{f1_ci_lo:.3f}, {f1_ci_hi:.3f}]")
     print(f"  Held-out TP={total_tp}  FP={total_fp}  FN={total_fn}")
     folds_correct = sum(1 for f in folds if f.held_out_correct)
     print(f"  Folds correct:  {folds_correct}/{n}")
@@ -369,10 +402,24 @@ def main() -> None:
     result = run_loocv()
 
     if args.json:
+        try:
+            from drift import __version__ as drift_ver
+        except Exception:
+            drift_ver = "unknown"
+        output = {
+            "_metadata": {
+                "drift_version": drift_ver,
+                "generated_at": datetime.datetime.now(
+                    tz=datetime.UTC
+                ).isoformat(),
+                "method": "leave-one-out cross-validation",
+            },
+            **asdict(result),
+        }
         out_path = Path(args.json)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(
-            json.dumps(asdict(result), indent=2, default=str),
+            json.dumps(output, indent=2, default=str),
             encoding="utf-8",
         )
         print(f"\nResults saved to {out_path}")

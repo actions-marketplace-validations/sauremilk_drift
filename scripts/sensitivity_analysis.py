@@ -20,6 +20,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+from tests.fixtures.ground_truth import (  # noqa: E402
+    ALL_FIXTURES,
+    GroundTruthFixture,
+)
+
 import drift.signals.architecture_violation  # noqa: E402, F401
 import drift.signals.doc_impl_drift  # noqa: E402, F401
 import drift.signals.explainability_deficit  # noqa: E402, F401
@@ -36,10 +41,6 @@ from drift.scoring.engine import (  # noqa: E402
     compute_signal_scores,
 )
 from drift.signals.base import AnalysisContext, create_signals  # noqa: E402
-from tests.fixtures.ground_truth import (  # noqa: E402
-    ALL_FIXTURES,
-    GroundTruthFixture,
-)
 
 
 def _run_all_fixtures(
@@ -330,7 +331,19 @@ def main() -> None:
             print("  Baseline weights are already near-optimal.")
 
         # ── Save results ──
+        try:
+            from drift import __version__ as drift_ver
+        except Exception:
+            drift_ver = "unknown"
+
         output = {
+            "_metadata": {
+                "drift_version": drift_ver,
+                "generated_at": datetime.datetime.now(
+                    datetime.UTC
+                ).isoformat(),
+                "method": "weight_perturbation_sensitivity",
+            },
             "baseline_composite": baseline_composite,
             "baseline_ranking": baseline_ranking,
             "signal_scores": {

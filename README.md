@@ -36,6 +36,24 @@ drift analyze --repo .
 
 That gives you a drift score, the hottest modules, and actionable findings in one run.
 
+## Release status
+
+The PyPI classifier remains `Development Status :: 3 - Alpha` intentionally.
+
+That is not a claim that the whole tool is immature. It is a conservative release signal for a product whose core Python analysis is already usable, while some adjacent surfaces still have mixed maturity.
+
+| Area | Status | What that means today |
+|---|---|---|
+| Core Python analysis | Stable | Primary analysis path, CLI usage, and main signal set are the most production-ready parts of drift. |
+| CI and SARIF workflow | Stable | Suitable for report-only rollout now, then selective gating once teams calibrate findings locally. |
+| TypeScript support | Experimental | Optional support exists, but Python remains the primary target and the more validated path. |
+| Embeddings-based parts | Optional / experimental | Not required for the core detector path and should be treated as exploratory add-ons. |
+| Benchmark methodology | Evolving | Public and reproducible, but still conservative in its claims and not the final word on every repository shape. |
+
+Why keep Alpha for now: release signaling should reflect the least mature user-facing surfaces, not only the strongest path. Drift already has stable core workflows, but the overall product story still includes experimental and evolving areas.
+
+See [Stability and Release Status](docs-site/stability.md) for the explicit matrix and the criteria for a future move toward Beta.
+
 ### Example output
 
 ```text
@@ -121,6 +139,18 @@ drift analyze --repo . --format json | jq '.findings[] | select(.signal=="MDS")'
 ```
 
 **Output:** MDS findings listing all 6 locations with similarity scores ≥ 0.95, enabling a single extract-to-shared-module refactoring.
+
+## Concrete example findings
+
+If you are evaluating drift, the fastest way to understand the value is to look at concrete findings rather than abstract signal names.
+
+See [docs-site/product/example-findings.md](docs-site/product/example-findings.md) for 5 short examples with code, the likely finding, why it matters, and how to fix it:
+
+- Pattern fragmentation: three incompatible error-handling patterns in one module
+- Mutant duplicate: two copied formatter functions that will drift apart later
+- Architecture violation: a `db/` module importing from `api/`
+- Doc-implementation drift: README structure that no longer matches the repo
+- Temporal volatility: a small file that became a churn hotspot in git history
 
 ## More setup options
 
@@ -346,12 +376,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and good first iss
 
 drift has working CLI, GitHub Action, configuration, JSON/SARIF output, benchmark material, and active tests.
 
-Feature maturity should still be read pragmatically:
+Current release posture:
 
+- PyPI classifier remains Alpha intentionally
 - core Python analysis: stable
 - CI and SARIF workflow: stable
-- benchmark claims: documented, but should be interpreted per signal and methodology
-- TypeScript support and selected advanced signals: evolving
+- TypeScript support: experimental
+- embeddings-based parts: optional / experimental
+- benchmark methodology: evolving
+
+Rationale and matrix: [Stability and Release Status](docs-site/stability.md)
 
 ## License
 

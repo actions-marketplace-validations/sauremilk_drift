@@ -25,6 +25,19 @@ from drift.models import (
 )
 from drift.signals.base import BaseSignal, register_signal
 
+# Decorators that indicate input validation is handled externally.
+_VALIDATION_DECORATORS: frozenset[str] = frozenset({
+    "validate",
+    "validator",
+    "validates",
+    "check_params",
+    "validate_arguments",
+    "validate_call",
+    "typechecked",
+    "beartype",
+    "enforce_types",
+})
+
 
 def _is_test_file(file_path: Path) -> bool:
     """Return True if *file_path* looks like a test file (by filename only)."""
@@ -66,7 +79,13 @@ def _references_param(node: ast.expr, param_names: set[str]) -> bool:
 
 
 def _function_is_guarded(source: str, func_info: FunctionInfo, param_names: set[str]) -> bool:
-    """Parse function body and check first 30% of statements for guards."""
+    """Parse function body and check first 50% of statements for guards."""
+    # Check for validation decorators first
+    for dec in func_info.decorators:
+        dec_lower = dec.lower()
+        if any(vd in dec_lower for vd in _VALIDATION_DECORATORS):
+            return True
+
     try:
         tree = ast.parse(source)
     except SyntaxError:
@@ -78,7 +97,7 @@ def _function_is_guarded(source: str, func_info: FunctionInfo, param_names: set[
         body = node.body
         if not body:
             return True
-        check_count = max(1, len(body) * 30 // 100)
+        check_count = max(1, len(body) * 50 // 100)
         return any(_has_guard(stmt, param_names) for stmt in body[:check_count])
     return True  # no function found — benefit of doubt
 

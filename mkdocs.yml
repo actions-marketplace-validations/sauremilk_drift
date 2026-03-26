@@ -71,6 +71,7 @@ nav:
       - Signal Reference: algorithms/signals.md
       - Scoring Model: algorithms/scoring.md
   - Trust & Evaluation:
+      - Stability and Release Status: stability.md
       - Trust and Evidence: trust-evidence.md
       - Benchmarking and Trust: benchmarking.md
       - Benchmark Study: study.md
@@ -80,6 +81,7 @@ nav:
       - API and Outputs: reference/api-outputs.md
   - Product:
       - Product Strategy: product-strategy.md
+      - Example Findings: product/example-findings.md
       - Press and Brand: product/press-brand.md
   - Case Studies:
       - Overview: case-studies/index.md
