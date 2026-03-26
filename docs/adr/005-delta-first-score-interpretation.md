@@ -255,6 +255,6 @@ All three renderers (Rich, JSON, SARIF) read `RepoAnalysis.trend` and render con
 
 - [ADR-001: Deterministic Analysis Pipeline](001-deterministic-analysis-pipeline.md) — zero-infrastructure constraint
 - [ADR-003: Composite Scoring Model](003-composite-scoring-model.md) — scoring model preserved
-- [STUDY.md §11.6](../../STUDY.md) — temporal stability evidence (σ < 0.005)
-- [STUDY.md §11.7](../../STUDY.md) — major-version correlation (django 1.8→6.0)
+- [STUDY.md §11.6](../STUDY.md) — temporal stability evidence (σ < 0.005)
+- [STUDY.md §11.7](../STUDY.md) — major-version correlation (django 1.8→6.0)
 - [POLICY.md §7](../../POLICY.md) — priority hierarchy (Glaubwürdigkeit > Signalpräzision > ...)

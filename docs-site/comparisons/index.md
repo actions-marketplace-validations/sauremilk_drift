@@ -5,7 +5,7 @@
 
 ## Capability Matrix
 
-Data from [STUDY.md §9](https://github.com/sauremilk/drift/blob/main/STUDY.md)
+Data from [STUDY.md §9](https://github.com/sauremilk/drift/blob/main/docs/STUDY.md)
 (15-repository benchmark, 2 642 classified findings).
 
 | Capability | drift | SonarQube | pylint / mypy | jscpd / CPD | Sourcegraph Cody |

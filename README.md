@@ -111,7 +111,7 @@ Your linter, type checker, and test suite won't catch this. Drift does — deter
 - **Semgrep / CodeQL / security scanners:** risky flows and policy violations, not whether patterns fragment across a codebase.
 - **Sonar / maintainability dashboards:** broad quality heuristics, not a drift-specific score grounded in reproducible signal families.
 
-Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 4 report-only signals kept out of the composite score until their precision improves. [Full study →](STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
+Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 4 report-only signals kept out of the composite score until their precision improves. [Full study →](docs/STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
 
 ## Use cases
 
@@ -268,7 +268,7 @@ Signal details and scoring model:
 
 ## How drift compares
 
-Data sourced from [STUDY.md](STUDY.md) §9 and [benchmark_results/](benchmark_results/).
+Data sourced from [STUDY.md](docs/STUDY.md) §9 and [benchmark_results/](benchmark_results/).
 
 | Capability | drift | SonarQube | pylint / mypy | jscpd / CPD |
 |---|:---:|:---:|:---:|:---:|
@@ -286,7 +286,7 @@ Data sourced from [STUDY.md](STUDY.md) §9 and [benchmark_results/](benchmark_re
 
 Drift is designed to **complement** linters and security scanners, not replace them. Recommended stack: linter (style) + type checker (types) + drift (coherence) + security scanner (SAST).
 
-Full comparison: [STUDY.md §9 — Tool Landscape Comparison](STUDY.md)
+Full comparison: [STUDY.md §9 — Tool Landscape Comparison](docs/STUDY.md)
 
 ## Ideal for
 
@@ -363,7 +363,7 @@ The drift score measures **structural entropy**, not code quality. Keep these pr
 - **Deliberate polymorphism is not erosion.** Strategy, Adapter, and Plugin patterns produce structural similarity that MDS flags as duplication. Findings include a `deliberate_pattern_risk` hint — verify intent before acting.
 - **The score rewards reduction, not correctness.** Deleting code lowers the score just like refactoring does. Do not optimize for a low score — optimize for understood, intentional structure.
 
-For a detailed discussion of epistemological boundaries (what drift can and cannot see), see [STUDY.md §14](STUDY.md).
+For a detailed discussion of epistemological boundaries (what drift can and cannot see), see [STUDY.md §14](docs/STUDY.md).
 
 > **Drift vs. erosion:** Without `layer_boundaries` in `drift.yaml`, drift detects *emergent drift* — structural patterns that diverge without explicit prohibition. With configured `layer_boundaries`, drift additionally performs *conformance checking* against a defined architecture. Both modes are complementary: drift does not replace dedicated architecture conformance frameworks (e.g. [PyTestArch](https://github.com/zyskarch/pytestarch) for executable layer rules in pytest), but catches cross-file coherence issues those tools do not model.
 
@@ -372,7 +372,7 @@ Start with the strongest, most actionable findings first. If a signal is noisy f
 Further reading:
 
 - [Benchmarking and Trust](docs-site/benchmarking.md)
-- [Full Study](STUDY.md)
+- [Full Study](docs/STUDY.md)
 - [Case Studies](docs-site/case-studies/index.md)
 
 ## Contributing

@@ -1,0 +1,36 @@
+# Drift tracked root entries allowlist
+# One root entry per line (exact name or glob). Comments and empty lines are ignored.
+# Goal: keep the repository root limited to product entry points, governance,
+# build/release control files, and a small set of top-level evidence directories.
+
+.githooks
+.github
+.gitignore
+.pre-commit-hooks.yaml
+.vscode
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+DEVELOPER.md
+LICENSE
+Makefile
+POLICY.md
+README.md
+SECURITY.md
+action.yml
+audit_results
+benchmark_results
+demos
+docs
+docs-site
+drift.example.yaml
+examples
+llms.txt
+master-backlog
+mkdocs.yml
+overrides
+pyproject.toml
+scripts
+src
+tests
+work_artifacts

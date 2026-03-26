@@ -87,9 +87,13 @@ The repository enforces an additional remote guardrail via GitHub Actions:
 
 - Workflow: `Repo Guard` (`.github/workflows/repo-guard.yml`)
 - Rule source: `.github/repo-guard.blocklist`
+- Root allowlist: `.github/repo-root-allowlist`
 - Check logic: `scripts/check_repo_hygiene.py`
+- Placement policy: `docs/ROOT_POLICY.md`
 
 This check is designed to prevent sensitive/local-only files from entering the public repository even if local hooks are bypassed (for example with `--no-verify`).
+
+The guard also enforces a small tracked root surface. If you introduce a new top-level entry, you must either move it into an existing directory or update the root allowlist with a clear rationale.
 
 Recommended branch protection setup:
 
@@ -110,7 +114,7 @@ Every PR should pass these checks before merge:
 
 ### Architecture
 - [ ] `drift self` → score ≤ previous score + 0.010
-- [ ] No new module without an entry in README/STUDY.md
+- [ ] No new module without an entry in README and docs/STUDY.md
 - [ ] New signal → own file in `signals/`, implements `BaseSignal`
 
 ### Code Quality

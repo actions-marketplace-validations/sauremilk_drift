@@ -119,6 +119,10 @@ python scripts/check_version.py --check-semver
 echo ">>> [1b/5] Checking release discipline..."
 python scripts/check_release_discipline.py
 
+# 1c. Public repo hygiene
+echo ">>> [1c/5] Checking public repo hygiene..."
+python scripts/check_repo_hygiene.py --config .github/repo-guard.blocklist --root-allowlist .github/repo-root-allowlist
+
 # 2. Lint
 echo ">>> [2/5] Running ruff lint..."
 ruff check src/ tests/

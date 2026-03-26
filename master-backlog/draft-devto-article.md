@@ -110,5 +110,5 @@ documentation. It catches the structural erosion that passes every other check.
 
 **Repository:** [github.com/sauremilk/drift](https://github.com/sauremilk/drift)
 **Package:** [pypi.org/project/drift-analyzer](https://pypi.org/project/drift-analyzer/)
-**Study:** [STUDY.md — 15-repository benchmark](https://github.com/sauremilk/drift/blob/main/STUDY.md)
+**Study:** [STUDY.md — 15-repository benchmark](https://github.com/sauremilk/drift/blob/main/docs/STUDY.md)
 **License:** MIT

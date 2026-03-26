@@ -15,15 +15,13 @@ build/
 coverage.xml
 htmlcov/
 site/
-out.json
 drift_score.json
-benchmark_pwbs.json
+work_artifacts/
 scripts/_*
 tagesplanung/
 \# Drift*Prior.md
 action_rate_err.txt
 action_rate_test.txt
 diag_err.txt
-LAUNCH_CHECKLIST.md
 
 outreach/

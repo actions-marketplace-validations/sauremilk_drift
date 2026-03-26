@@ -101,9 +101,8 @@ exclude = [
     "audit_results/",
     "benchmark_results/",
     "demos/",
+    "work_artifacts/",
     "scripts/",
-    "out.json",
-    "benchmark_pwbs.json",
 ]
 
 [tool.pytest.ini_options]

@@ -105,6 +105,7 @@ drift badge      Generate shields.io badge URL
 - **Conventional Commits** enforced by commit-msg hook: `feat|fix|docs|refactor|test|chore(scope): msg`
 - **Coverage gate:** 65% minimum (ratchet — only increase)
 - **Self-analysis gate:** `drift self` score must stay ≤ previous + 0.010
+- **Root discipline:** new tracked top-level entries must satisfy [docs/ROOT_POLICY.md](docs/ROOT_POLICY.md) and `.github/repo-root-allowlist`
 - Signals must be **deterministic**, **LLM-free**, and **fast** (< 500ms / 1k functions)
 - Git imports only in `ingestion/` — never in signals or scoring
 - Private paths (`tagesplanung/`) are blocked by git hooks

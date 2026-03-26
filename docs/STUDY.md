@@ -23,7 +23,7 @@ For methodology, see §1. For precision tables, see §3. For threats to validity
 
 ## Abstract
 
-We evaluate drift v0.1, a deterministic static analysis tool for detecting architectural erosion in Python repositories. The evaluation combines three complementary methods: (1) a **ground-truth precision analysis** of 286 classified findings across 5 repositories, (2) a **controlled mutation benchmark** measuring detection recall against 14 intentionally injected drift patterns, and (3) a **usefulness study** demonstrating actionable findings in a production codebase. drift achieves 77% precision (strict) / 95% lenient with 86% detection recall across 7 signal types, using non-circular classification criteria. The tool is fully deterministic — no LLM is used in the analysis pipeline ([ADR-001](docs/adr/001-deterministic-analysis-pipeline.md)).
+We evaluate drift v0.1, a deterministic static analysis tool for detecting architectural erosion in Python repositories. The evaluation combines three complementary methods: (1) a **ground-truth precision analysis** of 286 classified findings across 5 repositories, (2) a **controlled mutation benchmark** measuring detection recall against 14 intentionally injected drift patterns, and (3) a **usefulness study** demonstrating actionable findings in a production codebase. drift achieves 77% precision (strict) / 95% lenient with 86% detection recall across 7 signal types, using non-circular classification criteria. The tool is fully deterministic — no LLM is used in the analysis pipeline ([ADR-001](adr/001-deterministic-analysis-pipeline.md)).
 
 ---
 
@@ -31,7 +31,7 @@ We evaluate drift v0.1, a deterministic static analysis tool for detecting archi
 
 ### 1.1 Tool Under Test
 
-drift v0.1 detects architectural erosion through 7 AST-based signals. Each signal produces findings with a severity and score. Signals are combined into a composite drift score using count-dampened weighted aggregation ([ADR-003](docs/adr/003-composite-scoring-model.md)):
+drift v0.1 detects architectural erosion through 7 AST-based signals. Each signal produces findings with a severity and score. Signals are combined into a composite drift score using count-dampened weighted aggregation ([ADR-003](adr/003-composite-scoring-model.md)):
 
 $$S_i = \frac{\sum f_{ij}}{n_i} \cdot \min\!\left(1,\; \frac{\ln(1 + n_i)}{\ln(1 + k)}\right)$$
 
@@ -50,7 +50,7 @@ $$S_i = \frac{\sum f_{ij}}{n_i} \cdot \min\!\left(1,\; \frac{\ln(1 + n_i)}{\ln(1
 | Test Polarity Deficit        | TPD  | 0.00   | Reporting only |
 | Guard Clause Deficit         | GCD  | 0.00   | Reporting only |
 
-DIA, BEM, TPD, and GCD are included in the analysis output but contribute 0.0 to the composite score. They are Phase 2 signals with known precision limitations (see §3.1 for DIA; see [ADR-007](docs/adr/007-consistency-proxy-signals.md) for BEM/TPD/GCD).
+DIA, BEM, TPD, and GCD are included in the analysis output but contribute 0.0 to the composite score. They are Phase 2 signals with known precision limitations (see §3.1 for DIA; see [ADR-007](adr/007-consistency-proxy-signals.md) for BEM/TPD/GCD).
 
 ### 1.2 Repository Selection
 
@@ -70,7 +70,7 @@ We selected 5 Python repositories representing a range of domains, sizes, and de
 
 ### 1.3 Analysis Configuration
 
-All analysis was deterministic — no LLM involved ([ADR-001](docs/adr/001-deterministic-analysis-pipeline.md)). Identical default configuration for all repos: `drift analyze --since 90 --format json`. Public repos were cloned with `--depth 50` for git history (limits temporal signals). PWBS was analyzed against its full local checkout.
+All analysis was deterministic — no LLM involved ([ADR-001](adr/001-deterministic-analysis-pipeline.md)). Identical default configuration for all repos: `drift analyze --since 90 --format json`. Public repos were cloned with `--depth 50` for git history (limits temporal signals). PWBS was analyzed against its full local checkout.
 
 ---
 
@@ -337,7 +337,7 @@ drift analyze --repo /path/to/repo --format json --since 90
 drift self
 ```
 
-All raw JSON outputs, ground-truth classifications, and mutation benchmark results are stored in [`benchmark_results/`](benchmark_results/):
+All raw JSON outputs, ground-truth classifications, and mutation benchmark results are stored in [`benchmark_results/`](../benchmark_results/):
 
 | File                         | Contents                                          |
 | ---------------------------- | ------------------------------------------------- |
@@ -884,7 +884,7 @@ external validity claim over arbitrary repositories.
 
 ### 12.7 Empirical Evaluation of Consistency Proxy Signals (BEM, TPD, GCD) (2026-03-26)
 
-drift v0.5 introduced three report-only consistency proxy signals ([ADR-007](docs/adr/007-consistency-proxy-signals.md)):
+drift v0.5 introduced three report-only consistency proxy signals ([ADR-007](adr/007-consistency-proxy-signals.md)):
 
 | Signal | Code | Description |
 | ------ | ---- | ----------- |
