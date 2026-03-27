@@ -213,7 +213,8 @@ class CohesionDeficitSignal(BaseSignal):
 
             # Small member sets are noisier: ramp up confidence with module size.
             member_scale = min(1.0, (len(units) - 2) / 4)
-            score = round(min(1.0, raw_score * member_scale * repo_dampening), 3)
+            # Keep COD conservative for CI gating: severe but non-critical by default.
+            score = round(min(0.79, raw_score * member_scale * repo_dampening), 3)
 
             if score < detection_threshold:
                 continue
