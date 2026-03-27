@@ -3,6 +3,19 @@
 All notable changes to drift-analyzer are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.4] - 2026-03-27
+
+Short version: release publishing now supports secure PyPI token usage for automation without exposing credentials in the repository.
+
+### Changed
+
+- **Publish workflow token path**: `publish.yml` now supports token-based PyPI publishing through repository secret `PYPI_API_TOKEN`, with Trusted Publishing as fallback when no token is configured.
+- **Manual release control**: Added `workflow_dispatch` for the publish workflow so release publication can be retried explicitly.
+
+### Fixed
+
+- **Secret hygiene guardrails**: Added explicit documentation that tokens must never be committed and ignored local `.pypirc` to prevent accidental credential commits.
+
 ## [0.7.3] - 2026-03-27
 
 Short version: drift gains a deterministic cohesion-deficit signal with actionable remediation, plus aligned release evidence and consistency messaging.

@@ -149,4 +149,12 @@ drift badge      Generate shields.io badge URL
 4. Tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
 5. Create GitHub Release → CI publishes to PyPI and updates the `v1` major tag
 
+### PyPI token for agents and CI
+
+- Preferred setup: add repository secret `PYPI_API_TOKEN` with your PyPI API token.
+- Never store token values in tracked files, workflow YAML, docs examples with real values, or commits.
+- `publish.yml` will use token-based upload automatically when `PYPI_API_TOKEN` is set.
+- If `PYPI_API_TOKEN` is not set, workflow falls back to Trusted Publishing (OIDC).
+- For local/manual agent upload, export `TWINE_USERNAME=__token__` and `TWINE_PASSWORD=<your-token>` before `python -m twine upload dist/*`.
+
 See [CONTRIBUTING.md → Versioning](CONTRIBUTING.md#versioning) for details.
