@@ -28,19 +28,25 @@ exclude:
 
 # Signal weights (should sum to ~1.0)
 weights:
-  pattern_fragmentation: 0.22
-  architecture_violation: 0.22
-  mutant_duplicate: 0.17
-  temporal_volatility: 0.17
-  explainability_deficit: 0.12
-  doc_impl_drift: 0.00 # Report-only until README/ADR extraction is more selective
-  system_misalignment: 0.10
-  broad_exception_monoculture: 0.00  # ADR-007: report-only until ablation validates
-  test_polarity_deficit: 0.00        # ADR-007: report-only until ablation validates
-  guard_clause_deficit: 0.00         # ADR-007: report-only until ablation validates
-  naming_contract_violation: 0.00    # ADR-008: report-only until ablation validates
-  bypass_accumulation: 0.00          # ADR-008: report-only until ablation validates
-  exception_contract_drift: 0.00     # ADR-008: report-only until ablation validates
+  # Core signals (ablation-validated)
+  pattern_fragmentation: 0.16
+  architecture_violation: 0.16
+  mutant_duplicate: 0.13
+  temporal_volatility: 0.13
+  explainability_deficit: 0.09
+  system_misalignment: 0.08
+  # Promoted from report-only in v0.7.0
+  doc_impl_drift: 0.04
+  broad_exception_monoculture: 0.04
+  test_polarity_deficit: 0.04
+  guard_clause_deficit: 0.03
+  naming_contract_violation: 0.04
+  bypass_accumulation: 0.03
+  exception_contract_drift: 0.03
+
+# Auto-calibration rebalances weights at runtime based on finding distribution.
+# Set to false for fully manual weight control.
+auto_calibrate: true
 
 # Architecture policies
 policies:

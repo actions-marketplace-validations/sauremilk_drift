@@ -111,7 +111,7 @@ Your linter, type checker, and test suite won't catch this. Drift does — deter
 - **Semgrep / CodeQL / security scanners:** risky flows and policy violations, not whether patterns fragment across a codebase.
 - **Sonar / maintainability dashboards:** broad quality heuristics, not a drift-specific score grounded in reproducible signal families.
 
-Current public evidence: 15 real-world repositories in the study corpus, 6 scoring signals, and 4 report-only signals kept out of the composite score until their precision improves. [Full study →](docs/STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
+Current public evidence: 15 real-world repositories in the study corpus, 13 scoring signals (all contributing to the composite score), and auto-calibration that rebalances weights at runtime. [Full study →](docs/STUDY.md) · [Trust & limitations](docs-site/benchmarking.md)
 
 ## Use cases
 
@@ -247,18 +247,21 @@ More setup paths:
 └──┴────────┴───────┴──────────────────────────────────────┴──────────────────────┘
 ```
 
-Drift currently scores six signal families and reports four additional report-only signals:
+Drift scores all 13 signal families:
 
-- `PFS` Pattern Fragmentation
-- `AVS` Architecture Violations
-- `MDS` Mutant Duplicates
-- `EDS` Explainability Deficit
-- `TVS` Temporal Volatility
-- `SMS` System Misalignment
-- `DIA` Doc-Implementation Drift (report-only, weight `0.00`)
-- `BEM` Broad Exception Monoculture (report-only, weight `0.00`)
-- `TPD` Test Polarity Deficit (report-only, weight `0.00`)
-- `GCD` Guard Clause Deficit (report-only, weight `0.00`)
+- `PFS` Pattern Fragmentation (0.16)
+- `AVS` Architecture Violations (0.16)
+- `MDS` Mutant Duplicates (0.13)
+- `TVS` Temporal Volatility (0.13)
+- `EDS` Explainability Deficit (0.09)
+- `SMS` System Misalignment (0.08)
+- `DIA` Doc-Implementation Drift (0.04)
+- `BEM` Broad Exception Monoculture (0.04)
+- `TPD` Test Polarity Deficit (0.04)
+- `NBV` Naming Contract Violation (0.04)
+- `GCD` Guard Clause Deficit (0.03)
+- `BAT` Bypass Accumulation (0.03)
+- `ECM` Exception Contract Drift (0.03)
 
 Signal details and scoring model:
 
@@ -341,7 +344,7 @@ Recommended guides:
 
 ## Trust and limitations
 
-> **Public claims safe to repeat for v0.6.0:** Drift is deterministic, benchmarked on 15 real-world repositories in the current study corpus, and uses 6 scoring signals plus 4 report-only signals (DIA, BEM, TPD, GCD) with weight `0.00` until precision improves.
+> **Public claims safe to repeat for v0.7.0:** Drift is deterministic, benchmarked on 15 real-world repositories in the current study corpus, and uses 13 scoring signals with auto-calibration for runtime weight rebalancing and small-repo noise suppression.
 >
 > **What's limited:** Benchmark validation is single-rater; not yet independently replicated. Small repos can be noisy. Temporal signals depend on clone depth. The composite score is orientation, not a verdict.
 >

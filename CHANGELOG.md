@@ -3,6 +3,24 @@
 All notable changes to drift-analyzer are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] – 2026-03-27
+
+Short version: all 13 signals are now scoring-active with automatic weight calibration and small-repo noise suppression.
+
+### Added
+
+- **All signals scoring-active**: Promoted all 7 previously report-only signals (DIA, BEM, TPD, GCD, NBV, BAT, ECM) to scoring; no signals remain report-only. New ECM signal detects exception-profile drift via git-history comparison (MVP).
+- **Auto-calibration**: Runtime weight rebalancing (`auto_calibrate: true`, default) — dampens dominant signals within a ±50 % band; deterministic and reproducible.
+- **Small-repo noise suppression**: Adaptive dampening (K=20) and per-signal minimum-finding thresholds for repositories with fewer than 15 modules.
+
+### Changed
+
+- **Default signal weights**: Redistributed to 13-signal simplex; `compute_signal_scores()` accepts `dampening_k` and `min_findings` for context-aware scoring.
+
+### Fixed
+
+- **BEM docstring + ground-truth**: Fixed escaped triple-quote syntax error in `broad_exception_monoculture.py`; added 12 new NBV/BAT ground-truth fixtures and full 13-signal ablation coverage.
+
 ## [0.6.0] – 2026-03-26
 
 Short version: stronger TypeScript analysis, delta- and context-aware rollout signals, and new report-only consistency proxies backed by tighter release and evidence guardrails.

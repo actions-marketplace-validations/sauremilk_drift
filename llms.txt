@@ -21,13 +21,19 @@ Command: drift analyze --repo .
 
 ## Signals
 
-- PFS: Pattern Fragmentation (weight 0.22)
-- AVS: Architecture Violations (weight 0.22)
-- MDS: Mutant Duplicates (weight 0.17)
-- TVS: Temporal Volatility (weight 0.17)
-- EDS: Explainability Deficit (weight 0.12)
-- SMS: System Misalignment (weight 0.10)
-- DIA: Doc-Implementation Drift (report-only, weight 0.00)
+- PFS: Pattern Fragmentation (weight 0.16)
+- AVS: Architecture Violations (weight 0.16)
+- MDS: Mutant Duplicates (weight 0.13)
+- TVS: Temporal Volatility (weight 0.13)
+- EDS: Explainability Deficit (weight 0.09)
+- SMS: System Misalignment (weight 0.08)
+- DIA: Doc-Implementation Drift (weight 0.04)
+- BEM: Broad Exception Monoculture (weight 0.04)
+- TPD: Test Polarity Deficit (weight 0.04)
+- NBV: Naming Contract Violation (weight 0.04)
+- GCD: Guard Clause Deficit (weight 0.03)
+- BAT: Bypass Accumulation (weight 0.03)
+- ECM: Exception Contract Drift (weight 0.03)
 
 ## Docs
 
