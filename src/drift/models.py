@@ -36,6 +36,7 @@ class SignalType(StrEnum):
     NAMING_CONTRACT_VIOLATION = "naming_contract_violation"  # ADR-008
     BYPASS_ACCUMULATION = "bypass_accumulation"  # ADR-008
     EXCEPTION_CONTRACT_DRIFT = "exception_contract_drift"  # ADR-008
+    CO_CHANGE_COUPLING = "co_change_coupling"
 
 
 class PatternCategory(StrEnum):
@@ -298,3 +299,12 @@ class AgentTask:
     success_criteria: list[str] = field(default_factory=list)
     depends_on: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    # Phase 1: Automation fitness classification
+    automation_fit: str = "medium"  # "high" | "medium" | "low"
+    review_risk: str = "medium"  # "low" | "medium" | "high"
+    change_scope: str = "local"  # "local" | "module" | "cross-module"
+    verification_strength: str = "moderate"  # "strong" | "moderate" | "weak"
+    # Phase 2: Do-not-over-fix guardrails
+    constraints: list[str] = field(default_factory=list)
+    # Phase 4: Signal-specific repair maturity
+    repair_maturity: str = "experimental"  # "verified" | "experimental" | "indirect-only"

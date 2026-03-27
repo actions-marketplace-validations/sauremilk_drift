@@ -34,7 +34,208 @@ def _task_id(finding: Finding) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Signal-specific success criteria
+# Repair maturity matrix (Phase 4)
+# ---------------------------------------------------------------------------
+
+REPAIR_MATURITY: dict[str, dict[str, str | bool]] = {
+    SignalType.MUTANT_DUPLICATE: {
+        "maturity": "verified",
+        "benchmark_coverage": "strong",
+        "real_world": True,
+    },
+    SignalType.DOC_IMPL_DRIFT: {
+        "maturity": "verified",
+        "benchmark_coverage": "strong",
+        "real_world": True,
+    },
+    SignalType.PATTERN_FRAGMENTATION: {
+        "maturity": "verified",
+        "benchmark_coverage": "moderate",
+        "real_world": False,
+    },
+    SignalType.EXPLAINABILITY_DEFICIT: {
+        "maturity": "verified",
+        "benchmark_coverage": "moderate",
+        "real_world": False,
+    },
+    SignalType.ARCHITECTURE_VIOLATION: {
+        "maturity": "experimental",
+        "benchmark_coverage": "limited",
+        "real_world": False,
+    },
+    SignalType.TEMPORAL_VOLATILITY: {
+        "maturity": "indirect-only",
+        "benchmark_coverage": "cascade",
+        "real_world": False,
+    },
+    SignalType.SYSTEM_MISALIGNMENT: {
+        "maturity": "indirect-only",
+        "benchmark_coverage": "cascade",
+        "real_world": False,
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Automation fitness classification (Phase 1)
+# ---------------------------------------------------------------------------
+
+# Base classification per signal — overridden by dynamic modifiers
+_SIGNAL_CLASSIFICATION: dict[str, dict[str, str]] = {
+    SignalType.MUTANT_DUPLICATE: {
+        "automation_fit": "high",
+        "review_risk": "low",
+        "change_scope": "local",
+        "verification_strength": "strong",
+    },
+    SignalType.DOC_IMPL_DRIFT: {
+        "automation_fit": "high",
+        "review_risk": "low",
+        "change_scope": "local",
+        "verification_strength": "strong",
+    },
+    SignalType.PATTERN_FRAGMENTATION: {
+        "automation_fit": "medium",
+        "review_risk": "low",
+        "change_scope": "module",
+        "verification_strength": "strong",
+    },
+    SignalType.EXPLAINABILITY_DEFICIT: {
+        "automation_fit": "medium",
+        "review_risk": "medium",
+        "change_scope": "local",
+        "verification_strength": "moderate",
+    },
+    SignalType.ARCHITECTURE_VIOLATION: {
+        "automation_fit": "medium",
+        "review_risk": "medium",
+        "change_scope": "module",
+        "verification_strength": "moderate",
+    },
+    SignalType.TEMPORAL_VOLATILITY: {
+        "automation_fit": "low",
+        "review_risk": "high",
+        "change_scope": "cross-module",
+        "verification_strength": "weak",
+    },
+    SignalType.SYSTEM_MISALIGNMENT: {
+        "automation_fit": "low",
+        "review_risk": "medium",
+        "change_scope": "module",
+        "verification_strength": "moderate",
+    },
+}
+
+_FIT_LEVELS = ["low", "medium", "high"]
+_RISK_LEVELS = ["low", "medium", "high"]
+_SCOPE_LEVELS = ["local", "module", "cross-module"]
+_VERIF_LEVELS = ["weak", "moderate", "strong"]
+
+
+def _clamp(value: str, levels: list[str]) -> str:
+    """Clamp to valid level range."""
+    idx = levels.index(value) if value in levels else 1
+    return levels[max(0, min(idx, len(levels) - 1))]
+
+
+def _classify_task(finding: Finding, task: AgentTask) -> None:
+    """Apply automation fitness classification to a task (mutates in place).
+
+    Uses signal-specific base classification, then applies dynamic modifiers
+    based on finding metadata.
+    """
+    base = _SIGNAL_CLASSIFICATION.get(finding.signal_type, {})
+    fit = base.get("automation_fit", "medium")
+    risk = base.get("review_risk", "medium")
+    scope = base.get("change_scope", "local")
+    verif = base.get("verification_strength", "moderate")
+
+    # Dynamic modifier: PFS with clear canonical → higher automation fit
+    if finding.signal_type == SignalType.PATTERN_FRAGMENTATION:
+        meta = finding.metadata
+        if meta.get("canonical_variant") and meta.get("variant_count", 0) >= 3:
+            fit = "high"
+
+    # Dynamic modifier: many related files → broader scope
+    if len(finding.related_files) > 3:
+        scope_idx = _SCOPE_LEVELS.index(scope) if scope in _SCOPE_LEVELS else 0
+        scope = _SCOPE_LEVELS[min(scope_idx + 1, len(_SCOPE_LEVELS) - 1)]
+
+    # Dynamic modifier: has dependencies → higher review risk
+    if task.depends_on:
+        risk_idx = _RISK_LEVELS.index(risk) if risk in _RISK_LEVELS else 1
+        risk = _RISK_LEVELS[min(risk_idx + 1, len(_RISK_LEVELS) - 1)]
+
+    # Dynamic modifier: high complexity → lower automation fit
+    if task.complexity == "high":
+        fit_idx = _FIT_LEVELS.index(fit) if fit in _FIT_LEVELS else 1
+        fit = _FIT_LEVELS[max(fit_idx - 1, 0)]
+
+    # Dynamic modifier: MDS cross-file → module scope
+    if finding.signal_type == SignalType.MUTANT_DUPLICATE:
+        meta = finding.metadata
+        if meta.get("file_a") and meta.get("file_b") and meta["file_a"] != meta["file_b"]:
+            scope = "module"
+
+    task.automation_fit = _clamp(fit, _FIT_LEVELS)
+    task.review_risk = _clamp(risk, _RISK_LEVELS)
+    task.change_scope = _clamp(scope, _SCOPE_LEVELS)
+    task.verification_strength = _clamp(verif, _VERIF_LEVELS)
+
+
+# ---------------------------------------------------------------------------
+# Do-not-over-fix constraints (Phase 2)
+# ---------------------------------------------------------------------------
+
+_UNIVERSAL_CONSTRAINTS = [
+    "No refactoring beyond the directly affected root cause",
+    "No API signature changes unless explicitly required by the fix",
+    "No style or formatting changes unrelated to the root cause",
+    "Minimal change only — fix the named finding, nothing more",
+]
+
+_SIGNAL_CONSTRAINTS: dict[str, list[str]] = {
+    SignalType.MUTANT_DUPLICATE: [
+        "Do not rename without changing the function body — Drift uses SHA256(body), not names",
+        "Do not introduce new abstractions solely to deduplicate — prefer direct consolidation",
+    ],
+    SignalType.DOC_IMPL_DRIFT: [
+        "Do not introduce new phantom references — only remove or fix existing ones",
+        "Do not rewrite documentation beyond correcting the identified mismatch",
+    ],
+    SignalType.PATTERN_FRAGMENTATION: [
+        "Do not consolidate variants that intentionally serve divergent contexts",
+        "Preserve the canonical variant as-is — align others toward it",
+    ],
+    SignalType.EXPLAINABILITY_DEFICIT: [
+        "Do not add trivial docstrings (e.g., 'This function does X') — address actual complexity",
+        "Do not split functions unless complexity genuinely exceeds threshold",
+    ],
+    SignalType.ARCHITECTURE_VIOLATION: [
+        "Do not introduce new layer violations while resolving existing ones",
+        "Do not move code to a layer that creates a new circular dependency",
+    ],
+    SignalType.TEMPORAL_VOLATILITY: [
+        "Do not add unnecessary stabilization commits — each commit must have structural value",
+        "Do not lock interfaces prematurely — stabilize through tests and contracts",
+    ],
+    SignalType.SYSTEM_MISALIGNMENT: [
+        "Do not remove dependencies that are intentionally novel — only relocate misplaced ones",
+        "Verify alignment with module intent before moving imports",
+    ],
+}
+
+
+def _generate_constraints(finding: Finding) -> list[str]:
+    """Generate do-not-over-fix constraints for a task."""
+    constraints = list(_UNIVERSAL_CONSTRAINTS)
+    signal_specific = _SIGNAL_CONSTRAINTS.get(finding.signal_type, [])
+    constraints.extend(signal_specific)
+    return constraints
+
+
+# ---------------------------------------------------------------------------
+# Signal-specific success criteria (Phase 3 enrichment)
 # ---------------------------------------------------------------------------
 
 
@@ -52,6 +253,7 @@ def _success_criteria_for(finding: Finding) -> list[str]:
             f"Pattern variants in {module} reduced to 1 (canonical)",
             f"`drift analyze` reports no pattern_fragmentation finding for {module}",
             *base,
+            "FALSE-FIX CHECK: if variant_count unchanged but score drops, the fix is cosmetic",
         ]
 
     if st == SignalType.ARCHITECTURE_VIOLATION:
@@ -62,6 +264,7 @@ def _success_criteria_for(finding: Finding) -> list[str]:
                 f"Circular dependency resolved: no cycle between {cycle_str}",
                 "`drift analyze` reports no circular dependency for these modules",
                 *base,
+                "FALSE-FIX CHECK: if cycle length unchanged, the fix merely relocated the cycle",
             ]
         if "blast" in finding.title.lower():
             return [
@@ -74,6 +277,8 @@ def _success_criteria_for(finding: Finding) -> list[str]:
             f"No upward layer import from {path_str}",
             "`drift analyze` reports no layer violation for this file",
             *base,
+            "FALSE-FIX CHECK: if new upward imports appear elsewhere,"
+            " the violation was shifted not fixed",
         ]
 
     if st == SignalType.MUTANT_DUPLICATE:
@@ -83,6 +288,8 @@ def _success_criteria_for(finding: Finding) -> list[str]:
             f"Functions '{func_a}' and '{func_b}' merged into a single implementation",
             "No mutant_duplicate finding for these functions in `drift analyze`",
             *base,
+            "FALSE-FIX CHECK: renaming without body change will not resolve this"
+            " — body hash must differ",
         ]
 
     if st == SignalType.EXPLAINABILITY_DEFICIT:
@@ -96,6 +303,9 @@ def _success_criteria_for(finding: Finding) -> list[str]:
             criteria.insert(
                 0, f"Function '{func_name}' complexity ≤ 10 or split into sub-functions"
             )
+        criteria.append(
+            "FALSE-FIX CHECK: trivial docstrings without addressing complexity are insufficient"
+        )
         return criteria
 
     if st == SignalType.TEMPORAL_VOLATILITY:
@@ -103,6 +313,8 @@ def _success_criteria_for(finding: Finding) -> list[str]:
             f"Integration tests exist for {path_str}",
             "Module churn stabilized (no unnecessary refactoring commits)",
             *base,
+            "SIDE-EFFECT NOTE: repair commits may cause transient TVS findings"
+            " — this stabilizes over time",
         ]
 
     if st == SignalType.SYSTEM_MISALIGNMENT:
@@ -111,6 +323,8 @@ def _success_criteria_for(finding: Finding) -> list[str]:
         return [
             f"Dependencies ({dep_str}) documented or moved to appropriate module",
             *base,
+            "FALSE-FIX CHECK: moving imports without aligning module responsibility"
+            " is insufficient",
         ]
 
     return base
@@ -229,7 +443,11 @@ def _finding_to_task(
         action = f"Address: {finding.description}"
         complexity = "medium"
 
-    return AgentTask(
+    # Repair maturity from signal matrix
+    maturity_entry = REPAIR_MATURITY.get(finding.signal_type.value, {})
+    maturity = str(maturity_entry.get("maturity", "experimental"))
+
+    task = AgentTask(
         id=_task_id(finding),
         signal_type=finding.signal_type,
         severity=finding.severity,
@@ -249,7 +467,14 @@ def _finding_to_task(
             for k, v in finding.metadata.items()
             if k not in ("ast_fingerprint", "body_hash")
         },
+        constraints=_generate_constraints(finding),
+        repair_maturity=maturity,
     )
+
+    # Apply automation fitness classification (mutates task in place)
+    _classify_task(finding, task)
+
+    return task
 
 
 def analysis_to_agent_tasks(analysis: RepoAnalysis) -> list[AgentTask]:
@@ -296,6 +521,12 @@ def analysis_to_agent_tasks(analysis: RepoAnalysis) -> list[AgentTask]:
     # Compute intra-module dependencies
     _compute_dependencies(tasks)
 
+    # Re-apply review_risk modifier for tasks that gained dependencies
+    for t in tasks:
+        if t.depends_on:
+            risk_idx = _RISK_LEVELS.index(t.review_risk) if t.review_risk in _RISK_LEVELS else 1
+            t.review_risk = _RISK_LEVELS[min(risk_idx + 1, len(_RISK_LEVELS) - 1)]
+
     return tasks
 
 
@@ -322,6 +553,12 @@ def _task_to_dict(t: AgentTask) -> dict[str, Any]:
         "success_criteria": t.success_criteria,
         "depends_on": t.depends_on,
         "metadata": t.metadata,
+        "automation_fit": t.automation_fit,
+        "review_risk": t.review_risk,
+        "change_scope": t.change_scope,
+        "verification_strength": t.verification_strength,
+        "constraints": t.constraints,
+        "repair_maturity": t.repair_maturity,
     }
 
 
@@ -331,7 +568,7 @@ def analysis_to_agent_tasks_json(analysis: RepoAnalysis, indent: int = 2) -> str
 
     data: dict[str, Any] = {
         "version": __version__,
-        "schema": "agent-tasks-v1",
+        "schema": "agent-tasks-v2",
         "repo": analysis.repo_path.as_posix(),
         "analyzed_at": analysis.analyzed_at.isoformat(),
         "drift_score": analysis.drift_score,
