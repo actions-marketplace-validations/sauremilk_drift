@@ -5,7 +5,7 @@
 Release status: v0.7.1 (2026-03-27)
 
 Package: drift-analyzer
-Install: pip install drift-analyzer
+Install: pip install -q drift-analyzer  (add -q for quiet output, hiding verbose dependency chains)
 Repository: https://github.com/sauremilk/drift
 Documentation: https://sauremilk.github.io/drift/
 Command: drift analyze --repo .

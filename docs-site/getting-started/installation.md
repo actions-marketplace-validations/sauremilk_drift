@@ -2,6 +2,14 @@
 
 ## From PyPI
 
+We recommend using the quiet mode (`-q`) to suppress verbose dependency resolution output:
+
+```bash
+pip install -q drift-analyzer
+```
+
+The `-q` flag provides a cleaner experience by hiding transitive dependency chains. If you prefer to see all dependencies, use:
+
 ```bash
 pip install drift-analyzer
 ```
@@ -18,13 +26,13 @@ pip install -e ".[dev]"
 
 ```bash
 # TypeScript/TSX support
-pip install drift-analyzer[typescript]
+pip install -q drift-analyzer[typescript]
 
 # Embedding-based duplicate detection
-pip install drift-analyzer[embeddings]
+pip install -q drift-analyzer[embeddings]
 
 # All extras
-pip install drift-analyzer[all]
+pip install -q drift-analyzer[all]
 ```
 
 ## Requirements

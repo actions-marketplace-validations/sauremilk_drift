@@ -1,6 +1,6 @@
 # Signal Reference
 
-Drift measures 14 scoring signals, each targeting a different dimension of architectural erosion. All signals contribute to the composite score (auto-calibrated at runtime). Signals are grouped by origin: 6 core signals (ablation-validated since v0.5), 4 consistency proxy signals (promoted from report-only in v0.7.0 via [ADR-007](https://github.com/sauremilk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md)), 3 contract signals (added in v0.7.0/v0.7.1 via [ADR-008](https://github.com/sauremilk/drift/blob/main/docs/adr/008-adr-008-signal-promotion.md)), and 1 cohesion signal (COD).
+Drift measures 15 scoring signals, each targeting a different dimension of architectural erosion. All signals contribute to the composite score (auto-calibrated at runtime). Signals are grouped by origin: 6 core signals (ablation-validated since v0.5), 4 consistency proxy signals (promoted from report-only in v0.7.0 via [ADR-007](https://github.com/sauremilk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md)), 3 contract signals (added in v0.7.0/v0.7.1 via [ADR-008](https://github.com/sauremilk/drift/blob/main/docs/adr/008-adr-008-signal-promotion.md)), 1 cohesion signal (COD), and 1 co-change coupling signal (CCC).
 
 ## Core Signals
 
@@ -95,3 +95,15 @@ Added in v0.7.0/v0.7.1 via [ADR-008](https://github.com/sauremilk/drift/blob/mai
 **What it detects:** Modules where exception hierarchies or error-handling contracts diverge from the dominant codebase pattern.
 
 **Weight:** 0.03.
+
+## Coupling Signal
+
+### Co-Change Coupling (CCC)
+
+**What it detects:** File pairs that repeatedly change together in git history without explicit import dependency.
+
+**Example:** `order_service.py` and `payment_rules.py` are changed together across many commits, but neither imports the other.
+
+**Techniques:** Deterministic commit co-change aggregation with merge/bot down-weighting and static import-edge exclusion.
+
+**Weight:** 0.005.

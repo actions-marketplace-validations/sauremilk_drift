@@ -13,7 +13,7 @@ Drift currently requires Python 3.11+. If your shell or CI runner is still on 3.
 ## 1. Install
 
 ```bash
-pip install drift-analyzer    # requires Python 3.11+
+pip install -q drift-analyzer    # requires Python 3.11+ (use -q for clean output)
 ```
 
 ## 2. Analyze your repository

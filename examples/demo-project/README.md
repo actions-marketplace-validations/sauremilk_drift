@@ -5,7 +5,7 @@ A minimal Python project with intentional drift patterns for testing and demonst
 ## Run drift on this project
 
 ```bash
-pip install drift-analyzer
+pip install -q drift-analyzer
 drift analyze --repo .
 ```
 

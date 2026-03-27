@@ -30,7 +30,7 @@ Drift is a deterministic static analyzer for architectural drift in AI-accelerat
 ### 1-minute quickstart
 
 ```bash
-pip install drift-analyzer
+pip install -q drift-analyzer
 drift analyze --repo .
 ```
 
@@ -86,7 +86,7 @@ Start report-only first. Tighten to `fail-on: high` once the team understands th
 ```bash
 git clone https://github.com/sauremilk/drift.git
 cd drift/examples/demo-project
-pip install drift-analyzer
+pip install -q drift-analyzer
 drift analyze --repo .
 ```
 
@@ -247,7 +247,7 @@ More setup paths:
 └──┴────────┴───────┴──────────────────────────────────────┴──────────────────────┘
 ```
 
-Drift scores all 13 signal families:
+Drift scores all 15 signal families:
 
 - `PFS` Pattern Fragmentation (0.16)
 - `AVS` Architecture Violations (0.16)
@@ -262,6 +262,8 @@ Drift scores all 13 signal families:
 - `GCD` Guard Clause Deficit (0.03)
 - `BAT` Bypass Accumulation (0.03)
 - `ECM` Exception Contract Drift (0.03)
+- `COD` Cohesion Deficit (0.01)
+- `CCC` Co-Change Coupling (0.005)
 
 Signal details and scoring model:
 

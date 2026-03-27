@@ -18,9 +18,9 @@ $$\text{signal\_score} = \overline{s} \times \min\!\left(1,\; \frac{\ln(1 + n)}{
 
 **Effect:** 1 finding at 0.5 → dampened to 0.27. 15 findings at 0.5 → full 0.5.
 
-## Default Weights (v0.7.1)
+## Default Weights (v0.8.0)
 
-All 13 signals are scoring-active since v0.7.0. Weights are normalised at runtime; `auto_calibrate` (default: on) rebalances based on signal variance.
+All 15 signals are scoring-active. Weights are normalised at runtime; `auto_calibrate` (default: on) rebalances based on signal variance.
 
 | Signal | Weight | Rationale |
 |---|---|---|
@@ -37,6 +37,8 @@ All 13 signals are scoring-active since v0.7.0. Weights are normalised at runtim
 | Guard Clause Deficit (GCD) | 0.03 | Promoted from report-only (v0.7.0) |
 | Bypass Accumulation (BAT) | 0.03 | Added in v0.7.0 ([ADR-008](https://github.com/sauremilk/drift/blob/main/docs/adr/008-adr-008-signal-promotion.md)) |
 | Exception Contract Drift (ECM) | 0.03 | Added in v0.7.1 ([ADR-008](https://github.com/sauremilk/drift/blob/main/docs/adr/008-adr-008-signal-promotion.md)) |
+| Cohesion Deficit (COD) | 0.01 | Added in v0.7.3 as cohesion-focused coherence detector |
+| Co-Change Coupling (CCC) | 0.005 | Added in v0.8.0 for hidden git-history coupling without explicit imports |
 
 Core weights were originally calibrated via ablation study (remove each signal, measure F1 delta, assign proportional weight). Promoted signals received conservative initial weights. See [ADR-003](https://github.com/sauremilk/drift/blob/main/docs/adr/003-composite-scoring-model.md).
 

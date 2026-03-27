@@ -4,7 +4,7 @@ Extracts functions, classes, imports, and error-handling patterns from
 TypeScript and TSX files — the same structural information that
 ast_parser.py extracts for Python.
 
-Requires: ``pip install drift-analyzer[typescript]``
+Requires: ``pip install -q drift-analyzer[typescript]`` (use -q for clean output)
 """
 
 from __future__ import annotations

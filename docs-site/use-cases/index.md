@@ -141,7 +141,7 @@ patterns.
 ```bash
 git clone https://github.com/sauremilk/drift.git
 cd drift/examples/demo-project
-pip install drift-analyzer
+pip install -q drift-analyzer
 drift analyze --repo .
 ```
 

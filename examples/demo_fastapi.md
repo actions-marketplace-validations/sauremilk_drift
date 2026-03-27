@@ -5,7 +5,7 @@ This walkthrough shows how to analyze the [FastAPI](https://github.com/tiangolo/
 ## Prerequisites
 
 ```bash
-pip install drift-analyzer   # Python 3.11+
+pip install -q drift-analyzer   # Python 3.11+
 git clone https://github.com/tiangolo/fastapi.git
 ```
 
