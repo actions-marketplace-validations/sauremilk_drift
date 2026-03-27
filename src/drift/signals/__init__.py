@@ -5,6 +5,7 @@ from drift.signals.base import BaseSignal
 from drift.signals.broad_exception_monoculture import BroadExceptionMonocultureSignal
 from drift.signals.bypass_accumulation import BypassAccumulationSignal
 from drift.signals.doc_impl_drift import DocImplDriftSignal
+from drift.signals.exception_contract_drift import ExceptionContractDriftSignal
 from drift.signals.explainability_deficit import ExplainabilityDeficitSignal
 from drift.signals.guard_clause_deficit import GuardClauseDeficitSignal
 from drift.signals.mutant_duplicates import MutantDuplicateSignal
@@ -29,5 +30,6 @@ __all__ = [
     "GuardClauseDeficitSignal",
     "NamingContractViolationSignal",
     "BypassAccumulationSignal",
+    "ExceptionContractDriftSignal",
     "TypeScriptArchitectureSignal",
 ]

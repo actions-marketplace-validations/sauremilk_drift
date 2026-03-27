@@ -54,8 +54,13 @@ class TemporalVolatilitySignal(BaseSignal):
         file_histories: dict[str, FileHistory],
         config: DriftConfig,
     ) -> list[Finding]:
-        if not file_histories:
-            return []
+        """Flag files with statistically anomalous recent churn.
+
+        Computes z-scores for change frequency, unique authors, and
+        defect-correlated commits over a 30-day rolling window.
+        A file is flagged when any z-score exceeds volatility_z_threshold.
+        Requires git history; returns empty on shallow clones.
+        """
 
         histories = list(file_histories.values())
 

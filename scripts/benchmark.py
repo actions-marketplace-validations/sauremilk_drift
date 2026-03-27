@@ -2,9 +2,14 @@
 
 import json
 import subprocess
+import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
+# Add scripts dir to path for local imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _bench_utils import clone_repo as clone  # noqa: E402
 
 OUT_DIR = Path(__file__).parent.parent / "benchmark_results"
 OUT_DIR.mkdir(exist_ok=True)
@@ -63,7 +68,7 @@ def analyze(repo_path: str, name: str) -> dict | None:
         "name": name,
         "repo_sha": _get_head_sha(repo_path),
         "drift_version": _get_drift_version(),
-        "analyzed_at": datetime.now(timezone.utc).isoformat(),
+        "analyzed_at": datetime.now(UTC).isoformat(),
         "drift_score": data["drift_score"],
         "severity": data["severity"],
         "files": data["summary"]["total_files"],
@@ -80,22 +85,6 @@ def analyze(repo_path: str, name: str) -> dict | None:
     }
     (OUT_DIR / f"{name}.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return summary
-
-
-def clone(name: str, url: str, tmp: Path) -> str | None:
-    dest = tmp / name.lower()
-    if dest.exists():
-        return str(dest)
-    r = subprocess.run(
-        ["git", "clone", "--depth", "50", url, str(dest)],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    if r.returncode != 0:
-        print(f"CLONE FAIL {name}: {r.stderr[:200]}")
-        return None
-    return str(dest)
 
 
 def main():
@@ -163,7 +152,7 @@ def main():
     output = {
         "_metadata": {
             "drift_version": _get_drift_version(),
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "clone_depth": 50,
         },
         "results": results,

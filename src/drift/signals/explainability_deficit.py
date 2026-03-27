@@ -63,7 +63,11 @@ class ExplainabilityDeficitSignal(BaseSignal):
         file_histories: dict[str, FileHistory],
         config: DriftConfig,
     ) -> list[Finding]:
-        # Collect all function names for test detection
+        """Flag functions with high cyclomatic complexity but no docstring.
+
+        Thresholds from config: min_function_loc and min_complexity.
+        Test files and functions whose name appears as a test target are excluded.
+        """
         all_functions: dict[str, FunctionInfo] = {}
         test_targets: set[str] = set()
 

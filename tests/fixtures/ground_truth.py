@@ -1858,7 +1858,329 @@ ALL_FIXTURES: list[GroundTruthFixture] = [
     GCD_COMPLEX_TP,
     GCD_SIMPLE_TN,
     GCD_DECORATOR_GUARD_TN,
+    # ── NBV / BAT fixtures below ──
 ]
+
+
+# ── Naming Contract Violation (NBV) ─────────────────────────────────────
+
+NBV_VALIDATE_TP = GroundTruthFixture(
+    name="nbv_validate_tp",
+    description="validate_email() without raise or return False → should fire NBV",
+    files={
+        "core/__init__.py": "",
+        "core/validators.py": """\
+            def validate_email(email: str) -> str:
+                parts = email.split("@")
+                domain = parts[-1] if len(parts) > 1 else ""
+                local = parts[0] if parts else ""
+                cleaned = local.strip().lower()
+                return f"{cleaned}@{domain}"
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.NAMING_CONTRACT_VIOLATION,
+            file_path="core/validators.py",
+            should_detect=True,
+            description="validate_email has no raise and never returns False/None",
+        ),
+    ],
+)
+
+NBV_ENSURE_TP = GroundTruthFixture(
+    name="nbv_ensure_tp",
+    description="ensure_connection() without raise → should fire NBV",
+    files={
+        "infra/__init__.py": "",
+        "infra/db.py": """\
+            def ensure_connection(host: str, port: int) -> dict:
+                config = {"host": host, "port": port}
+                config["timeout"] = 30
+                config["retries"] = 3
+                return config
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.NAMING_CONTRACT_VIOLATION,
+            file_path="infra/db.py",
+            should_detect=True,
+            description="ensure_connection has no raise statement",
+        ),
+    ],
+)
+
+NBV_IS_HAS_TP = GroundTruthFixture(
+    name="nbv_is_has_tp",
+    description="is_valid() without bool return → should fire NBV",
+    files={
+        "utils/__init__.py": "",
+        "utils/checks.py": """\
+            def is_valid(data: dict) -> str:
+                keys = list(data.keys())
+                values = list(data.values())
+                summary = f"{len(keys)} keys, {len(values)} values"
+                return summary
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.NAMING_CONTRACT_VIOLATION,
+            file_path="utils/checks.py",
+            should_detect=True,
+            description="is_valid returns str, not bool",
+        ),
+    ],
+)
+
+NBV_GET_OR_CREATE_TP = GroundTruthFixture(
+    name="nbv_get_or_create_tp",
+    description="get_or_create_user() without creation path → should fire NBV",
+    files={
+        "services/__init__.py": "",
+        "services/users.py": """\
+            USERS = {"alice": {"id": 1}, "bob": {"id": 2}}
+
+            def get_or_create_user(name: str) -> dict:
+                user = USERS.get(name)
+                result = user if user else {}
+                return result
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.NAMING_CONTRACT_VIOLATION,
+            file_path="services/users.py",
+            should_detect=True,
+            description="get_or_create_user has no creation path after conditional",
+        ),
+    ],
+)
+
+NBV_TRY_TP = GroundTruthFixture(
+    name="nbv_try_tp",
+    description="try_connect() without try/except → should fire NBV",
+    files={
+        "network/__init__.py": "",
+        "network/client.py": """\
+            def try_connect(host: str, port: int) -> dict:
+                addr = f"{host}:{port}"
+                config = {"address": addr, "connected": False}
+                config["connected"] = True
+                return config
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.NAMING_CONTRACT_VIOLATION,
+            file_path="network/client.py",
+            should_detect=True,
+            description="try_connect has no try/except block",
+        ),
+    ],
+)
+
+NBV_TRUE_NEGATIVE = GroundTruthFixture(
+    name="nbv_tn",
+    description="All naming contracts correctly fulfilled → should NOT fire NBV",
+    files={
+        "lib/__init__.py": "",
+        "lib/contracts.py": """\
+            def validate_input(data: dict) -> bool:
+                if not data:
+                    raise ValueError("data is empty")
+                if "id" not in data:
+                    return False
+                return True
+
+            def ensure_ready(service: str) -> None:
+                if not service:
+                    raise RuntimeError("service not configured")
+                if len(service) < 2:
+                    raise ValueError("invalid service name")
+
+            def is_active(status: str) -> bool:
+                return status == "active"
+
+            def try_parse(raw: str) -> dict:
+                try:
+                    parts = raw.split(",")
+                    return {"parts": parts}
+                except Exception:
+                    return {}
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.NAMING_CONTRACT_VIOLATION,
+            file_path="lib/contracts.py",
+            should_detect=False,
+            description="All naming contracts are satisfied",
+        ),
+    ],
+)
+
+NBV_STUB_TN = GroundTruthFixture(
+    name="nbv_stub_tn",
+    description="Functions under nbv_min_function_loc → should NOT fire NBV",
+    files={
+        "stubs/__init__.py": "",
+        "stubs/tiny.py": """\
+            def validate_id(x):
+                return x
+
+            def is_ok(v):
+                return v
+        """,
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.NAMING_CONTRACT_VIOLATION,
+            file_path="stubs/tiny.py",
+            should_detect=False,
+            description="Functions too small (< 3 LOC) — below threshold",
+        ),
+    ],
+)
+
+
+# ── Bypass Accumulation (BAT) ───────────────────────────────────────────
+
+BAT_TRUE_POSITIVE = GroundTruthFixture(
+    name="bat_tp",
+    description="File >50 LOC with >5% bypass marker density → should fire BAT",
+    files={
+        "legacy/__init__.py": "",
+        "legacy/compat.py": (
+            "# Legacy compatibility layer\n"
+            + "\n".join(
+                [
+                    f"def func_{i}(x):  # type: ignore"
+                    if i % 3 == 0
+                    else (
+                        f"def func_{i}(x):  # noqa"
+                        if i % 3 == 1
+                        else f"def func_{i}(x):  # pragma: no cover"
+                    )
+                    for i in range(20)
+                ]
+            )
+            + "\n"
+            + "\n".join([f"    return x + {i}" for i in range(20)])
+            + "\n# TODO fix all the above\n"
+            + "# FIXME legacy code\n"
+            + "# HACK workaround\n"
+            + "\n".join([f"CONST_{i} = {i}" for i in range(20)])
+        ),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BYPASS_ACCUMULATION,
+            file_path="legacy/compat.py",
+            should_detect=True,
+            description="High bypass marker density (type: ignore, noqa, pragma, TODO/FIXME/HACK)",
+        ),
+    ],
+)
+
+BAT_HIGH_DENSITY_TP = GroundTruthFixture(
+    name="bat_high_density_tp",
+    description="File with very high bypass density (>10%) → should fire BAT with HIGH severity",
+    files={
+        "hacks/__init__.py": "",
+        "hacks/workaround.py": "\n".join(
+            [f"x_{i} = None  # type: ignore" for i in range(60)]
+            + [f"# TODO fix item {i}" for i in range(10)]
+        ),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BYPASS_ACCUMULATION,
+            file_path="hacks/workaround.py",
+            should_detect=True,
+            description="Very high bypass marker density -> HIGH severity",
+        ),
+    ],
+)
+
+BAT_TRUE_NEGATIVE = GroundTruthFixture(
+    name="bat_tn",
+    description="File >50 LOC with <5% bypass density → should NOT fire BAT",
+    files={
+        "clean/__init__.py": "",
+        "clean/module.py": "\n".join(
+            [f"def clean_func_{i}(x):" for i in range(25)]
+            + [f"    return x + {i}" for i in range(25)]
+            + ["# one TODO is fine", "CONST = 42"]
+        ),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BYPASS_ACCUMULATION,
+            file_path="clean/module.py",
+            should_detect=False,
+            description="Low bypass density — below threshold",
+        ),
+    ],
+)
+
+BAT_TINY_FILE_TN = GroundTruthFixture(
+    name="bat_tiny_file_tn",
+    description="File <50 LOC even with high marker density → should NOT fire BAT",
+    files={
+        "small/__init__.py": "",
+        "small/tiny.py": "\n".join(
+            [f"x = {i}  # type: ignore" for i in range(10)]
+        ),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BYPASS_ACCUMULATION,
+            file_path="small/tiny.py",
+            should_detect=False,
+            description="File too small (<50 LOC) — below bat_min_loc threshold",
+        ),
+    ],
+)
+
+BAT_TEST_FILE_TN = GroundTruthFixture(
+    name="bat_test_file_tn",
+    description="Test file with high bypass density → excluded, should NOT fire BAT",
+    files={
+        "tests/__init__.py": "",
+        "tests/test_legacy.py": "\n".join(
+            [f"def test_item_{i}():  # type: ignore" for i in range(30)]
+            + ["    assert True  # noqa" for _ in range(30)]
+        ),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.BYPASS_ACCUMULATION,
+            file_path="tests/test_legacy.py",
+            should_detect=False,
+            description="Test files are excluded from BAT analysis",
+        ),
+    ],
+)
+
+
+# Append NBV + BAT fixtures to ALL_FIXTURES
+ALL_FIXTURES.extend([
+    NBV_VALIDATE_TP,
+    NBV_ENSURE_TP,
+    NBV_IS_HAS_TP,
+    NBV_GET_OR_CREATE_TP,
+    NBV_TRY_TP,
+    NBV_TRUE_NEGATIVE,
+    NBV_STUB_TN,
+    BAT_TRUE_POSITIVE,
+    BAT_HIGH_DENSITY_TP,
+    BAT_TRUE_NEGATIVE,
+    BAT_TINY_FILE_TN,
+    BAT_TEST_FILE_TN,
+])
+
 
 FIXTURES_BY_SIGNAL: dict[SignalType, list[GroundTruthFixture]] = {}
 for _fixture in ALL_FIXTURES:

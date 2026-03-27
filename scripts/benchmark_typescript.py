@@ -2,8 +2,13 @@
 
 import json
 import subprocess
+import sys
 import time
 from pathlib import Path
+
+# Add scripts dir to path for local imports
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _bench_utils import clone_repo as clone  # noqa: E402
 
 OUT_DIR = Path(__file__).parent.parent / "benchmark_results"
 OUT_DIR.mkdir(exist_ok=True)
@@ -58,22 +63,6 @@ def analyze(repo_path: str, name: str) -> dict | None:
     }
     (OUT_DIR / f"{name}.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return summary
-
-
-def clone(name: str, url: str, tmp: Path) -> str | None:
-    dest = tmp / name.lower()
-    if dest.exists():
-        return str(dest)
-    r = subprocess.run(
-        ["git", "clone", "--depth", "50", url, str(dest)],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    if r.returncode != 0:
-        print(f"CLONE FAIL {name}: {r.stderr[:200]}")
-        return None
-    return str(dest)
 
 
 def main() -> None:

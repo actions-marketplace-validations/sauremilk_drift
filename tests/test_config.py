@@ -10,8 +10,9 @@ from drift.config import DriftConfig
 def test_default_config():
     config = DriftConfig()
     assert config.fail_on == "high"
-    assert config.weights.pattern_fragmentation == 0.22
-    assert config.weights.doc_impl_drift == 0.00
+    assert config.weights.pattern_fragmentation == 0.16
+    assert config.weights.doc_impl_drift == 0.04
+    assert config.auto_calibrate is True
     assert "**/*.py" in config.include
     assert "**/__pycache__/**" in config.exclude
 

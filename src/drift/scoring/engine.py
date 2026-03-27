@@ -54,6 +54,9 @@ def assign_impact_scores(findings: list[Finding], weights: SignalWeights) -> Non
 
 def compute_signal_scores(
     findings: list[Finding],
+    *,
+    dampening_k: int = _DAMPENING_K,
+    min_findings: int = 0,
 ) -> dict[SignalType, float]:
     """Compute per-signal aggregate scores with count-dampened aggregation.
 
@@ -66,6 +69,10 @@ def compute_signal_scores(
     dominating the composite score. A single high-score finding contributes
     less than many moderate findings — but the relationship is sublinear,
     not linear. This is calibrated via ablation study (see ADR-003).
+
+    Args:
+        dampening_k: count-dampening constant (default 10; small repos use 20).
+        min_findings: per-signal minimum finding count to score (below → 0).
     """
     by_signal: dict[SignalType, list[float]] = defaultdict(list)
     for f in findings:
@@ -74,9 +81,9 @@ def compute_signal_scores(
     scores: dict[SignalType, float] = {}
     for sig in SignalType:
         values = by_signal.get(sig, [])
-        if values:
+        if values and len(values) >= max(1, min_findings):
             mean = sum(values) / len(values)
-            dampening = min(1.0, math.log(1 + len(values)) / math.log(1 + _DAMPENING_K))
+            dampening = min(1.0, math.log(1 + len(values)) / math.log(1 + dampening_k))
             scores[sig] = round(mean * dampening, 4)
 
     return scores
@@ -193,6 +200,70 @@ def delta_gate_pass(
 # ---------------------------------------------------------------------------
 # Weight calibration from ablation data
 # ---------------------------------------------------------------------------
+
+
+def auto_calibrate_weights(
+    findings: list[Finding],
+    base_weights: SignalWeights,
+    *,
+    dominance_cap: float = 0.40,
+) -> SignalWeights:
+    """Runtime weight rebalancing based on finding distribution.
+
+    Prevents any single signal from dominating the composite score by
+    dampening signals that contribute a disproportionate share of findings.
+    The base weight ranking is preserved — adjustment stays within a
+    ±50 % band of each base weight.
+
+    Used when ``auto_calibrate=True`` in config (the default).  This
+    replaces manual re-calibration for most users while staying
+    deterministic and reproducible (same findings → same weights).
+    """
+    if not findings:
+        return base_weights
+
+    weight_dict = base_weights.as_dict()
+
+    # Count findings per weight key
+    counts: dict[str, int] = defaultdict(int)
+    for f in findings:
+        key = _SIGNAL_WEIGHT_KEYS.get(f.signal_type)
+        if key:
+            counts[key] += 1
+
+    total = sum(counts.values())
+    if total == 0:
+        return base_weights
+
+    adjustments: dict[str, float] = {}
+    for key, w in weight_dict.items():
+        if w <= 0:
+            continue
+        share = counts.get(key, 0) / total
+        if share > dominance_cap:
+            # Dampen prolific signal — scale proportionally to excess
+            excess = share - dominance_cap
+            factor = max(0.5, 1.0 - excess)  # floor at 50 % of base
+            adjustments[key] = w * factor
+        elif counts.get(key, 0) == 0:
+            # Signal produced nothing — keep base weight (no penalty)
+            adjustments[key] = w
+        else:
+            adjustments[key] = w
+
+    if not adjustments:
+        return base_weights
+
+    # Renormalize active weights so their sum matches original active sum
+    original_active = sum(v for v in weight_dict.values() if v > 0)
+    new_active = sum(adjustments.values())
+    if new_active < 0.001:
+        return base_weights
+
+    scale = original_active / new_active
+    calibrated = {k: round(v * scale, 4) for k, v in adjustments.items()}
+
+    return base_weights.model_copy(update=calibrated)
 
 
 def calibrate_weights(

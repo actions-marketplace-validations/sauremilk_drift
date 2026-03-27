@@ -14,12 +14,18 @@ import datetime
 from pathlib import Path
 
 import drift.signals.architecture_violation  # noqa: F401
+import drift.signals.broad_exception_monoculture  # noqa: F401
+import drift.signals.bypass_accumulation  # noqa: F401
 import drift.signals.doc_impl_drift  # noqa: F401
+import drift.signals.exception_contract_drift  # noqa: F401
 import drift.signals.explainability_deficit  # noqa: F401
+import drift.signals.guard_clause_deficit  # noqa: F401
 import drift.signals.mutant_duplicates  # noqa: F401
+import drift.signals.naming_contract_violation  # noqa: F401
 import drift.signals.pattern_fragmentation  # noqa: F401
 import drift.signals.system_misalignment  # noqa: F401
 import drift.signals.temporal_volatility  # noqa: F401
+import drift.signals.test_polarity_deficit  # noqa: F401
 from drift.config import DriftConfig, SignalWeights
 from drift.ingestion.ast_parser import parse_file
 from drift.ingestion.file_discovery import discover_files
@@ -166,6 +172,12 @@ ACTIVE_SIGNALS = [
     SignalType.TEMPORAL_VOLATILITY,
     SignalType.SYSTEM_MISALIGNMENT,
     SignalType.DOC_IMPL_DRIFT,
+    SignalType.BROAD_EXCEPTION_MONOCULTURE,
+    SignalType.TEST_POLARITY_DEFICIT,
+    SignalType.GUARD_CLAUSE_DEFICIT,
+    SignalType.NAMING_CONTRACT_VIOLATION,
+    SignalType.BYPASS_ACCUMULATION,
+    SignalType.EXCEPTION_CONTRACT_DRIFT,
 ]
 
 

@@ -93,6 +93,12 @@ class BroadExceptionMonocultureSignal(BaseSignal):
         file_histories: dict[str, FileHistory],
         config: DriftConfig,
     ) -> list[Finding]:
+        """Flag modules where most exception handlers catch only broad types.
+
+        A module is flagged when >=bem_min_handlers handlers exist and
+        the broad-handler ratio exceeds 0.7.  Error-boundary modules
+        (e.g. middleware, error_handler) are excluded.
+        """
         min_handlers = config.thresholds.bem_min_handlers
 
         # Group error-handling patterns by module directory

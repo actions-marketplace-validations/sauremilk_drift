@@ -160,6 +160,16 @@ class MutantDuplicateSignal(BaseSignal):
         file_histories: dict[str, FileHistory],
         config: DriftConfig,
     ) -> list[Finding]:
+        """Detect near-duplicate and exact-duplicate function bodies.
+
+        Uses a three-stage pipeline:
+        1. AST fingerprint comparison (structural Jaccard similarity)
+        2. Character n-gram overlap for bodies below the AST threshold
+        3. Optional embedding-based semantic search (FAISS) for renamed-variable clones
+
+        Functions shorter than 5 LOC or with complexity < 2 are excluded.
+        Dunder methods are always excluded.
+        """
         # Use config threshold if available, otherwise module default
         ast_threshold = config.thresholds.similarity_threshold
         hybrid_threshold = max(ast_threshold - 0.05, 0.60)

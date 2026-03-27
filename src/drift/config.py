@@ -53,6 +53,8 @@ class ThresholdsConfig(BaseModel):
     ecm_max_files: int = 50  # ADR-008: perf guardrail
     ecm_lookback_commits: int = 20  # ADR-008: git history depth
     max_discovery_files: int = 10000  # safety guardrail for huge repos
+    small_repo_module_threshold: int = 15  # adaptive dampening below this
+    small_repo_min_findings: int = 2  # per-signal minimum to score
 
 
 class SignalWeights(BaseModel):
@@ -60,23 +62,30 @@ class SignalWeights(BaseModel):
 
     Weights are normalised internally — they don't need to sum to 1.0,
     but a warning is emitted if they deviate significantly.
+
+    As of v0.7.0 all signals are scoring-active (no report-only signals).
+    Previously report-only signals (ADR-007/008) receive conservative
+    initial weights; auto-calibration adjusts at runtime.
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    pattern_fragmentation: float = 0.22
-    architecture_violation: float = 0.22
-    mutant_duplicate: float = 0.17
-    explainability_deficit: float = 0.12
-    doc_impl_drift: float = 0.00  # report-only until extraction precision improves
-    temporal_volatility: float = 0.17
-    system_misalignment: float = 0.10
-    broad_exception_monoculture: float = 0.00  # report-only (ADR-007)
-    test_polarity_deficit: float = 0.00  # report-only (ADR-007)
-    guard_clause_deficit: float = 0.00  # report-only (ADR-007)
-    naming_contract_violation: float = 0.00  # report-only (ADR-008)
-    bypass_accumulation: float = 0.00  # report-only (ADR-008)
-    exception_contract_drift: float = 0.00  # report-only (ADR-008)
+    # Core signals (ablation-validated)
+    pattern_fragmentation: float = 0.16
+    architecture_violation: float = 0.16
+    mutant_duplicate: float = 0.13
+    explainability_deficit: float = 0.09
+    temporal_volatility: float = 0.13
+    system_misalignment: float = 0.08
+
+    # Promoted from report-only (v0.7.0)
+    doc_impl_drift: float = 0.04
+    broad_exception_monoculture: float = 0.04
+    test_polarity_deficit: float = 0.04
+    guard_clause_deficit: float = 0.03
+    naming_contract_violation: float = 0.04
+    bypass_accumulation: float = 0.03
+    exception_contract_drift: float = 0.03
 
     def as_dict(self) -> dict[str, float]:
         return self.model_dump()
@@ -115,6 +124,7 @@ class DriftConfig(BaseModel):
             "**/docs/**",
             "**/docs_src/**",
             "**/examples/**",
+            "**/site/**",
         ]
     )
     policies: PolicyConfig = Field(default_factory=PolicyConfig)
@@ -125,6 +135,7 @@ class DriftConfig(BaseModel):
     context_dampening: float = 0.5
     fail_on_delta: float | None = None
     fail_on_delta_window: int = 5
+    auto_calibrate: bool = True
     embeddings_enabled: bool = True
     embedding_model: str = "all-MiniLM-L6-v2"
     embedding_batch_size: int = 64

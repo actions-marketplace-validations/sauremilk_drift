@@ -32,6 +32,7 @@ from drift.models import (
 )
 from drift.scoring.engine import (
     assign_impact_scores,
+    auto_calibrate_weights,
     composite_score,
     compute_module_scores,
     compute_signal_scores,
@@ -227,9 +228,24 @@ def _run_pipeline(
     # Re-compute impact after dampening so downstream scoring uses adjusted values
     assign_impact_scores(all_findings, config.weights)
 
-    signal_scores = compute_signal_scores(all_findings)
-    repo_score = composite_score(signal_scores, config.weights)
-    module_scores = compute_module_scores(all_findings, config.weights)
+    # --- 5d. Auto-calibration ---
+    effective_weights = config.weights
+    if config.auto_calibrate:
+        effective_weights = auto_calibrate_weights(all_findings, config.weights)
+        # Re-assign impact with calibrated weights
+        assign_impact_scores(all_findings, effective_weights)
+
+    # --- 5e. Small-repo noise suppression ---
+    n_modules = len({f.path.parent.as_posix() for f in files})
+    is_small_repo = n_modules < config.thresholds.small_repo_module_threshold
+    scoring_kwargs: dict[str, int] = {}
+    if is_small_repo:
+        scoring_kwargs["dampening_k"] = 20  # stricter dampening for small repos
+        scoring_kwargs["min_findings"] = config.thresholds.small_repo_min_findings
+
+    signal_scores = compute_signal_scores(all_findings, **scoring_kwargs)
+    repo_score = composite_score(signal_scores, effective_weights)
+    module_scores = compute_module_scores(all_findings, effective_weights)
 
     # --- 6. Pattern catalog ---
     pattern_catalog: dict[PatternCategory, list[PatternInstance]] = {}

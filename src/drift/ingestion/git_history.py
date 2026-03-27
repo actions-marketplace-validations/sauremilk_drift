@@ -30,6 +30,16 @@ AI_COAUTHOR_MARKERS = [
     "github-actions",
     "anthropic",
     "openai",
+    # Newer AI coding tools (2025+)
+    "windsurf",
+    "devin",
+    "aider",
+    "cline",
+    "sourcegraph",
+    "amazon-q",
+    "gemini",
+    "claude",
+    "copilot-workspace",
 ]
 
 # Commit messages dominated by AI tools tend to be formulaic.
@@ -37,6 +47,14 @@ AI_COAUTHOR_MARKERS = [
 # Tier 1 (higher confidence): very specific AI-tool patterns
 # Tier 2 (lower confidence): generic "Verb + noun + noun" only when
 #   combined with other weak signals (no body, exact format).
+
+# Known AI tool email patterns in Co-authored-by tags.
+# Matched against the email portion of the co-author header.
+_AI_COAUTHOR_EMAILS = [
+    "copilot@users.noreply.github.com",
+    "noreply@cursor.sh",
+    "noreply@codeium.com",
+]
 
 # High-confidence patterns: clearly auto-generated messages
 _AI_MSG_TIER1 = [
@@ -48,6 +66,8 @@ _AI_MSG_TIER1 = [
         r"(functionality|feature|support|handling|endpoint|module)\b",
         re.IGNORECASE,
     ),
+    # aider-specific prefix
+    re.compile(r"^aider: ", re.IGNORECASE),
 ]
 
 # Low-confidence patterns: common in AI but also in humans
@@ -72,11 +92,15 @@ def _detect_ai_attribution(message: str, coauthors: list[str]) -> tuple[bool, fl
       (below the default threshold, so treated as human unless
        combined with other evidence in the caller)
     """
-    # Strong signal: co-author tag from known AI tool
+    # Strong signal: co-author tag from known AI tool (name match)
     for coauthor in coauthors:
         lower = coauthor.lower()
         for marker in AI_COAUTHOR_MARKERS:
             if marker in lower:
+                return True, 0.95
+        # Strong signal: co-author email from known AI tool
+        for email_marker in _AI_COAUTHOR_EMAILS:
+            if email_marker in lower:
                 return True, 0.95
 
     msg_first_line = message.split("\n")[0].strip()

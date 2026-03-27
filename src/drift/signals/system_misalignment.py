@@ -191,7 +191,12 @@ class SystemMisalignmentSignal(BaseSignal):
         file_histories: dict[str, FileHistory],
         config: DriftConfig,
     ) -> list[Finding]:
-        # Build baseline of established imports per module (excluding recent files)
+        """Detect novel imports that break a module's established dependency baseline.
+
+        Builds a per-module import baseline from files older than recency_days,
+        then flags recent files that introduce foreign third-party dependencies.
+        Aborts if <10% of files have established history (baseline too thin).
+        """
         recency_days = 14
         if hasattr(config, "thresholds"):
             recency_days = config.thresholds.recency_days

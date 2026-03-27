@@ -382,6 +382,13 @@ class ArchitectureViolationSignal(BaseSignal):
         allowed_patterns: list[str],
         blast_radius: dict[str, int] | None = None,
     ) -> list[Finding]:
+        """Flag cross-layer imports when no explicit policy boundaries exist.
+
+        Infers architectural layers from directory structure and optional
+        embedding-based prototype matching, then checks whether edges cross
+        layer boundaries.  Hub modules (high in-degree) are dampened to
+        reduce false positives from legitimate shared infrastructure.
+        """
         findings: list[Finding] = []
 
         for src, dst, data in graph.edges(data=True):

@@ -92,6 +92,12 @@ def test_composite_score_zero_weights_returns_zero():
         doc_impl_drift=0.0,
         temporal_volatility=0.0,
         system_misalignment=0.0,
+        broad_exception_monoculture=0.0,
+        test_polarity_deficit=0.0,
+        guard_clause_deficit=0.0,
+        naming_contract_violation=0.0,
+        bypass_accumulation=0.0,
+        exception_contract_drift=0.0,
     )
     scores = {sig: 0.5 for sig in SignalType}
     result = composite_score(scores, zero_weights)
