@@ -75,3 +75,63 @@ These are most useful when you want a custom orchestration layer without wrappin
 - [Team Rollout](getting-started/team-rollout.md)
 - [CI Architecture Checks with SARIF](use-cases/ci-architecture-checks-sarif.md)
 - [Trust and Evidence](trust-evidence.md)
+
+## GitLab CI
+
+Drift works in any CI environment that supports Python. Here is a minimal GitLab CI template:
+
+```yaml
+drift-check:
+  image: python:3.12-slim
+  stage: test
+  script:
+    - pip install -q drift-analyzer
+    - drift check --fail-on none --format json > drift-report.json
+    - drift check --fail-on high
+  artifacts:
+    paths:
+      - drift-report.json
+    when: always
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+```
+
+### Progressive rollout in GitLab
+
+1. **Report-only** (first week): `--fail-on none` — collect artifacts, no pipeline failures
+2. **Gate on critical**: change to `--fail-on critical` after reviewing initial findings
+3. **Gate on high**: tighten to `--fail-on high` when the team is confident in signal quality
+
+### SARIF output for GitLab
+
+GitLab does not natively consume SARIF, but you can archive it as an artifact or convert it using third-party tools:
+
+```yaml
+drift-sarif:
+  image: python:3.12-slim
+  stage: test
+  script:
+    - pip install -q drift-analyzer
+    - drift analyze --format sarif > gl-code-quality-report.sarif
+  artifacts:
+    paths:
+      - gl-code-quality-report.sarif
+    when: always
+```
+
+### Diff-only analysis
+
+For merge request pipelines, use diff mode for fast incremental checks:
+
+```yaml
+drift-check:
+  image: python:3.12-slim
+  stage: test
+  script:
+    - pip install -q drift-analyzer
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - drift check --diff origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME --fail-on high
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+```

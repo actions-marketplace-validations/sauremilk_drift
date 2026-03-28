@@ -29,6 +29,7 @@ from drift.models import (
     RepoAnalysis,
 )
 from drift.scoring.engine import (
+    apply_path_overrides,
     assign_impact_scores,
     auto_calibrate_weights,
     composite_score,
@@ -401,6 +402,12 @@ class ScoringPhase:
         if config.auto_calibrate:
             effective_weights = self._calibrator(all_findings, config.weights)
             self._impact_assigner(all_findings, effective_weights)
+
+        # Apply per-path overrides (filter + re-weight) before scoring
+        if config.path_overrides:
+            all_findings = apply_path_overrides(
+                all_findings, config.path_overrides, effective_weights
+            )
 
         n_modules = len({f.path.parent.as_posix() for f in files})
         is_small_repo = n_modules < config.thresholds.small_repo_module_threshold

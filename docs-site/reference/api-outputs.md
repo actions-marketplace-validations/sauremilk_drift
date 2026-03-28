@@ -1,17 +1,121 @@
 # API and Outputs
 
-Drift already exposes machine-consumable surfaces that are useful for automation, CI artifacts, and custom orchestration.
+Drift exposes machine-consumable surfaces for automation, CI artifacts, and custom orchestration.
 
 This page keeps the current surface area narrow and explicit.
 
 ## Python API entry points
 
-The current analysis entry points are:
+### `analyze_repo`
 
-- `analyze_repo(repo_path, config=None, since_days=90, target_path=None, on_progress=None, workers=...)`
-- `analyze_diff(repo_path, config=None, diff_ref="HEAD~1", workers=..., on_progress=None, since_days=90)`
+```python
+from pathlib import Path
+from drift.analyzer import analyze_repo
+from drift.config import DriftConfig
 
-Use these when you want to integrate drift as a library inside a Python workflow.
+result = analyze_repo(
+    repo_path=Path("."),       # Repository root
+    config=None,               # DriftConfig instance or None for auto-detection
+    since_days=90,             # Git history lookback window
+    target_path=None,          # Restrict analysis to a subdirectory
+    on_progress=None,          # Callback: (message, current, total) -> None
+    workers=8,                 # Thread pool size for parallel parsing
+)
+```
+
+### `analyze_diff`
+
+```python
+from drift.analyzer import analyze_diff
+
+result = analyze_diff(
+    repo_path=Path("."),       # Repository root
+    config=None,               # DriftConfig instance or None
+    diff_ref="HEAD~1",         # Git ref to diff against
+    workers=8,                 # Thread pool size
+    on_progress=None,          # Progress callback
+    since_days=90,             # Git history lookback
+)
+```
+
+Both return a `RepoAnalysis` dataclass.
+
+### `RepoAnalysis` fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `repo_path` | `Path` | Repository root |
+| `analyzed_at` | `datetime` | Timestamp of analysis |
+| `drift_score` | `float` | Composite drift score (0.0–1.0) |
+| `severity` | `Severity` | Overall severity level |
+| `findings` | `list[Finding]` | All detected findings |
+| `module_scores` | `list[ModuleScore]` | Per-module drift scores |
+| `total_files` | `int` | Number of analyzed files |
+| `total_functions` | `int` | Number of analyzed functions |
+| `ai_attributed_ratio` | `float` | Fraction of AI-attributed commits |
+| `analysis_duration_seconds` | `float` | Wall-clock duration |
+| `trend` | `TrendContext \| None` | Score trend over time |
+| `suppressed_count` | `int` | Findings suppressed by inline markers |
+| `context_tagged_count` | `int` | Findings with context tags |
+
+### `Finding` fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `signal_type` | `SignalType` | Signal that produced this finding |
+| `rule_id` | `str` | Stable rule identifier (defaults to `signal_type.value`) |
+| `severity` | `Severity` | Finding severity |
+| `score` | `float` | Signal confidence score (0.0–1.0) |
+| `impact` | `float` | Weighted impact after scoring |
+| `title` | `str` | One-line summary |
+| `description` | `str` | Detailed explanation |
+| `fix` | `str \| None` | Suggested remediation |
+| `file_path` | `Path \| None` | Primary affected file |
+| `start_line` | `int \| None` | Start line |
+| `end_line` | `int \| None` | End line |
+| `related_files` | `list[Path]` | Additional affected files |
+| `ai_attributed` | `bool` | Whether the code is AI-generated |
+| `metadata` | `dict` | Signal-specific metadata |
+
+### `DriftConfig` as a Pydantic model
+
+Configuration can be constructed programmatically:
+
+```python
+from drift.config import DriftConfig, SignalWeights
+
+config = DriftConfig(
+    include=["**/*.py"],
+    exclude=["**/test/**"],
+    weights=SignalWeights(pattern_fragmentation=0.20),
+    fail_on="high",
+    auto_calibrate=True,
+)
+```
+
+Or loaded from a YAML file:
+
+```python
+config = DriftConfig.load(Path("."))  # Auto-discovers drift.yaml
+```
+
+### Example: programmatic usage
+
+```python
+from pathlib import Path
+from drift.analyzer import analyze_repo
+from drift.config import DriftConfig
+
+config = DriftConfig.load(Path("."))
+result = analyze_repo(Path("."), config=config)
+
+print(f"Drift score: {result.drift_score:.3f}")
+print(f"Severity: {result.severity}")
+print(f"Findings: {len(result.findings)}")
+
+for f in sorted(result.findings, key=lambda x: x.impact, reverse=True)[:5]:
+    print(f"  [{f.rule_id}] {f.title} (impact={f.impact:.3f})")
+```
 
 ## When to prefer the Python API
 

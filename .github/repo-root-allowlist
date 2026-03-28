@@ -34,4 +34,5 @@ pyproject.toml
 scripts
 src
 tests
+uv.lock
 work_artifacts

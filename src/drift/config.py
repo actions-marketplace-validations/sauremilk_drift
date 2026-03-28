@@ -93,6 +93,20 @@ class SignalWeights(BaseModel):
         return self.model_dump()
 
 
+class PathOverride(BaseModel):
+    """Per-path configuration overrides.
+
+    Match paths using glob patterns (e.g. ``tests/**``, ``legacy/``).
+    More specific patterns take precedence over broader ones.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    weights: SignalWeights | None = None
+    exclude_signals: list[str] = Field(default_factory=list)
+    severity_gate: str | None = None
+
+
 def _default_includes() -> list[str]:
     """Return default include patterns, auto-extending for TypeScript when available."""
     patterns = ["**/*.py"]
@@ -141,6 +155,7 @@ class DriftConfig(BaseModel):
     embeddings_enabled: bool = True
     embedding_model: str = "all-MiniLM-L6-v2"
     embedding_batch_size: int = 64
+    path_overrides: dict[str, PathOverride] = Field(default_factory=dict)
 
     @staticmethod
     def _find_config_file(repo_path: Path) -> Path | None:

@@ -8,12 +8,13 @@ See docs/adr/003-composite-scoring-model.md for design rationale.
 
 from __future__ import annotations
 
+import fnmatch
 import math
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from drift.config import SignalWeights
+from drift.config import PathOverride, SignalWeights
 from drift.models import (
     Finding,
     ModuleScore,
@@ -50,6 +51,69 @@ def assign_impact_scores(findings: list[Finding], weights: SignalWeights) -> Non
         w = weight_dict.get(key, 0.1) if key else 0.1
         breadth = 1 + math.log(1 + len(f.related_files))
         f.impact = round(w * f.score * breadth, 4)
+
+
+def resolve_path_override(
+    file_path: Path | None,
+    overrides: dict[str, PathOverride],
+) -> PathOverride | None:
+    """Return the most specific matching PathOverride for *file_path*.
+
+    Specificity is determined by pattern length (longest match wins).
+    Returns ``None`` when no pattern matches.
+    """
+    if file_path is None or not overrides:
+        return None
+
+    posix = file_path.as_posix()
+    best: PathOverride | None = None
+    best_len = -1
+    for pattern, override in overrides.items():
+        if fnmatch.fnmatch(posix, pattern) and len(pattern) > best_len:
+            best = override
+            best_len = len(pattern)
+    return best
+
+
+def apply_path_overrides(
+    findings: list[Finding],
+    overrides: dict[str, PathOverride],
+    weights: SignalWeights,
+) -> list[Finding]:
+    """Filter findings and re-weight impacts based on per-path overrides.
+
+    * Findings whose signal is listed in ``exclude_signals`` are removed.
+    * Findings matched by an override with custom ``weights`` get their
+      impact recomputed using those weights.
+
+    Returns the (possibly reduced) list of findings.  Does **not** mutate
+    the original list; instead returns a new one.
+    """
+    if not overrides:
+        return findings
+
+    kept: list[Finding] = []
+    for f in findings:
+        override = resolve_path_override(f.file_path, overrides)
+        if override is None:
+            kept.append(f)
+            continue
+
+        # Exclude signal?
+        if f.signal_type.value in override.exclude_signals:
+            continue
+
+        # Re-weight if override provides custom weights
+        if override.weights is not None:
+            wd = override.weights.as_dict()
+            key = _SIGNAL_WEIGHT_KEYS.get(f.signal_type)
+            w = wd.get(key, 0.1) if key else 0.1
+            breadth = 1 + math.log(1 + len(f.related_files))
+            f.impact = round(w * f.score * breadth, 4)
+
+        kept.append(f)
+
+    return kept
 
 
 def compute_signal_scores(

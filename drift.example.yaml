@@ -94,3 +94,21 @@ thresholds:
   recency_days: 14             # TVS: recency window
   volatility_z_threshold: 1.5  # TVS: z-score outlier threshold
   max_discovery_files: 10000   # Safety: hard cap for discovered source files
+
+# Per-path overrides: adjust weights or suppress signals for specific paths.
+# Patterns use glob syntax; the most specific (longest) match wins.
+# path_overrides:
+#   "tests/**":
+#     # Test code: suppress pattern fragmentation and architecture violations
+#     exclude_signals:
+#       - pattern_fragmentation
+#       - architecture_violation
+#   "legacy/**":
+#     # Legacy code: lower weights, only flag critical issues
+#     severity_gate: critical
+#     weights:
+#       pattern_fragmentation: 0.05
+#       architecture_violation: 0.05
+#   "scripts/**":
+#     exclude_signals:
+#       - explainability_deficit

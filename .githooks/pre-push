@@ -12,7 +12,7 @@ set -e
 blocked_pattern='^(tagesplanung/)'
 feature_pattern='^feat(\(.+\))?:'
 fix_pattern='^fix(\(.+\))?:'
-STUDY_MD_PATH=${STUDY_MD_PATH:-"docs/Study.md"}
+STUDY_MD_PATH=${STUDY_MD_PATH:-"docs/STUDY.md"}
 BENCHMARK_EVIDENCE_PATTERN=${BENCHMARK_EVIDENCE_PATTERN:-"^benchmark_results/[^/]*_feature_evidence\.json$"}
 
 # Aggregated push state (captured while iterating updated refs)

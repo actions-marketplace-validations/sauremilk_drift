@@ -12,6 +12,7 @@ from drift.models import Finding, ModuleScore, RepoAnalysis, Severity
 def _finding_to_dict(f: Finding) -> dict[str, Any]:
     return {
         "signal": f.signal_type.value,
+        "rule_id": f.rule_id,
         "severity": f.severity.value,
         "score": f.score,
         "impact": f.impact,
@@ -88,7 +89,7 @@ def findings_to_sarif(analysis: RepoAnalysis) -> str:
 
     rule_ids: dict[str, int] = {}
     for f in analysis.findings:
-        rule_key = f.signal_type.value
+        rule_key = f.rule_id or f.signal_type.value
         if rule_key not in rule_ids:
             rule_ids[rule_key] = len(rules)
             rules.append(

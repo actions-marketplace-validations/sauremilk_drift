@@ -3,6 +3,21 @@
 All notable changes to drift-analyzer are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.2] - 2026-03-28
+
+Short version: drift gains `drift config validate/show`, stable `rule_id` on findings, per-path configuration overrides, and expanded docs.
+
+### Added
+
+- **`drift config validate/show`**: Validates `drift.yaml` schema, extreme weights, unknown signals; `show` displays resolved config as Rich table or JSON.
+- **Stable `rule_id` on Finding**: Every finding carries a `rule_id` field (default: `signal_type.value`), emitted in JSON and used as SARIF `ruleId`.
+- **Per-path overrides**: New `path_overrides` config section with glob-based `exclude_signals`, custom `weights`, and `severity_gate` per directory.
+- **Documentation expansion**: Troubleshooting guide, performance matrix (16 repos), GitLab CI template, Python API examples, check-vs-analyze comparison.
+
+### Changed
+
+- **Pipeline + SARIF**: `apply_path_overrides` runs after scoring; SARIF output uses `rule_id` for better tool integration.
+
 ## [0.8.1] - 2026-03-27
 
 Short version: drift now enforces English-only user-facing finding remediation text to keep CLI output and demo assets language-consistent.

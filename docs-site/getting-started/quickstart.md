@@ -73,6 +73,19 @@ The GitHub Action now follows the same safe default. Tighten to `high` only afte
 
 See [Team Rollout](team-rollout.md) for the full progressive adoption path.
 
+## `analyze` vs `check` — when to use which
+
+| | `drift analyze` | `drift check` |
+|---|---|---|
+| **Purpose** | Full repository scan | Diff-scoped CI gate |
+| **Scope** | All files matching include/exclude | Only changed files (`--diff`) |
+| **Typical use** | Local exploration, baseline creation | Pull request CI checks |
+| **Output** | Rich terminal, JSON, SARIF | Same formats, plus exit code gating |
+| **Key flags** | `--path`, `--sort-by`, `--format` | `--fail-on`, `--diff`, `--baseline` |
+| **Speed** | Seconds to minutes (depends on repo size) | Typically < 10 seconds |
+
+**Rule of thumb:** Use `analyze` when you want a complete picture. Use `check` when you want a fast CI gate on changed code.
+
 ## Other commands
 
 ```bash

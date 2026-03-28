@@ -203,6 +203,11 @@ class Finding:
     fix: str | None = None
     impact: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
+    rule_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.rule_id is None:
+            self.rule_id = self.signal_type.value
 
 
 @dataclass

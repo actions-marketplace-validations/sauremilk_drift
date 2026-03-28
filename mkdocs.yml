@@ -55,6 +55,7 @@ nav:
       - Team Rollout: getting-started/team-rollout.md
       - Finding Triage: getting-started/finding-triage.md
       - Configuration: getting-started/configuration.md
+      - Troubleshooting: getting-started/troubleshooting.md
   - Use Cases:
       - Overview: use-cases/index.md
       - Architecture Drift Detection for Python: use-cases/architecture-drift-python.md
@@ -80,6 +81,7 @@ nav:
       - FAQ: faq.md
       - Glossary: glossary.md
       - API and Outputs: reference/api-outputs.md
+      - Performance: reference/performance.md
   - Product:
       - Product Strategy: product-strategy.md
       - Example Findings: product/example-findings.md
