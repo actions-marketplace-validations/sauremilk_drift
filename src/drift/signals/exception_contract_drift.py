@@ -177,12 +177,7 @@ def _ts_extract_functions_from_source(
         name: str | None = None
         func_node = None
 
-        if node.type == "function_declaration":
-            name_nd = node.child_by_field_name("name")
-            name = ts_node_text(name_nd, src) if name_nd else None
-            func_node = node
-
-        elif node.type == "method_definition":
+        if node.type == "function_declaration" or node.type == "method_definition":
             name_nd = node.child_by_field_name("name")
             name = ts_node_text(name_nd, src) if name_nd else None
             func_node = node

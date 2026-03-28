@@ -182,20 +182,19 @@ def _ts_count_assertions(
             fn = node.child_by_field_name("function")
             if fn:
                 fn_text = ts_node_text(fn, src)
-                if fn_text in ("it", "test", "describe"):
-                    if fn_text in ("it", "test"):
-                        test_functions += 1
-                        # Check for boundary keywords in first argument
-                        args = node.child_by_field_name("arguments")
-                        if args and args.children:
-                            first_arg = next(
-                                (c for c in args.children if c.type == "string"),
-                                None,
-                            )
-                            if first_arg:
-                                desc = ts_node_text(first_arg, src).lower()
-                                if any(kw in desc for kw in _BOUNDARY_KEYWORDS):
-                                    boundary_functions += 1
+                if fn_text in ("it", "test"):
+                    test_functions += 1
+                    # Check for boundary keywords in first argument
+                    args = node.child_by_field_name("arguments")
+                    if args and args.children:
+                        first_arg = next(
+                            (c for c in args.children if c.type == "string"),
+                            None,
+                        )
+                        if first_arg:
+                            desc = ts_node_text(first_arg, src).lower()
+                            if any(kw in desc for kw in _BOUNDARY_KEYWORDS):
+                                boundary_functions += 1
 
             # Check for expect().matcher() chains
             # The pattern is: call_expression -> member_expression -> call_expression (expect)
