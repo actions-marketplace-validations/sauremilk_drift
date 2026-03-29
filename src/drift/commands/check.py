@@ -94,6 +94,13 @@ from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
     default=None,
     help="Write machine output (JSON/SARIF) to a file instead of stdout.",
 )
+@click.option(
+    "--json",
+    "json_shortcut",
+    is_flag=True,
+    default=False,
+    help="Shortcut for --format json (agent-friendly).",
+)
 def check(
     repo: Path,
     diff_ref: str,
@@ -111,11 +118,15 @@ def check(
     no_code: bool,
     baseline_file: Path | None,
     output_file: Path | None,
+    json_shortcut: bool,
 ) -> None:
     """Check a diff for drift (CI mode)."""
     from drift.analyzer import _DEFAULT_WORKERS, analyze_diff
     from drift.config import DriftConfig
     from drift.scoring.engine import severity_gate_pass
+
+    if json_shortcut:
+        output_format = "json"
 
     cfg = DriftConfig.load(repo, config)
     if no_embeddings:

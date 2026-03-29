@@ -36,6 +36,33 @@ def _emit_error_payload(payload: dict[str, object]) -> None:
     click.echo(json.dumps(payload, sort_keys=True), err=True)
 
 
+def _build_error_payload(
+    error_code: str,
+    category: str,
+    message: str,
+    exit_code: int,
+    *,
+    detail: str | None = None,
+    hint: str | None = None,
+) -> dict[str, object]:
+    """Build a v2.0 machine-readable error payload with recovery info."""
+    info = ERROR_REGISTRY.get(error_code)
+    recoverable = category == "user"
+    suggested_action = info.action if info else hint
+    return {
+        "schema_version": "2.0",
+        "type": "error",
+        "error_code": error_code,
+        "category": category,
+        "message": message,
+        "detail": detail,
+        "exit_code": exit_code,
+        "hint": hint,
+        "recoverable": recoverable,
+        "suggested_action": suggested_action,
+    }
+
+
 def _configure_logging(verbose: bool = False) -> None:
     """Set up structured logging for the drift tool."""
     level = logging.DEBUG if verbose else logging.WARNING
@@ -95,15 +122,10 @@ def safe_main() -> None:
     except KeyboardInterrupt:
         if machine_errors:
             _emit_error_payload(
-                {
-                    "schema_version": "1.0",
-                    "type": "error",
-                    "error_code": "DRIFT-0000",
-                    "category": "system",
-                    "message": "Interrupted.",
-                    "exit_code": EXIT_INTERRUPTED,
-                    "hint": None,
-                },
+                _build_error_payload(
+                    "DRIFT-0000", "system", "Interrupted.",
+                    EXIT_INTERRUPTED,
+                ),
             )
         else:
             click.echo("\nInterrupted.", err=True)
@@ -112,16 +134,14 @@ def safe_main() -> None:
         info = ERROR_REGISTRY.get(exc.code)
         if machine_errors:
             _emit_error_payload(
-                {
-                    "schema_version": "1.0",
-                    "type": "error",
-                    "error_code": exc.code,
-                    "category": info.category if info else "analysis",
-                    "message": str(exc),
-                    "detail": exc.detail,
-                    "exit_code": exc.exit_code,
-                    "hint": exc.hint,
-                },
+                _build_error_payload(
+                    exc.code,
+                    info.category if info else "analysis",
+                    str(exc),
+                    exc.exit_code,
+                    detail=exc.detail,
+                    hint=exc.hint,
+                ),
             )
         else:
             click.echo(exc.detail, err=True)
@@ -129,16 +149,11 @@ def safe_main() -> None:
     except FileNotFoundError as exc:
         if machine_errors:
             _emit_error_payload(
-                {
-                    "schema_version": "1.0",
-                    "type": "error",
-                    "error_code": "DRIFT-2001",
-                    "category": "system",
-                    "message": str(exc),
-                    "detail": f"[DRIFT-2001] {exc}",
-                    "exit_code": EXIT_SYSTEM_ERROR,
-                    "hint": None,
-                },
+                _build_error_payload(
+                    "DRIFT-2001", "system", str(exc),
+                    EXIT_SYSTEM_ERROR,
+                    detail=f"[DRIFT-2001] {exc}",
+                ),
             )
         else:
             click.echo(f"[DRIFT-2001] {exc}", err=True)
@@ -146,16 +161,12 @@ def safe_main() -> None:
     except Exception as exc:
         if machine_errors:
             _emit_error_payload(
-                {
-                    "schema_version": "1.0",
-                    "type": "error",
-                    "error_code": "DRIFT-3002",
-                    "category": "analysis",
-                    "message": str(exc),
-                    "detail": f"[DRIFT-2003] {exc}",
-                    "exit_code": EXIT_ANALYSIS_ERROR,
-                    "hint": "Run with -v for the full traceback.",
-                },
+                _build_error_payload(
+                    "DRIFT-3002", "analysis", str(exc),
+                    EXIT_ANALYSIS_ERROR,
+                    detail=f"[DRIFT-2003] {exc}",
+                    hint="Run with -v for the full traceback.",
+                ),
             )
         else:
             click.echo(f"[DRIFT-2003] {exc}", err=True)

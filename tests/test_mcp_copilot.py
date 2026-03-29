@@ -267,44 +267,44 @@ class TestMergeIntoFile:
 
 
 class TestMcpServerHelpers:
-    """Test MCP server helper functions without requiring mcp package."""
+    """Test MCP server tool functions are importable and well-formed."""
 
-    def test_resolve_repo_path_cwd(self) -> None:
-        """_resolve_repo_path with no arg returns cwd."""
-        from drift.mcp_server import _resolve_repo_path
+    def test_mcp_tools_importable(self) -> None:
+        """All five v2 MCP tools can be imported."""
+        from drift.mcp_server import (
+            drift_diff,
+            drift_explain,
+            drift_fix_plan,
+            drift_scan,
+            drift_validate,
+        )
 
-        result = _resolve_repo_path(None)
-        assert result.is_dir()
+        # They should all be callable functions
+        assert callable(drift_scan)
+        assert callable(drift_diff)
+        assert callable(drift_explain)
+        assert callable(drift_fix_plan)
+        assert callable(drift_validate)
 
-    def test_resolve_repo_path_explicit(self, tmp_path: Path) -> None:
-        from drift.mcp_server import _resolve_repo_path
+    def test_drift_explain_returns_json(self) -> None:
+        """drift_explain returns valid JSON for a known signal."""
+        import json as _json
 
-        result = _resolve_repo_path(str(tmp_path))
-        assert result == tmp_path.resolve()
+        from drift.mcp_server import drift_explain
 
-    def test_resolve_repo_path_invalid(self) -> None:
-        from drift.mcp_server import _resolve_repo_path
+        result = _json.loads(drift_explain("PFS"))
+        assert "name" in result
+        assert "description" in result
 
-        with pytest.raises(ValueError, match="does not exist"):
-            _resolve_repo_path("/nonexistent/path/xyz")
+    def test_drift_explain_unknown_topic(self) -> None:
+        """drift_explain handles unknown topics gracefully."""
+        import json as _json
 
-    def test_analysis_summary_structure(self, _analysis: RepoAnalysis) -> None:
-        from drift.mcp_server import _analysis_summary
+        from drift.mcp_server import drift_explain
 
-        summary = _analysis_summary(_analysis, max_findings=5)
-        assert "drift_score" in summary
-        assert "severity" in summary
-        assert "findings" in summary
-        assert len(summary["findings"]) <= 5
-        assert "trend" in summary
-
-    def test_analysis_summary_limits_findings(
-        self, _analysis: RepoAnalysis
-    ) -> None:
-        from drift.mcp_server import _analysis_summary
-
-        summary = _analysis_summary(_analysis, max_findings=2)
-        assert len(summary["findings"]) == 2
+        result = _json.loads(drift_explain("NONEXISTENT_THING"))
+        # Should still return valid JSON without crashing
+        assert isinstance(result, dict)
 
 
 # ---------------------------------------------------------------------------

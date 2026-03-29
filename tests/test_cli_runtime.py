@@ -99,11 +99,13 @@ def test_safe_main_drift_error_emits_json_payload_when_enabled(
     assert exc_info.value.code == 2
     captured = capsys.readouterr()
     payload = json.loads(captured.err.strip())
-    assert payload["schema_version"] == "1.0"
+    assert payload["schema_version"] == "2.0"
     assert payload["type"] == "error"
     assert payload["error_code"] == "DRIFT-1001"
     assert payload["category"] == "user"
     assert payload["exit_code"] == 2
+    assert payload["recoverable"] is True
+    assert payload["suggested_action"] is not None
 
 
 def test_safe_main_generic_exception_emits_json_payload_when_enabled(
@@ -118,9 +120,10 @@ def test_safe_main_generic_exception_emits_json_payload_when_enabled(
     assert exc_info.value.code == 3
     captured = capsys.readouterr()
     payload = json.loads(captured.err.strip())
-    assert payload["schema_version"] == "1.0"
+    assert payload["schema_version"] == "2.0"
     assert payload["type"] == "error"
     assert payload["error_code"] == "DRIFT-3002"
     assert payload["category"] == "analysis"
     assert payload["exit_code"] == 3
     assert payload["message"] == "boom"
+    assert payload["recoverable"] is False

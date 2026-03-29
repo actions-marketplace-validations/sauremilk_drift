@@ -3,6 +3,21 @@
 All notable changes to drift-analyzer are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.4] - 2026-03-29
+
+Short version: drift introduces an agent-native API surface and expands MCP capabilities with concise machine-first responses and improved CLI ergonomics.
+
+### Added
+
+- **Programmatic agent API module**: Added `drift.api` with stable entry points (`scan`, `diff`, `explain`, `fix_plan`, `validate`) for deterministic tool integration.
+- **Expanded MCP tool surface**: Reworked MCP server to expose five agent-native tools: `drift_scan`, `drift_diff`, `drift_explain`, `drift_fix_plan`, and `drift_validate`.
+- **Agent-friendly JSON shortcuts**: Added `--json` shortcut flags to `drift analyze` and `drift check` to reduce command friction in automated workflows.
+
+### Changed
+
+- **Machine-error contract v2.0**: CLI JSON error payloads now include recovery metadata (`recoverable`, `suggested_action`) for safer agent decision-making.
+- **MCP contract coverage**: Updated MCP and CLI runtime tests to align with the new API and error-schema behavior.
+
 ## [0.10.3] - 2026-03-29
 
 Short version: drift adds deterministic machine-error contracts and a decision-ready fix-first queue so CI and sprint planning can act directly on analyzer output.

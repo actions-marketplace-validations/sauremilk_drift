@@ -114,6 +114,13 @@ from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
     default=None,
     help="Save the current findings as a baseline file after analysis.",
 )
+@click.option(
+    "--json",
+    "json_shortcut",
+    is_flag=True,
+    default=False,
+    help="Shortcut for --format json (agent-friendly).",
+)
 def analyze(
     repo: Path,
     path: str | None,
@@ -135,12 +142,16 @@ def analyze(
     baseline_file: Path | None,
     output_file: Path | None,
     save_baseline_path: Path | None,
+    json_shortcut: bool,
 ) -> None:
     """Analyze a repository for architectural drift."""
     from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 
     from drift.analyzer import _DEFAULT_WORKERS, analyze_repo
     from drift.config import DriftConfig
+
+    if json_shortcut:
+        output_format = "json"
 
     cfg = DriftConfig.load(repo, config)
     if no_embeddings:

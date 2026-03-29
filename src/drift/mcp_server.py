@@ -4,19 +4,19 @@ Requires the optional ``mcp`` extra: ``pip install drift-analyzer[mcp]``
 
 The server uses stdio transport (no network listener) and is started via
 ``drift mcp --serve``.  VS Code discovers it through ``.vscode/mcp.json``.
+
+Tool surface (v2):
+    drift_scan       — Full repo analysis (concise/detailed)
+    drift_diff       — Diff-based change detection
+    drift_explain    — Signal/rule/error explanations
+    drift_fix_plan   — Prioritised repair tasks with constraints
+    drift_validate   — Preflight config & environment check
 """
 
 from __future__ import annotations
 
 import json
-import time
-from pathlib import Path
 from typing import Any
-
-from drift.analyzer import analyze_diff, analyze_repo
-from drift.config import DriftConfig
-from drift.models import RepoAnalysis, SignalType
-from drift.output.json_output import _finding_to_dict
 
 MCPFastMCPImpl: Any
 
@@ -45,6 +45,7 @@ except ImportError:
             raise RuntimeError(msg)
 
     MCPFastMCPImpl = _FallbackFastMCP
+
 # ---------------------------------------------------------------------------
 # Server instance
 # ---------------------------------------------------------------------------
@@ -55,218 +56,158 @@ mcp = MCPFastMCPImpl(
         "Drift is a deterministic static analyzer that detects architectural "
         "erosion in Python codebases. Use these tools to analyze repositories "
         "for coherence problems like pattern fragmentation, layer violations, "
-        "and near-duplicate code."
+        "and near-duplicate code.\n\n"
+        "Tool workflow:\n"
+        "1. drift_validate — check config & environment before first analysis\n"
+        "2. drift_scan — assess overall architectural health\n"
+        "3. drift_diff — detect regressions in a PR or after changes\n"
+        "4. drift_fix_plan — get actionable repair tasks with constraints\n"
+        "5. drift_explain — understand unfamiliar signals or findings"
     ),
 )
 
-# ---------------------------------------------------------------------------
-# In-memory cache
-# ---------------------------------------------------------------------------
-
-_CACHE_TTL_SECONDS = 60
-
-_cache: dict[str, tuple[float, RepoAnalysis]] = {}
-
-
-def _get_cached(key: str) -> RepoAnalysis | None:
-    entry = _cache.get(key)
-    if entry is None:
-        return None
-    ts, analysis = entry
-    if time.monotonic() - ts > _CACHE_TTL_SECONDS:
-        del _cache[key]
-        return None
-    return analysis
-
-
-def _set_cache(key: str, analysis: RepoAnalysis) -> None:
-    _cache[key] = (time.monotonic(), analysis)
-
 
 # ---------------------------------------------------------------------------
-# Path validation
-# ---------------------------------------------------------------------------
-
-
-def _resolve_repo_path(path: str | None) -> Path:
-    """Resolve and validate a repository path.
-
-    Ensures the path exists and is a directory.  Does NOT allow traversal
-    outside the resolved directory (``Path.resolve()`` removes ``..``).
-    """
-    resolved = Path(path).resolve() if path else Path.cwd().resolve()
-    if not resolved.is_dir():
-        msg = f"Repository path does not exist or is not a directory: {resolved}"
-        raise ValueError(msg)
-    return resolved
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _analysis_summary(analysis: RepoAnalysis, max_findings: int = 20) -> dict[str, Any]:
-    """Build a JSON-serialisable summary dict from a RepoAnalysis."""
-    findings_list = sorted(analysis.findings, key=lambda f: f.impact, reverse=True)[
-        :max_findings
-    ]
-    result: dict[str, Any] = {
-        "drift_score": analysis.drift_score,
-        "severity": analysis.severity.value,
-        "total_files": analysis.total_files,
-        "total_functions": analysis.total_functions,
-        "analysis_duration_seconds": analysis.analysis_duration_seconds,
-        "findings_count": len(analysis.findings),
-        "findings_returned": len(findings_list),
-        "findings": [_finding_to_dict(f) for f in findings_list],
-    }
-    if analysis.trend:
-        result["trend"] = {
-            "direction": analysis.trend.direction,
-            "delta": analysis.trend.delta,
-            "previous_score": analysis.trend.previous_score,
-        }
-    return result
-
-
-# ---------------------------------------------------------------------------
-# MCP Tools
+# MCP Tools — v2 agent-native surface
 # ---------------------------------------------------------------------------
 
 
 @mcp.tool()
-def drift_analyze(
+def drift_scan(
     path: str = ".",
-    since_days: int = 90,
     target_path: str | None = None,
-    max_findings: int = 20,
+    since_days: int = 90,
+    signals: str | None = None,
+    max_findings: int = 10,
+    response_detail: str = "concise",
 ) -> str:
-    """Run full architectural drift analysis on the repository.
+    """Analyze a repository for architectural drift.
 
-    Returns drift score, severity, and top findings sorted by impact.
+    Returns drift score, severity, top signals, fix-first queue,
+    and findings sorted by impact.  Use this to assess overall health.
 
     Args:
-        path: Repository path to analyze. Defaults to current directory.
+        path: Repository path (default: current directory).
+        target_path: Restrict analysis to a subdirectory.
         since_days: Days of git history to consider (default: 90).
-        target_path: Optional subdirectory to restrict analysis to.
-        max_findings: Maximum findings to return (default: 20).
+        signals: Comma-separated signal IDs to include (e.g. "PFS,AVS").
+        max_findings: Maximum findings to return (default: 10).
+        response_detail: "concise" (token-sparing) or "detailed" (full fields).
     """
-    repo_path = _resolve_repo_path(path)
-    cache_key = f"repo:{repo_path}:{since_days}:{target_path or ''}"
+    from drift.api import scan
 
-    analysis = _get_cached(cache_key)
-    if analysis is None:
-        config = DriftConfig.load(repo_path)
-        analysis = analyze_repo(
-            repo_path,
-            config=config,
-            since_days=since_days,
-            target_path=target_path,
-        )
-        _set_cache(cache_key, analysis)
-
-    return json.dumps(_analysis_summary(analysis, max_findings), default=str)
+    signal_list = (
+        [s.strip() for s in signals.split(",") if s.strip()]
+        if signals
+        else None
+    )
+    result = scan(
+        path,
+        target_path=target_path,
+        since_days=since_days,
+        signals=signal_list,
+        max_findings=max_findings,
+        response_detail=response_detail,
+    )
+    return json.dumps(result, default=str)
 
 
 @mcp.tool()
-def drift_check_diff(
+def drift_diff(
     path: str = ".",
     diff_ref: str = "HEAD~1",
+    baseline_file: str | None = None,
+    max_findings: int = 10,
+    response_detail: str = "concise",
 ) -> str:
-    """Analyze only files changed since a git ref.
+    """Detect drift changes since a git ref or baseline.
 
-    Use this for checking current changes before commit. Fast because it
-    only processes changed files.
+    Use this for PR review, CI gating, or before/after comparison.
+    Returns drift_detected flag, score delta, new and resolved findings.
 
     Args:
-        path: Repository path. Defaults to current directory.
+        path: Repository path (default: current directory).
         diff_ref: Git ref to diff against (default: HEAD~1).
+        baseline_file: Path to .drift-baseline.json for comparison.
+        max_findings: Maximum findings to return (default: 10).
+        response_detail: "concise" or "detailed".
     """
-    repo_path = _resolve_repo_path(path)
-    config = DriftConfig.load(repo_path)
-    analysis = analyze_diff(repo_path, config=config, diff_ref=diff_ref)
-    return json.dumps(_analysis_summary(analysis), default=str)
+    from drift.api import diff
+
+    result = diff(
+        path,
+        diff_ref=diff_ref,
+        baseline_file=baseline_file,
+        max_findings=max_findings,
+        response_detail=response_detail,
+    )
+    return json.dumps(result, default=str)
 
 
 @mcp.tool()
-def drift_explain_finding(signal: str) -> str:
-    """Get detailed explanation for a specific signal type.
+def drift_explain(topic: str) -> str:
+    """Explain a drift signal, rule, or error code.
 
-    Returns detection logic, examples, weight, and remediation guidance.
+    Use when you encounter an unfamiliar signal abbreviation (e.g. "PFS"),
+    need to understand what a finding means, or want remediation guidance.
 
     Args:
-        signal: Signal type name (e.g. 'pattern_fragmentation').
+        topic: Signal abbreviation ("PFS"), signal name
+            ("pattern_fragmentation"), or error code ("DRIFT-1001").
     """
-    # Validate signal name
-    try:
-        signal_type = SignalType(signal)
-    except ValueError:
-        valid = [s.value for s in SignalType]
-        return json.dumps({"error": f"Unknown signal '{signal}'. Valid: {valid}"})
+    from drift.api import explain
 
-    # Import signal info from explain command
-    from drift.commands.explain import _SIGNAL_INFO
-
-    # Find matching entry by signal_type value
-    info: dict[str, str] | None = None
-    for _abbr, entry in _SIGNAL_INFO.items():
-        if entry["signal_type"] == signal:
-            info = entry
-            break
-
-    if info is None:
-        return json.dumps({
-            "signal": signal,
-            "name": signal_type.value,
-            "description": "No detailed explanation available for this signal.",
-        })
-
-    return json.dumps({
-        "signal": signal,
-        "name": info.get("name", signal),
-        "weight": float(info.get("weight", "0")),
-        "description": info.get("description", ""),
-        "detection_logic": info.get("detects", ""),
-        "example": info.get("example", ""),
-        "remediation": info.get("fix_hint", ""),
-    })
+    return json.dumps(explain(topic), default=str)
 
 
 @mcp.tool()
-def drift_file_findings(
-    file_path: str,
+def drift_fix_plan(
     path: str = ".",
+    signal: str | None = None,
+    max_tasks: int = 5,
+    automation_fit_min: str | None = None,
 ) -> str:
-    """Get all drift findings for a specific file.
+    """Generate prioritised repair tasks with constraints and success criteria.
 
-    Use when reviewing or editing a particular file to see its issues.
+    Use this after drift_scan identifies findings you want to fix.
+    Each task includes action steps, do-not-over-fix constraints,
+    machine-verifiable success criteria, and automation fitness rating.
 
     Args:
-        file_path: Relative path to the file within the repo.
-        path: Repository root path. Defaults to current directory.
+        path: Repository path (default: current directory).
+        signal: Filter to a specific signal ("PFS", "AVS", etc.).
+        max_tasks: Maximum tasks to return (default: 5).
+        automation_fit_min: Minimum automation fitness: "low", "medium", or "high".
     """
-    repo_path = _resolve_repo_path(path)
-    cache_key = f"repo:{repo_path}:90:"
+    from drift.api import fix_plan
 
-    analysis = _get_cached(cache_key)
-    if analysis is None:
-        config = DriftConfig.load(repo_path)
-        analysis = analyze_repo(repo_path, config=config)
-        _set_cache(cache_key, analysis)
+    result = fix_plan(
+        path,
+        signal=signal,
+        max_tasks=max_tasks,
+        automation_fit_min=automation_fit_min,
+    )
+    return json.dumps(result, default=str)
 
-    target = Path(file_path)
-    matching = [
-        _finding_to_dict(f)
-        for f in analysis.findings
-        if f.file_path and (f.file_path == target or f.file_path.as_posix() == file_path)
-    ]
 
-    return json.dumps({
-        "file": file_path,
-        "finding_count": len(matching),
-        "findings": matching,
-    }, default=str)
+@mcp.tool()
+def drift_validate(
+    path: str = ".",
+    config_file: str | None = None,
+) -> str:
+    """Validate configuration and environment before running analysis.
+
+    Use before first drift_scan or after config changes to verify
+    that git is available, config is valid, and files are discoverable.
+
+    Args:
+        path: Repository path (default: current directory).
+        config_file: Explicit config file path (auto-discovered if omitted).
+    """
+    from drift.api import validate
+
+    result = validate(path, config_file=config_file)
+    return json.dumps(result, default=str)
 
 
 # ---------------------------------------------------------------------------
