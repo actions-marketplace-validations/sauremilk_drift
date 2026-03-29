@@ -3,7 +3,7 @@
 All notable changes to drift-analyzer are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.10.4] - 2026-03-29
+## [0.10.5] - 2026-03-29
 
 Short version: drift introduces an agent-native API surface and expands MCP capabilities with concise machine-first responses and improved CLI ergonomics.
 
