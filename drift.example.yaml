@@ -120,3 +120,14 @@ thresholds:
 #   "scripts/**":
 #     exclude_signals:
 #       - explainability_deficit
+
+# Deferred areas: mark known technical debt modules as "deferred".
+# Unlike exclude, deferred areas are still analysed — but their findings
+# are tagged deferred=true so CI gates and reports can treat them separately.
+# This is useful for legacy modules that you plan to address later.
+# deferred:
+#   - pattern: "legacy/**"
+#     reason: "Legacy auth module — scheduled for Q3 rewrite"
+#     review_by: "2026-09-01"
+#   - pattern: "vendor/**"
+#     reason: "Vendored dependency — do not modify"

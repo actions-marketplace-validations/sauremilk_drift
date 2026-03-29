@@ -7,12 +7,31 @@ Error code ranges:
 
 Each error follows the format:
   [DRIFT-XXXX] <what happened> → <why> → <what to do>
+
+Exit codes:
+  0  — Success (no blocking findings)
+  1  — Findings exceed severity threshold (--fail-on gate)
+  2  — Configuration or user input error
+  3  — Analysis pipeline error (partial results may exist)
+  4  — System error (I/O, git, permissions)
+  130 — Interrupted (Ctrl+C)
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+
+# ---------------------------------------------------------------------------
+# Exit code constants — use these instead of magic numbers
+# ---------------------------------------------------------------------------
+
+EXIT_OK = 0
+EXIT_FINDINGS_ABOVE_THRESHOLD = 1
+EXIT_CONFIG_ERROR = 2
+EXIT_ANALYSIS_ERROR = 3
+EXIT_SYSTEM_ERROR = 4
+EXIT_INTERRUPTED = 130
 
 
 @dataclass(frozen=True)

@@ -8,6 +8,7 @@ from pathlib import Path
 import click
 
 from drift.commands import console
+from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
 
 
 @click.command()
@@ -84,6 +85,14 @@ from drift.commands import console
     default=None,
     help="Filter out known findings from a baseline file.",
 )
+@click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write machine output (JSON/SARIF) to a file instead of stdout.",
+)
 def check(
     repo: Path,
     diff_ref: str,
@@ -100,6 +109,7 @@ def check(
     quiet: bool,
     no_code: bool,
     baseline_file: Path | None,
+    output_file: Path | None,
 ) -> None:
     """Check a diff for drift (CI mode)."""
     from drift.analyzer import _DEFAULT_WORKERS, analyze_diff
@@ -140,19 +150,39 @@ def check(
     elif output_format == "json":
         from drift.output.json_output import analysis_to_json
 
-        click.echo(analysis_to_json(analysis))
+        json_text = analysis_to_json(analysis)
+        if output_file:
+            output_file.write_text(json_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(json_text)
     elif output_format == "sarif":
         from drift.output.json_output import findings_to_sarif
 
-        click.echo(findings_to_sarif(analysis))
+        sarif_text = findings_to_sarif(analysis)
+        if output_file:
+            output_file.write_text(sarif_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(sarif_text)
     elif output_format == "agent-tasks":
         from drift.output.agent_tasks import analysis_to_agent_tasks_json
 
-        click.echo(analysis_to_agent_tasks_json(analysis))
+        tasks_text = analysis_to_agent_tasks_json(analysis)
+        if output_file:
+            output_file.write_text(tasks_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(tasks_text)
     elif output_format == "github":
         from drift.output.github_format import findings_to_github_annotations
 
-        click.echo(findings_to_github_annotations(analysis))
+        gh_text = findings_to_github_annotations(analysis)
+        if output_file:
+            output_file.write_text(gh_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(gh_text)
     else:
         from drift.output.rich_output import render_full_report
 
@@ -164,7 +194,7 @@ def check(
             f"findings at or above '{threshold}' severity.",
         )
         if not exit_zero:
-            sys.exit(1)
+            sys.exit(EXIT_FINDINGS_ABOVE_THRESHOLD)
     else:
         console.print(
             f"\n[bold green]✓ Drift check passed[/bold green] (threshold: {threshold}).",

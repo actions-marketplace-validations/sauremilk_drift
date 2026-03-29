@@ -44,13 +44,25 @@ def assign_impact_scores(findings: list[Finding], weights: SignalWeights) -> Non
 
     The logarithmic factor rewards findings that span many files without
     creating an unbounded multiplier for very large clusters.
+
+    Also computes ``score_contribution`` — the fraction of the composite
+    score attributable to this finding.  Useful for prioritising which
+    fixes reduce the overall drift score the most.
     """
     weight_dict = weights.as_dict()
+    total_weight = sum(weight_dict.values())
+
     for f in findings:
         key = _SIGNAL_WEIGHT_KEYS.get(f.signal_type)
         w = weight_dict.get(key, 0.1) if key else 0.1
         breadth = 1 + math.log(1 + len(f.related_files))
         f.impact = round(w * f.score * breadth, 4)
+
+        # score_contribution: estimated share of the composite score
+        if total_weight > 0.001:
+            f.score_contribution = round((w * f.score) / total_weight, 4)
+        else:
+            f.score_contribution = 0.0
 
 
 def resolve_path_override(

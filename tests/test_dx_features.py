@@ -138,9 +138,9 @@ class TestCodeSnippets:
 
 
 class TestExitCodes:
-    """Verify exit code 2 for internal errors."""
+    """Verify structured exit codes for internal errors."""
 
-    def test_file_not_found_exits_2(self, monkeypatch, capsys) -> None:
+    def test_file_not_found_exits_4(self, monkeypatch, capsys) -> None:
         def _raise(*a, **kw):
             raise FileNotFoundError("gone")
 
@@ -149,9 +149,9 @@ class TestExitCodes:
         with pytest.raises(SystemExit) as exc_info:
             cli.safe_main()
 
-        assert exc_info.value.code == 2
+        assert exc_info.value.code == 4
 
-    def test_generic_exception_exits_2(self, monkeypatch, capsys) -> None:
+    def test_generic_exception_exits_3(self, monkeypatch, capsys) -> None:
         def _raise(*a, **kw):
             raise RuntimeError("boom")
 
@@ -161,7 +161,7 @@ class TestExitCodes:
         with pytest.raises(SystemExit) as exc_info:
             cli.safe_main()
 
-        assert exc_info.value.code == 2
+        assert exc_info.value.code == 3
 
 
 # ---------------------------------------------------------------------------

@@ -38,7 +38,7 @@ def test_safe_main_file_not_found(
     with pytest.raises(SystemExit) as exc_info:
         cli.safe_main()
 
-    assert exc_info.value.code == 2
+    assert exc_info.value.code == 4
     captured = capsys.readouterr()
     assert "missing file" in captured.err
     assert "DRIFT-2001" in captured.err
@@ -53,7 +53,7 @@ def test_safe_main_generic_exception_shows_hint(
     with pytest.raises(SystemExit) as exc_info:
         cli.safe_main()
 
-    assert exc_info.value.code == 2
+    assert exc_info.value.code == 3
     captured = capsys.readouterr()
     assert "boom" in captured.err
     assert "DRIFT-2003" in captured.err

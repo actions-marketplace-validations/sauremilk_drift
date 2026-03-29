@@ -9,6 +9,7 @@ import click
 from rich.console import Console
 
 from drift.commands import console
+from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
 
 
 @click.command()
@@ -98,6 +99,21 @@ from drift.commands import console
     default=None,
     help="Filter out known findings from a baseline file.",
 )
+@click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write machine output (JSON/SARIF) to a file instead of stdout.",
+)
+@click.option(
+    "--save-baseline",
+    "save_baseline_path",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Save the current findings as a baseline file after analysis.",
+)
 def analyze(
     repo: Path,
     path: str | None,
@@ -117,6 +133,8 @@ def analyze(
     quiet: bool,
     no_code: bool,
     baseline_file: Path | None,
+    output_file: Path | None,
+    save_baseline_path: Path | None,
 ) -> None:
     """Analyze a repository for architectural drift."""
     from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
@@ -182,19 +200,39 @@ def analyze(
     elif output_format == "json":
         from drift.output.json_output import analysis_to_json
 
-        click.echo(analysis_to_json(analysis))
+        json_text = analysis_to_json(analysis)
+        if output_file:
+            output_file.write_text(json_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(json_text)
     elif output_format == "sarif":
         from drift.output.json_output import findings_to_sarif
 
-        click.echo(findings_to_sarif(analysis))
+        sarif_text = findings_to_sarif(analysis)
+        if output_file:
+            output_file.write_text(sarif_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(sarif_text)
     elif output_format == "agent-tasks":
         from drift.output.agent_tasks import analysis_to_agent_tasks_json
 
-        click.echo(analysis_to_agent_tasks_json(analysis))
+        tasks_text = analysis_to_agent_tasks_json(analysis)
+        if output_file:
+            output_file.write_text(tasks_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(tasks_text)
     elif output_format == "github":
         from drift.output.github_format import findings_to_github_annotations
 
-        click.echo(findings_to_github_annotations(analysis))
+        gh_text = findings_to_github_annotations(analysis)
+        if output_file:
+            output_file.write_text(gh_text + "\n", encoding="utf-8")
+            console.print(f"[dim]Output written to {output_file}[/dim]", highlight=False)
+        else:
+            click.echo(gh_text)
     else:
         from drift.output.rich_output import render_full_report, render_recommendations
 
@@ -219,6 +257,16 @@ def analyze(
         if recs:
             render_recommendations(recs, console)
 
+    # Save baseline if requested (--save-baseline)
+    if save_baseline_path is not None:
+        from drift.baseline import save_baseline as _save_bl
+
+        _save_bl(analysis, save_baseline_path)
+        console.print(
+            f"[bold green]✓ Baseline saved:[/bold green] {save_baseline_path} "
+            f"({len(analysis.findings)} findings)",
+        )
+
     # Severity gate (opt-in via --fail-on)
     threshold = fail_on or cfg.severity_gate()
     if threshold and threshold != "none":
@@ -230,7 +278,7 @@ def analyze(
                 f"findings at or above '{threshold}' severity.",
             )
             if not exit_zero:
-                sys.exit(1)
+                sys.exit(EXIT_FINDINGS_ABOVE_THRESHOLD)
         else:
             console.print(
                 f"\n[bold green]\u2713 Drift check passed[/bold green] "

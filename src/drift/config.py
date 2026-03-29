@@ -118,6 +118,21 @@ class PathOverride(BaseModel):
     severity_gate: str | None = None
 
 
+class DeferredArea(BaseModel):
+    """A glob-matched area marked as known technical debt (not excluded).
+
+    Unlike ``exclude``, deferred areas are still analysed.  Findings in
+    deferred areas are tagged ``deferred=True`` so CI gates and reports
+    can treat them differently.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    pattern: str
+    reason: str = ""
+    review_by: str | None = None  # ISO date or sprint identifier
+
+
 def _default_includes() -> list[str]:
     """Return default include patterns, auto-extending for TypeScript when available."""
     patterns = ["**/*.py"]
@@ -167,6 +182,7 @@ class DriftConfig(BaseModel):
     embedding_model: str = "all-MiniLM-L6-v2"
     embedding_batch_size: int = 64
     path_overrides: dict[str, PathOverride] = Field(default_factory=dict)
+    deferred: list[DeferredArea] = Field(default_factory=list)
 
     @staticmethod
     def _find_config_file(repo_path: Path) -> Path | None:

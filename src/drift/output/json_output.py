@@ -8,24 +8,33 @@ from typing import Any
 from drift import __version__
 from drift.models import Finding, ModuleScore, RepoAnalysis, Severity
 
+# JSON schema version — increment on breaking output changes.
+# Major: incompatible field removals/renames.  Minor: additive new fields.
+SCHEMA_VERSION = "1.0"
 
-def _finding_to_dict(f: Finding) -> dict[str, Any]:
-    return {
+
+def _finding_to_dict(f: Finding, *, impact_rank: int | None = None) -> dict[str, Any]:
+    d: dict[str, Any] = {
         "signal": f.signal_type.value,
         "rule_id": f.rule_id,
         "severity": f.severity.value,
         "score": f.score,
         "impact": f.impact,
+        "score_contribution": f.score_contribution,
+        "impact_rank": impact_rank,
         "title": f.title,
         "description": f.description,
         "fix": f.fix,
         "file": f.file_path.as_posix() if f.file_path else None,
         "start_line": f.start_line,
         "end_line": f.end_line,
+        "symbol": f.symbol,
         "related_files": [rf.as_posix() for rf in f.related_files],
         "ai_attributed": f.ai_attributed,
+        "deferred": f.deferred,
         "metadata": f.metadata,
     }
+    return d
 
 
 def _module_to_dict(m: ModuleScore) -> dict[str, Any]:
@@ -52,7 +61,12 @@ def _analysis_status_to_dict(analysis: RepoAnalysis) -> dict[str, Any]:
 
 def analysis_to_json(analysis: RepoAnalysis, indent: int = 2) -> str:
     """Serialize a RepoAnalysis to JSON string."""
+    # Rank findings by impact (descending) for consumer convenience
+    ranked = sorted(analysis.findings, key=lambda f: f.impact, reverse=True)
+    impact_ranks: dict[int, int] = {id(f): rank for rank, f in enumerate(ranked, 1)}
+
     data: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
         "version": __version__,
         "repo": analysis.repo_path.as_posix(),
         "analyzed_at": analysis.analyzed_at.isoformat(),
@@ -75,7 +89,10 @@ def analysis_to_json(analysis: RepoAnalysis, indent: int = 2) -> str:
             "analysis_duration_seconds": analysis.analysis_duration_seconds,
         },
         "modules": [_module_to_dict(m) for m in analysis.module_scores],
-        "findings": [_finding_to_dict(f) for f in analysis.findings],
+        "findings": [
+            _finding_to_dict(f, impact_rank=impact_ranks.get(id(f)))
+            for f in analysis.findings
+        ],
         "suppressed_count": analysis.suppressed_count,
         "context_tagged_count": analysis.context_tagged_count,
     }

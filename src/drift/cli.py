@@ -15,7 +15,12 @@ import click
 
 from drift import __version__
 from drift.commands import console  # noqa: F401 — re-export for backwards compat
-from drift.errors import DriftError
+from drift.errors import (
+    EXIT_ANALYSIS_ERROR,
+    EXIT_INTERRUPTED,
+    EXIT_SYSTEM_ERROR,
+    DriftError,
+)
 
 
 def _configure_logging(verbose: bool = False) -> None:
@@ -75,13 +80,13 @@ def safe_main() -> None:
         raise
     except KeyboardInterrupt:
         click.echo("\nInterrupted.", err=True)
-        sys.exit(130)
+        sys.exit(EXIT_INTERRUPTED)
     except DriftError as exc:
         click.echo(exc.detail, err=True)
         sys.exit(exc.exit_code)
     except FileNotFoundError as exc:
         click.echo(f"[DRIFT-2001] {exc}", err=True)
-        sys.exit(2)
+        sys.exit(EXIT_SYSTEM_ERROR)
     except Exception as exc:
         click.echo(f"[DRIFT-2003] {exc}", err=True)
         if logging.getLogger().isEnabledFor(logging.DEBUG):
@@ -90,7 +95,7 @@ def safe_main() -> None:
             traceback.print_exc()
         else:
             click.echo("Hint: run with -v for the full traceback.", err=True)
-        sys.exit(2)
+        sys.exit(EXIT_ANALYSIS_ERROR)
 
 
 def _handle_click_error(exc: click.ClickException) -> None:

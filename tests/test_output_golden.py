@@ -64,6 +64,7 @@ class TestJsonOutputGolden:
         analysis = _minimal_analysis()
         data = json.loads(analysis_to_json(analysis))
         expected_keys = {
+            "schema_version",
             "version",
             "repo",
             "analyzed_at",
@@ -103,14 +104,18 @@ class TestJsonOutputGolden:
             "severity",
             "score",
             "impact",
+            "score_contribution",
+            "impact_rank",
             "title",
             "description",
             "fix",
             "file",
             "start_line",
             "end_line",
+            "symbol",
             "related_files",
             "ai_attributed",
+            "deferred",
             "metadata",
         }
         assert set(data["findings"][0].keys()) == expected_finding_keys

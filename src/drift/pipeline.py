@@ -480,6 +480,21 @@ class ScoringPhase:
                 all_findings, config.path_overrides, effective_weights,
             )
 
+        # Tag findings in deferred areas (still analysed, but flagged)
+        if config.deferred:
+            import fnmatch as _fnmatch
+
+            for f in all_findings:
+                if f.file_path is None:
+                    continue
+                posix = f.file_path.as_posix()
+                for area in config.deferred:
+                    if _fnmatch.fnmatch(posix, area.pattern):
+                        f.deferred = True
+                        if area.reason:
+                            f.metadata.setdefault("deferred_reason", area.reason)
+                        break
+
         n_modules = len({f.path.parent.as_posix() for f in files})
         is_small_repo = n_modules < config.thresholds.small_repo_module_threshold
         scoring_kwargs: dict[str, int] = {}

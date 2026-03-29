@@ -203,11 +203,14 @@ class Finding:
     file_path: Path | None = None
     start_line: int | None = None
     end_line: int | None = None
+    symbol: str | None = None
     related_files: list[Path] = field(default_factory=list)
     commit_hash: str | None = None
     ai_attributed: bool = False
     fix: str | None = None
     impact: float = 0.0
+    score_contribution: float = 0.0
+    deferred: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
     rule_id: str | None = None
 

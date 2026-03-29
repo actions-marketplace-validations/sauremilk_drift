@@ -3,6 +3,24 @@
 All notable changes to drift-analyzer are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.2] - 2026-03-29
+
+Short version: drift hardens machine-output contracts and CI release ergonomics with deterministic file output, schema versioning, deferred-area governance, and explicit exit-code semantics.
+
+### Added
+
+- **Deterministic machine file output**: Added `--output/-o` for `drift analyze` and `drift check`, plus `--save-baseline` on `analyze`, so CI can persist pure JSON/SARIF artifacts without shell redirection workarounds.
+- **Deferred-area governance model**: Added config-level `deferred` path rules so legacy zones remain analyzed but findings are explicitly tagged as deferred debt instead of being silently excluded.
+
+### Changed
+
+- **Versioned JSON contract and prioritization metadata**: JSON output now carries `schema_version`, `score_contribution`, `impact_rank`, plus `symbol` and `deferred` fields to stabilize downstream integrations and improve hotspot ranking.
+- **Structured CLI exit semantics**: Replaced magic exit numbers with explicit constants, separating threshold findings, config/user errors, analysis failures, and system failures for clearer CI diagnostics.
+
+### Fixed
+
+- **Self-smoke file-count guardrail drift**: Updated repository self-smoke file-count upper bound to accommodate organic project growth while preserving sanity-check intent.
+
 ## [0.10.1] - 2026-03-29
 
 Short version: drift restores fully English user-facing finding output so CLI and release surfaces stay language-consistent.

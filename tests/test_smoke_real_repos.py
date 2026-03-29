@@ -90,8 +90,8 @@ class TestSelfAnalysis:
 
     def test_file_count_reasonable(self, analysis: RepoAnalysis) -> None:
         """Drift repo should have a known range of Python files."""
-        # STUDY.md: drift has ~45 files
-        assert 20 <= analysis.total_files <= 200, f"Unexpected file count: {analysis.total_files}"
+        # STUDY.md: drift has ~45 files; range widened for codebase growth
+        assert 20 <= analysis.total_files <= 300, f"Unexpected file count: {analysis.total_files}"
 
     def test_drift_score_in_range(self, analysis: RepoAnalysis) -> None:
         """Self-analysis score should be in the expected range.
