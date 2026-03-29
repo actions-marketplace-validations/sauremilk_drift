@@ -21,7 +21,7 @@ from pathlib import Path
 from drift.models import SignalType
 
 
-class FixtureKind(str, enum.Enum):
+class FixtureKind(enum.StrEnum):
     """Classification of a ground-truth fixture."""
 
     POSITIVE = "positive"
