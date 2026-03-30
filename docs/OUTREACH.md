@@ -10,6 +10,7 @@ Reihenfolge = empfohlene Priorität.
 - Command: `drift`
 - Safe signal claim: 15 scoring signals, all active in the current model (6 core + 9 promoted/new, auto-calibrated at runtime).
 - Safe rollout claim: start report-only in CI, then tighten to `high` only after reviewing real findings.
+- Execution assets: see `docs/distribution/README.md` for awesome submissions, article draft, IDE MVP spec, and week-1 runbook.
 
 ---
 

@@ -57,8 +57,10 @@ Optimaler Zeitpunkt: Dienstag oder Mittwoch, 15–17 Uhr CET (9–11 Uhr US East
 
 ## Phase 4 — Sustain (Woche 2–4)
 
-- [ ] **PR an awesome-static-analysis** — Text in OUTREACH.md §3
-- [ ] **PR an awesome-python** — Text in OUTREACH.md §4
+- [ ] **PR an awesome-static-analysis** — Text in [distribution/awesome-submissions.md](distribution/awesome-submissions.md)
+- [ ] **PR an awesome-python** — Text in [distribution/awesome-submissions.md](distribution/awesome-submissions.md)
+- [ ] **5-Repo Artikel publizieren (dev.to + Hashnode)** — Draft in [distribution/devto-hashnode-5-repos.md](distribution/devto-hashnode-5-repos.md)
+- [ ] **IDE Discovery MVP in Tickets überführen** — Spec in [distribution/ide-discovery-mvp-spec.md](distribution/ide-discovery-mvp-spec.md)
 - [ ] **PyPI-Downloads tracken** — https://pypistats.org/packages/drift-analyzer
 - [ ] **First-Issue Labels setzen** — Konkrete Kandidaten für `good first issue`:
   1. EDS: `__init__`-Methoden aus False-Positive-Berechnung ausschließen (`signals/explainability_deficit.py`)

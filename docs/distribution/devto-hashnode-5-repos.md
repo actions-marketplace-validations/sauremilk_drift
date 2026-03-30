@@ -1,0 +1,112 @@
+# Draft: I Ran Drift on 5 Real Repos. Here Is What I Found.
+
+Use this as the base article for dev.to and Hashnode.
+
+## Working Title
+
+I Ran Drift on 5 Real Repos. Here Is What I Found.
+
+## Subtitle
+
+Deterministic architecture erosion signals in production Python codebases, and what teams can fix first.
+
+## Draft
+
+If you use AI coding assistants every day, your code often stays locally correct while global structure slowly drifts.
+
+Tests still pass. Linters still pass. But architecture coherence starts to erode: the same concern gets implemented in multiple styles, boundaries blur, and near-duplicates spread.
+
+I built drift to measure this deterministically in Python repositories, without an LLM in the analysis pipeline. Then I ran it on five real-world projects.
+
+### Method in one minute
+
+- Tool: `drift-analyzer`
+- Mode: static analysis with deterministic signals
+- Output: findings plus a composite drift score
+- Purpose: identify architectural erosion early enough to be fixable
+
+This is not a bug scanner. It is a coherence scanner.
+
+### Repo 1: fastapi/fastapi
+
+- Finding highlight: 499 near-duplicate test functions (MDS)
+- Interpretation: duplication drift at scale, likely copy-modify patterns
+- Actionable next step: consolidate with parameterized fixtures and shared test helpers
+
+### Repo 2: django/django
+
+- Finding highlight: score remained stable across many releases, then dropped after deprecation cleanup
+- Interpretation: score tracks structural coherence over time, not just size
+- Actionable next step: monitor trend deltas per release, not only absolute score
+
+### Repo 3: pydantic/pydantic
+
+- Finding highlight: 117 underdocumented high-complexity internal functions (EDS)
+- Interpretation: maintainability risk concentrates in internal complexity hot spots
+- Actionable next step: document top complexity functions first for highest leverage
+
+### Repo 4: paramiko/paramiko
+
+- Finding highlight: a large transport module and circular dependency hotspots
+- Interpretation: long-lived protocol libraries accumulate architecture stress in stable core files
+- Actionable next step: split refactor candidates by blast radius and start with low-risk duplicate extraction
+
+### Repo 5: drift (self-analysis)
+
+- Finding highlight: stable short-term trend with visible sensitivity to focused refactors
+- Interpretation: deterministic signals are usable in day-to-day CI if tuned to report-only first
+- Actionable next step: adopt report-only rollout, then gate only high-severity findings
+
+## What surprised me most
+
+1. The highest-value findings were not stylistic. They were structural and repeatedly actionable.
+2. Trend stability mattered more than one-off snapshots.
+3. Teams get better results when they treat findings as architecture work items, not lint noise.
+
+## Practical rollout that worked
+
+Start with a non-blocking phase:
+
+```yaml
+- uses: sauremilk/drift@v1
+  with:
+    fail-on: none
+    upload-sarif: "true"
+```
+
+Then tighten only after calibration:
+
+```yaml
+- uses: sauremilk/drift@v1
+  with:
+    fail-on: high
+    upload-sarif: "true"
+```
+
+## Reproducibility
+
+```bash
+pip install drift-analyzer
+
+drift analyze --repo .
+```
+
+For pre-commit style checks:
+
+```bash
+drift diff --staged-only
+```
+
+## Closing
+
+AI-assisted velocity is real. Architectural drift is also real.
+
+The teams that benefit most are not the ones with perfect code. They are the ones that detect coherence erosion early and fix it while changes are still small.
+
+If you want, I can publish the exact command matrix and scoring profile used for the five-repo run in a follow-up post.
+
+## Channel Adaption Notes
+
+- dev.to: keep the narrative personal, include short code blocks, add 3 tags: python, architecture, ai.
+- Hashnode: keep stronger technical framing, include one figure or table from case-study evidence.
+- Keep title identical for attribution continuity.
