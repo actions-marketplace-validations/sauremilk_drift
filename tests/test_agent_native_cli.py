@@ -62,6 +62,38 @@ def test_scan_outputs_json(monkeypatch, tmp_path: Path) -> None:
     assert "blocking_reasons" in payload
 
 
+def test_scan_accepts_signals_alias(monkeypatch, tmp_path: Path) -> None:
+    import drift.commands.scan as scan_command
+
+    captured: dict[str, object] = {}
+
+    def _fake_scan(*args, **kwargs):
+        captured.update(kwargs)
+        return {
+            "schema_version": "2.0",
+            "accept_change": True,
+            "blocking_reasons": [],
+        }
+
+    monkeypatch.setattr(scan_command, "api_scan", _fake_scan)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "scan",
+            "--repo",
+            str(tmp_path),
+            "--signals",
+            "PFS,AVS",
+            "--max-findings",
+            "1",
+        ],
+    )
+    assert result.exit_code == 0
+    assert captured.get("signals") == ["PFS", "AVS"]
+
+
 # ---------------------------------------------------------------------------
 # Unit tests for improved agent-native API helpers
 # ---------------------------------------------------------------------------

@@ -443,6 +443,38 @@ def _scan_next_actions(analysis: RepoAnalysis) -> list[str]:
     return actions or ["No immediate action required"]
 
 
+def _diff_decision_reason(
+    *,
+    accept_change: bool,
+    in_scope_accept: bool,
+    has_out_of_scope_noise: bool,
+) -> tuple[str, str]:
+    """Return a stable code/text reason for the diff decision.
+
+    This gives agents a single unambiguous explanation for accept/reject,
+    instead of requiring interpretation of multiple boolean fields.
+    """
+    if accept_change:
+        return (
+            "accepted_no_blockers",
+            "Accepted: no in-scope blockers detected.",
+        )
+    if not in_scope_accept:
+        return (
+            "rejected_in_scope_blockers",
+            "Rejected due to in-scope high findings or score regression.",
+        )
+    if has_out_of_scope_noise:
+        return (
+            "rejected_out_of_scope_noise_only",
+            "Rejected due to out-of-scope noise only.",
+        )
+    return (
+        "rejected_unknown",
+        "Rejected: blocking conditions detected.",
+    )
+
+
 def diff(
     path: str | Path = ".",
     *,
@@ -631,6 +663,14 @@ def diff(
             "explanation": noise_explanation,
         }
 
+        accept_change = not blocking_reasons
+        in_scope_accept = not in_scope_blocking
+        decision_reason_code, decision_reason = _diff_decision_reason(
+            accept_change=accept_change,
+            in_scope_accept=in_scope_accept,
+            has_out_of_scope_noise=bool(out_of_scope_new),
+        )
+
         result = _base_response(
             drift_detected=delta > 0.0,
             status=status,
@@ -653,12 +693,14 @@ def diff(
             drift_categories=drift_categories,
             affected_components=affected,
             summary=", ".join(summary_parts),
-            accept_change=not blocking_reasons,
-            in_scope_accept=not in_scope_blocking,
+            accept_change=accept_change,
+            in_scope_accept=in_scope_accept,
             blocking_reasons=blocking_reasons,
+            decision_reason_code=decision_reason_code,
+            decision_reason=decision_reason,
             recommended_next_actions=_diff_next_actions(
                 scoped_new, status, blocking_reasons,
-                in_scope_accept=not in_scope_blocking,
+                in_scope_accept=in_scope_accept,
                 has_baseline=baseline_file is not None,
             ),
             response_truncated=len(scoped_new) > max_findings,

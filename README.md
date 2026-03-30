@@ -78,6 +78,36 @@ The [demo project](examples/demo-project/) contains intentional drift patterns, 
 
 ![drift CLI demo](https://raw.githubusercontent.com/sauremilk/drift/master/demos/demo.gif)
 
+## Vibe-Coding Workflow
+
+Drift is built for AI-assisted ("vibe-coding") sessions where an LLM agent writes most of the code and you steer.
+
+### Session start
+
+```bash
+drift scan --repo . --max-findings 5
+```
+
+The agent reads the JSON, learns the current health baseline, and knows which patterns to avoid.
+
+### During a session
+
+```bash
+drift diff --uncommitted          # before you commit
+drift diff --staged-only          # only what's in the index
+drift diff --diff-ref main        # compare against main branch
+```
+
+Each call returns `accept_change: true | false` with blocking reasons the agent can act on directly.
+
+### CI
+
+```yaml
+- run: drift check --repo . --fail-on high
+```
+
+Same signals, same deterministic engine — no LLM involved at analysis time.
+
 ## Why teams use drift
 
 Your linter, type checker, and test suite can tell you whether code is valid. They do not tell you whether the repository is quietly splitting into incompatible patterns across modules.

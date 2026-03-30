@@ -137,6 +137,8 @@ def test_api_diff_returns_acceptance_fields(monkeypatch) -> None:
     assert result["new_high_or_critical"] == 1
     assert "new_high_or_critical_findings" in result["blocking_reasons"]
     assert "drift_score_regressed" in result["blocking_reasons"]
+    assert result["decision_reason_code"] == "rejected_in_scope_blockers"
+    assert "in-scope" in result["decision_reason"]
 
 
 def test_api_diff_scopes_decision_logic_to_target_path(monkeypatch) -> None:
@@ -166,7 +168,7 @@ def test_api_diff_scopes_decision_logic_to_target_path(monkeypatch) -> None:
         findings=[in_scope, out_scope],
         drift_score=0.45,
         severity=Severity.HIGH,
-        trend=SimpleNamespace(previous_score=0.2),
+        trend=SimpleNamespace(previous_score=0.45),
         is_degraded=False,
         total_files=12,
     )
@@ -183,6 +185,8 @@ def test_api_diff_scopes_decision_logic_to_target_path(monkeypatch) -> None:
     assert result["out_of_scope_new_count"] == 1
     assert result["target_path"] == "src/app"
     assert "out_of_scope_diff_noise" in result["blocking_reasons"]
+    assert result["decision_reason_code"] == "rejected_out_of_scope_noise_only"
+    assert "out-of-scope" in result["decision_reason"]
 
 
 def test_api_diff_uncommitted_mode_passed_to_analyzer(monkeypatch) -> None:
