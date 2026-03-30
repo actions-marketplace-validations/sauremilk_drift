@@ -1,4 +1,9 @@
 
+## [1.1.2] — 2026-03-30
+
+### Fixed
+- DCA reduziert False Positives für Framework-Entry-Points: Route-dekorierte Handler und schema-nahe Klassen in Router-Dateien werden nicht mehr als potenziell ungenutzte Exports priorisiert.
+
 ## [1.1.1] — 2026-03-30
 
 ### Release
