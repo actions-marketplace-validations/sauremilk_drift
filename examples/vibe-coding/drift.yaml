@@ -1,0 +1,126 @@
+# Drift Configuration — Vibe-Coding Profile
+#
+# Optimised for AI-accelerated codebases (Copilot, Cursor, Claude, etc.)
+# where copy-paste patterns, bypass markers, and happy-path-only tests
+# are the dominant sources of technical debt.
+#
+# Copy this file to drift.yaml in your project root, then run:
+#   drift validate --config drift.yaml
+#   drift analyze --config drift.yaml
+
+# ── File patterns ────────────────────────────────────────────────────
+include:
+  - "**/*.py"
+  - "**/*.ts"
+  - "**/*.tsx"
+
+exclude:
+  - "**/node_modules/**"
+  - "**/__pycache__/**"
+  - "**/venv/**"
+  - "**/.venv/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/.git/**"
+  - "**/*.egg-info/**"
+  - "**/docs/**"
+  - "**/examples/**"
+
+# ── Signal weights (vibe-coding optimised) ───────────────────────────
+# Rationale: AI-generated code produces more near-duplicates and bypass
+# markers than human code; refactoring and negative-testing are
+# systematically underrepresented.  Weights are shifted accordingly.
+weights:
+  # ↑  Copy-paste and fragmentation (primary vibe-coding debt vector)
+  mutant_duplicate: 0.20          # ↑ from 0.13 — LLMs duplicate rather than refactor
+  pattern_fragmentation: 0.18     # ↑ from 0.16 — same concern solved N ways per session
+
+  # =  Architecture erosion (still important, but not vibe-specific)
+  architecture_violation: 0.14    # ↓ from 0.16
+  temporal_volatility: 0.10       # ↓ from 0.13 — AI churn is structurally expected
+  system_misalignment: 0.08       # unchanged
+
+  # ↑  Explainability + quality bypass (AI-specific deficit patterns)
+  explainability_deficit: 0.10    # ↑ from 0.09 — complex code accepted without understanding
+  bypass_accumulation: 0.06       # ↑ from 0.03 — AI uses type: ignore, noqa, Any freely
+  test_polarity_deficit: 0.06     # ↑ from 0.04 — AI generates happy-path-only tests
+
+  # =  Remaining signals
+  naming_contract_violation: 0.04
+  broad_exception_monoculture: 0.04
+  guard_clause_deficit: 0.03
+  doc_impl_drift: 0.02
+  exception_contract_drift: 0.02
+  cohesion_deficit: 0.01
+  co_change_coupling: 0.005
+
+# Auto-calibration adjusts these weights at runtime based on the actual
+# finding distribution.  Disable if you want fully manual control.
+auto_calibrate: true
+
+# ── CI severity gate ─────────────────────────────────────────────────
+# Start with 'none' (report-only) in week 1, then escalate:
+#   Week 1–2: none    (observe baseline)
+#   Week 3:   high    (block critical/high findings)
+#   Week 4+:  medium  (enforce quality floor)
+fail_on: none
+
+# ── Delta gate (ratchet) ────────────────────────────────────────────
+# Exit 1 if the drift score increases by more than 0.05 compared to the
+# mean of the last 5 snapshots.  Prevents gradual debt accumulation.
+# fail_on_delta: 0.05
+# fail_on_delta_window: 5
+
+# ── Architecture policies ────────────────────────────────────────────
+policies:
+  layer_boundaries:
+    - name: "No DB imports in API layer"
+      from: "api/**"
+      deny_import:
+        - "db.*"
+        - "models.*"
+        - "repositories.*"
+
+    - name: "No API imports in DB layer"
+      from: "db/**"
+      deny_import:
+        - "api.*"
+        - "routes.*"
+        - "views.*"
+
+  max_pattern_variants:
+    error_handling: 2
+    data_access: 2
+    api_endpoint: 3
+
+  # Uncomment to set a fixed AI ratio if git history detection is unreliable:
+  # ai_attribution:
+  #   manual_ratio: 0.80
+
+# ── Thresholds (tuned for vibe-coding noise) ─────────────────────────
+thresholds:
+  similarity_threshold: 0.75      # ↓ from 0.80 — catch more near-duplicates
+  min_function_loc: 8             # ↓ from 10 — AI generates many small duplicates
+  min_complexity: 4               # ↓ from 5 — lower bar to catch AI boilerplate
+  recency_days: 14
+  volatility_z_threshold: 1.5
+  max_discovery_files: 10000
+
+# ── Per-path overrides ───────────────────────────────────────────────
+# path_overrides:
+#   "tests/**":
+#     exclude_signals:
+#       - pattern_fragmentation
+#       - architecture_violation
+#   "legacy/**":
+#     severity_gate: critical
+#     weights:
+#       pattern_fragmentation: 0.05
+
+# ── Deferred technical debt ──────────────────────────────────────────
+# Mark known debt modules as "deferred" — still analysed and reported
+# but excluded from CI gate blocking.
+# deferred:
+#   - pattern: "legacy/**"
+#     reason: "Scheduled for Q3 rewrite"
+#     review_by: "2026-09-01"

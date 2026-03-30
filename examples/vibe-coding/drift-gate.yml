@@ -1,0 +1,73 @@
+# Drift — Vibe-Coding Pre-Merge Gate
+#
+# Runs drift analysis on every pull request and blocks merges when
+# architectural drift exceeds the configured severity threshold.
+#
+# Copy to .github/workflows/drift-gate.yml in your project.
+#
+# Rollout plan:
+#   Week 1-2: fail-on: none      (report-only, observe baseline)
+#   Week 3:   fail-on: high      (block critical/high findings)
+#   Week 4+:  fail-on: medium    (enforce quality floor)
+
+name: "Drift — Vibe-Coding Gate"
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  security-events: write    # Required for SARIF upload to Code Scanning
+  pull-requests: write      # Required for PR summary comment
+
+jobs:
+  drift-check:
+    name: Architectural Drift Check
+    runs-on: ubuntu-latest
+
+    steps:
+      # Full git history is required for temporal signals (TVS, CCC, ECM)
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: sauremilk/drift@v1
+        id: drift
+        with:
+          # Use vibe-coding-optimised configuration
+          config: drift.yaml
+
+          # Severity gate — start with 'none', then escalate per rollout plan
+          fail-on: none
+
+          # Upload SARIF so findings appear as inline PR annotations
+          upload-sarif: "true"
+
+          # Post a summary comment on every PR
+          comment: "true"
+
+          # 90 days of git history for temporal + trend signals
+          since: "90"
+
+          # Output format for logs
+          format: rich
+
+      # Optional: fail if drift score regresses beyond threshold
+      # Uncomment after establishing a baseline
+      # - name: Delta gate (ratchet)
+      #   if: always()
+      #   run: |
+      #     SCORE="${{ steps.drift.outputs.drift-score }}"
+      #     echo "Drift score: $SCORE"
+      #     # Add custom threshold logic here if needed
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Drift Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Score:** ${{ steps.drift.outputs.drift-score }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Findings:** ${{ steps.drift.outputs.finding-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Severity:** ${{ steps.drift.outputs.severity }}" >> $GITHUB_STEP_SUMMARY

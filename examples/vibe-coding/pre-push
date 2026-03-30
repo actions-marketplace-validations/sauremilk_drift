@@ -1,0 +1,50 @@
+#!/usr/bin/env sh
+# Drift pre-push hook for vibe-coding workflows.
+#
+# Runs a quick staged/uncommitted drift check before every push,
+# blocking pushes that introduce HIGH or CRITICAL findings.
+#
+# Installation:
+#   cp pre-push .git/hooks/pre-push
+#   chmod +x .git/hooks/pre-push
+#
+# Or use a hooks directory:
+#   git config core.hooksPath .githooks
+#
+# Skip temporarily (emergency only):
+#   DRIFT_SKIP_CHECK=1 git push
+set -e
+
+if [ "${DRIFT_SKIP_CHECK:-0}" = "1" ]; then
+    echo ">>> [drift pre-push] WARN: drift check skipped (DRIFT_SKIP_CHECK=1)"
+    exit 0
+fi
+
+# Check if drift is installed
+if ! command -v drift >/dev/null 2>&1; then
+    echo ">>> [drift pre-push] WARN: drift-analyzer not installed, skipping check"
+    echo ">>> [drift pre-push] Install with: pip install drift-analyzer"
+    exit 0
+fi
+
+echo ">>> [drift pre-push] Running architectural drift check..."
+
+# Quick diff check against previous commit when available
+# --quiet suppresses progress/spinner output
+# --fail-on high blocks on HIGH or CRITICAL findings only
+DIFF_REF="HEAD"
+if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+    DIFF_REF="HEAD~1"
+fi
+
+if drift check --diff "$DIFF_REF" --fail-on high --quiet 2>/dev/null; then
+    echo ">>> [drift pre-push] OK — no blocking findings detected"
+else
+    exit_code=$?
+    echo ""
+    echo ">>> [drift pre-push] BLOCKED — HIGH or CRITICAL drift findings detected"
+    echo ">>> [drift pre-push] Run 'drift analyze' to see full report"
+    echo ">>> [drift pre-push] Run 'drift fix-plan' for repair suggestions"
+    echo ">>> [drift pre-push] Skip with DRIFT_SKIP_CHECK=1 git push (emergency only)"
+    exit $exit_code
+fi
