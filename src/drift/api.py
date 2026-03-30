@@ -338,10 +338,7 @@ def _diverse_findings(findings: list, max_findings: int) -> list:
     # Phase 2: fill remaining slots from highest-scored remaining
     remaining = [f for f in by_score if id(f) not in phase1_set]
     budget = max_findings - len(phase1)
-    if budget > 0:
-        result = phase1 + remaining[:budget]
-    else:
-        result = phase1[:max_findings]
+    result = phase1 + remaining[:budget] if budget > 0 else phase1[:max_findings]
     return result
 
 
