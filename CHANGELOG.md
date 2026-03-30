@@ -1,3 +1,11 @@
+## [1.1.10] – 2026-03-30
+
+Short version: Improve MDS/PFS/AVS signal precision from MiroFish validation.
+
+### Changed
+
+- Improve MDS/PFS/AVS signal precision from MiroFish validation.
+
 ## [1.1.9] – 2026-03-30
 
 Short version: Add --signals alias to analyze and check commands for consistency with scan. (+1 more commits)

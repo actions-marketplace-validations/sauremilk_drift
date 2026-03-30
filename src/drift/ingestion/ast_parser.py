@@ -205,9 +205,26 @@ def _compute_ast_ngrams(node: ast.AST) -> list[list[str]]:
     Names, string literals, and numeric constants are normalised away so that
     renaming variables does not affect the fingerprint.  The result is stored
     in FunctionInfo.ast_fingerprint["ngrams"] as a JSON-safe list of lists.
+
+    ``self.attr`` / ``cls.attr`` attribute accesses are collapsed to plain
+    ``Name`` nodes so that methods and standalone functions with equivalent
+    bodies produce identical fingerprints (method↔function normalisation).
     """
     node_types: list[str] = []
+    # Track self/cls Attribute nodes whose Name(self/cls) child should be skipped
+    _skip_ids: set[int] = set()
     for child in ast.walk(node):
+        if id(child) in _skip_ids:
+            continue
+        # Normalise self.x / cls.x → plain Name (method ↔ function equivalence)
+        if (
+            isinstance(child, ast.Attribute)
+            and isinstance(child.value, ast.Name)
+            and child.value.id in ("self", "cls")
+        ):
+            node_types.append("Name")
+            _skip_ids.add(id(child.value))
+            continue
         node_types.append(type(child).__name__)
 
     if len(node_types) < _NGRAM_N:

@@ -6,6 +6,8 @@
 
 > **Feature update (2026-03-30):** `drift analyze` and `drift check` now accept `--no-color`, allowing colorless rich output for CI logs, terminals with forced plain rendering, and agent-driven command execution.
 
+> **Feature update (2026-03-30):** v1.1.10 improves signal precision based on external validation against the MiroFish repository: (1) MDS now normalises `self.attr`/`cls.attr` to plain `Name` in AST n-gram fingerprints, so method↔function mutant pairs score higher similarity; (2) PFS applies a spread factor when non-canonical instance count exceeds 2, boosting scores for high-repetition fragmentation (e.g. 20× error-handling copy-paste); (3) AVS recognises `scripts/`, `commands/`, `cli/` as layer-0 entry points, enabling layer-violation detection for script-based architectures.
+
 ---
 
 ## Executive Summary

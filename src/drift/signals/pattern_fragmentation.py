@@ -121,6 +121,15 @@ class PatternFragmentationSignal(BaseSignal):
 
                 frag_score = 1 - (1 / num_variants)
 
+                # Boost score when many non-canonical instances exist.
+                # A module with 20 error-handling instances and 3 variants is
+                # worse than one with 3 instances and 3 variants — the spread
+                # of deviations across the codebase amplifies maintenance cost.
+                non_canonical_count = total - canonical_count
+                if non_canonical_count > 2:
+                    spread_factor = min(1.5, 1.0 + (non_canonical_count - 2) * 0.04)
+                    frag_score = min(1.0, frag_score * spread_factor)
+
                 # Build description
                 desc_parts = [
                     f"{num_variants} {category.value} variants in {module_path.as_posix()}/ "
