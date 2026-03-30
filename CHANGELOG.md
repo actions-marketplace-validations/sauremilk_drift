@@ -1,3 +1,8 @@
+
+## [1.1.3] — 2026-03-30
+
+### Release
+- Version 1.1.3
 # Changelog
 
 All notable changes to drift-analyzer are documented here.
