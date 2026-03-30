@@ -1,3 +1,16 @@
+## [1.1.12] – 2026-03-30
+
+Short version: Add `drift init` command with built-in profiles (default, vibe-coding, strict).
+
+### Added
+
+- **`drift init`** CLI command: scaffolds drift.yaml, GitHub Actions workflow, git pre-push hook, and VS Code MCP config in one command.
+- **Profile system** (`src/drift/profiles.py`): built-in `default`, `vibe-coding`, and `strict` configuration profiles with pre-tuned signal weights, thresholds, and policies.
+- `--profile vibe-coding` upweights MDS (0.20), PFS (0.18), BAT (0.06), TPD (0.06), lowers similarity threshold to 0.75, adds layer boundary policies.
+- `--profile strict` sets `fail_on: medium` for zero-tolerance CI gates.
+- Flags: `--ci`, `--hooks`, `--mcp`, `--full` for selective or all-in-one scaffolding.
+- 24 new tests in `tests/test_init_cmd.py`.
+
 ## [1.1.11] – 2026-03-30
 
 Short version: Security-by-Default signals (MAZ, ISD, HSC) for vibe-coding detection.
