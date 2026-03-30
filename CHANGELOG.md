@@ -1,3 +1,7 @@
+# Changelog
+
+All notable changes to drift-analyzer are documented here.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.1.2] — 2026-03-30
 
@@ -8,10 +12,6 @@
 
 ### Release
 - Version 1.1.1
-# Changelog
-
-All notable changes to drift-analyzer are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.10.10] - 2026-03-30
 
