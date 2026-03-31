@@ -12,6 +12,8 @@
 
 > **Feature update (2026-03-30):** v1.1.12 introduces `drift init` — a new CLI command that scaffolds drift configuration with built-in profiles (`default`, `vibe-coding`, `strict`). Supports `--profile` to select pre-tuned signal weights and thresholds, `--ci` to generate a GitHub Actions workflow, `--hooks` for a git pre-push gate, `--mcp` for VS Code MCP server config, and `--full` for all-in-one scaffolding. The `vibe-coding` profile upweights MDS (0.20), PFS (0.18), BAT (0.06), and TPD (0.06), lowers similarity threshold to 0.75, and adds layer boundary policies — targeting the dominant technical debt vectors in AI-accelerated codebases. 24 new tests in `tests/test_init_cmd.py`.
 
+> **Feature update (2026-03-31):** v1.1.14 lays the foundation for incremental analysis. `BaselineSnapshot` (new module `src/drift/incremental.py`) captures file-hash state after a full scan and provides TTL-based validity, file-change detection (added/removed/modified), and baseline score storage. `SignalCache.content_hash_for_file()` adds a per-file cache key method enabling file-local signals to cache independently of the full repo hash. 13 new tests in `tests/test_incremental.py`.
+
 ---
 
 ## Executive Summary

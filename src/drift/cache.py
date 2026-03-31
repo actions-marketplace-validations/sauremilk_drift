@@ -279,6 +279,16 @@ class SignalCache:
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
     @staticmethod
+    def content_hash_for_file(file_hash: str) -> str:
+        """Return the cache-key content hash for a single file.
+
+        For file-local signals the per-file content hash *is* the file
+        hash itself (already a 32-char SHA-256 prefix produced by
+        ``ParseCache.file_hash``).
+        """
+        return file_hash
+
+    @staticmethod
     def content_hash_for_results(
         parse_results: list[ParseResult],
         file_hashes: dict[str, str],
