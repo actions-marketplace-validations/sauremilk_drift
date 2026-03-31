@@ -1292,11 +1292,11 @@ def nudge(
         )
         file_info_map = {f.path.as_posix(): f for f in all_files_info}
         for fp in changed_set:
-            finfo = file_info_map.get(fp)
-            if finfo is None:
+            fi = file_info_map.get(fp)
+            if fi is None:
                 continue
             try:
-                pr = parse_file(finfo.path, repo_path, finfo.language)
+                pr = parse_file(fi.path, repo_path, fi.language)
                 current_parse[fp] = pr
             except Exception:
                 continue
