@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Fixed
+
+- Make PyPI publish workflow runner-agnostic by using Twine upload for token-based publishing (works on Windows/self-hosted runners).
+
 ## [1.1.16] – 2026-03-31
 
 Short version: Resolve mypy type assignment error in nudge (finfo  fi). (+11 more commits)
