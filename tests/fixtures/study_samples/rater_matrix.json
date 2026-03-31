@@ -1,0 +1,10 @@
+{
+  "categories": ["TP", "FP", "Unclear"],
+  "ratings": [
+    {"finding_id": "F-001", "raters": ["TP", "TP", "TP"]},
+    {"finding_id": "F-002", "raters": ["TP", "TP", "FP"]},
+    {"finding_id": "F-003", "raters": ["FP", "FP", "FP"]},
+    {"finding_id": "F-004", "raters": ["TP", "FP", "TP"]},
+    {"finding_id": "F-005", "raters": ["Unclear", "Unclear", "Unclear"]}
+  ]
+}

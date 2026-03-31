@@ -1,7 +1,10 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Community studies — participate in drift research
+    url: https://github.com/sauremilk/drift/blob/main/CONTRIBUTING.md#participate-in-community-studies
+    about: Help validate drift's signals by running analyses, rating findings, or benchmarking repos.
   - name: Support and channel guide
-    url: https://github.com/sauremilk/drift/blob/master/SUPPORT.md
+    url: https://github.com/sauremilk/drift/blob/main/SUPPORT.md
     about: Use SUPPORT.md to pick the right channel for questions, bugs, ideas, and security.
   - name: Questions and usage help
     url: https://github.com/sauremilk/drift/discussions

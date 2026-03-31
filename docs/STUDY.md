@@ -1306,3 +1306,186 @@ value proposition remains valid within its operational domain: detecting
 *structural* erosion in codebases where syntactic coherence is a meaningful
 proxy for design health. The epistemological limits define where that proxy
 breaks down.
+
+---
+
+## 15. Community Validation Studies — Security by Default
+
+**Status:** `[PLANNED]` — collecting contributions via
+[issue templates](https://github.com/sauremilk/drift/issues/new/choose).
+
+This section will contain empirical evidence from community-contributed
+analyses focusing on security-related signals (MAZ, HSC, ISD).
+
+### 15.1 Security-Erosion in AI-Augmented Repositories (S1)
+
+**Research question:** Is the rate of missing authorization checks (MAZ findings)
+higher in AI-attributed endpoints than in manually written endpoints within the
+same repository?
+
+**Hypothesis:** H₁: MAZ-Finding-Rate(AI) > MAZ-Finding-Rate(manual)
+with effect size d ≥ 0.5.
+
+**Method:** Contributors analyze public repos with ≥ 50 endpoints, run
+`drift analyze --format json`, and attribute endpoints via `git blame`.
+
+**Sample minimum:** 10 repos, ≥ 500 endpoints total.
+
+**Results:** *Awaiting community contributions.*
+
+### 15.2 ISD Recall Extension — Community FN Catalogue (S2)
+
+**Research question:** Which categories of insecure defaults does drift's ISD
+signal (CWE-1188) systematically miss?
+
+**Goal:** Build a catalogue of ISD false-negative patterns, ordered by
+frequency and severity, to extend detection rules.
+
+**Method:** Contributors run `drift analyze` on their repos and document
+insecure defaults that ISD did not detect, using the
+[repo benchmark template](https://github.com/sauremilk/drift/issues/new?template=study_repo_benchmark.md).
+
+**Sample minimum:** 15 FN reports from ≥ 5 repos.
+
+**Results:** *Awaiting community contributions.*
+
+### 15.3 Security-Coherence Covariance (S3)
+
+**Research question:** Does the composite drift score correlate positively
+with missing authorization coverage in web repositories?
+
+**Hypothesis:** H₁: Spearman ρ(score, 1 − auth-coverage-rate) > 0.4.
+
+**Method:** Contributors measure auth-coverage (endpoints with auth /
+total endpoints) alongside the composite score.
+
+**Sample minimum:** 20 repos.
+
+**Results:** *Awaiting community contributions.*
+
+---
+
+## 16. Community Validation Studies — Day-2 Problem
+
+**Status:** `[PLANNED]`
+
+### 16.1 Score Response to Team Transition Events (S4)
+
+**Research question:** Does the drift score rise measurably within 30 days
+after a principal contributor leaves a project?
+
+**Method:** Contributors identify repos with documented maintainer transitions,
+run `drift analyze` at 7 temporal checkpoints (t−30 to t+90), and report
+score deltas.
+
+**Sample minimum:** 8 transition events from ≥ 5 repos.
+
+**Results:** *Awaiting community contributions.*
+
+### 16.2 Community Self-Analysis Evidence Base (S5)
+
+**Research question:** Do repo owners discover previously unknown architecture
+problems through `drift analyze`, and how many get fixed within 30 days?
+
+**Method:** Two-phase protocol — (A) run drift, rate each finding for surprise
+and correctness; (B) 30-day follow-up on fix rate. Uses the
+[self-analysis template](https://github.com/sauremilk/drift/issues/new?template=study_self_analysis.md).
+
+**Sample minimum:** 15 reports (phase A), 10 follow-ups (phase B).
+
+**Results:** *Awaiting community contributions.*
+
+Aggregation script: `scripts/study_self_analysis_aggregate.py`.
+
+### 16.3 Documentation-Drift as Day-2 Indicator (S6)
+
+**Research question:** Does the DIA signal correlate more strongly with
+time since last docs commit than with codebase size?
+
+**Hypothesis:** H₁: ρ(DIA, docs-stagnation) > ρ(DIA, LOC).
+
+**Method:** Contributors measure DIA score, days since last docs commit,
+and LOC for each repo.
+
+**Results:** *Awaiting community contributions.*
+
+See also: [EPISTEMICS.md §7](EPISTEMICS.md) for conceptual reflection.
+
+### 16.4 Framework Erosion Profiles (S9)
+
+**Research question:** Do dominant drift signals differ systematically
+between web frameworks (Django, Flask, FastAPI, Express, NestJS)?
+
+**Hypothesis:** Signal dominance distribution is framework-dependent
+(χ² test, p < 0.05).
+
+**Method:** 5 repos per framework, normalized signal-score breakdown.
+
+**Sample minimum:** 25 repos (5 × 5 frameworks).
+
+**Results:** *Awaiting community contributions.*
+
+### 16.5 Consistency Proxy Promotion Evidence (S10)
+
+**Research question:** Do BEM + TPD + GCD correlate more strongly with
+manually rated module inconsistency than the composite score alone?
+
+**Decision this informs:** Should BEM/TPD/GCD move from `weight=0.0`
+(report-only) to scoring-active?
+
+**Method:** Senior contributors rate 10 modules per repo on a 5-point
+consistency rubric. Comparison: ρ(manual, proxy) vs. ρ(manual, composite).
+
+**Sample minimum:** 3 repos × 8 modules = 24 ratings.
+
+**Results:** *Awaiting community contributions.*
+
+---
+
+## 17. Community Validation Studies — Technical Debt
+
+**Status:** `[PLANNED]`
+
+### 17.1 Score-Debt Correlation Study (S11)
+
+**Research question:** Does the composite drift score correlate with the
+number of tech-debt-labelled GitHub issues?
+
+**Hypothesis:** H₁: Spearman ρ > 0.4.
+
+**Method:** Contributors identify public repos with ≥ 10 tech-debt issues
+(labels: `tech-debt`, `technical-debt`, `refactoring`, `cleanup`,
+`code-quality`, `debt`), run `drift analyze`, and normalize by LOC.
+
+**Sample minimum:** 20 repos.
+
+Automation script: `scripts/study_debt_correlation.py`.
+
+**Results:** *Awaiting community contributions.*
+
+### 17.2 DCA Signal Validation — AI-Generated vs. Manual Code (S12)
+
+**Research question:** Do repos with a high share of AI-generated commits
+accumulate more dead code (DCA findings) per kLOC?
+
+**Method:** Matched-pair design — each AI-heavy repo is paired with a
+conventional repo matched on language, LOC (±30%), age (±1 year), and domain.
+
+**Sample minimum:** 8 matched pairs.
+
+**Results:** *Awaiting community contributions.*
+
+### 17.3 Actionability Assessment (S13)
+
+**Research question:** How understandable and actionable are drift's
+`next_action` texts in practice?
+
+**Method:** Contributors rate 10 random findings on three Likert dimensions:
+understandability (1–5), actionability (1–5), prioritizability (1–5). Uses
+the [self-analysis template](https://github.com/sauremilk/drift/issues/new?template=study_self_analysis.md) (step 4).
+
+**Sample minimum:** 10 contributors × 10 findings = 100 ratings.
+
+Aggregation script: `scripts/study_self_analysis_aggregate.py`.
+
+**Results:** *Awaiting community contributions.*

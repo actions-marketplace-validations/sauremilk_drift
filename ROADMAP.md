@@ -33,6 +33,9 @@ Contributions here are reviewed with priority.
   (empty repos, single-file projects, deeply nested modules).
 - **Signal documentation** — write or improve per-signal docs with concrete
   code examples showing what triggers the signal and why.
+- **Community validation studies** — independent precision validation,
+  actionability assessment, and erosion-pattern research
+  ([STUDY.md §15–§17](docs/STUDY.md)).
 
 ## Good for new contributors
 
@@ -51,6 +54,12 @@ Look for the [`good first issue`](https://github.com/sauremilk/drift/issues?q=is
 - **Report a false positive or false negative** — even without a code fix,
   a well-documented FP/FN report with a minimal reproduction is a valuable
   contribution. Use the [FP/FN issue template](https://github.com/sauremilk/drift/issues/new?template=false_positive.md).
+- **Participate in a self-analysis study** — run `drift analyze` on your own
+  repo and share what you found (~15 min).
+  Use the [self-analysis template](https://github.com/sauremilk/drift/issues/new?template=study_self_analysis.md).
+- **Rate drift findings** — classify findings as TP/FP for inter-rater
+  validation (~30 min).
+  Use the [finding rating template](https://github.com/sauremilk/drift/issues/new?template=study_finding_rating.md).
 
 ## Not currently prioritized
 

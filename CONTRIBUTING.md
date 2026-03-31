@@ -35,6 +35,21 @@ First contribution? Welcome. Here's the fastest path:
 
 Unsure whether something is worth contributing? Open a [contribution proposal](https://github.com/sauremilk/drift/issues/new?template=contribution_proposal.md) — we'll help you scope it. If Drift surprised you with an unexpected result, that is valuable feedback even without a code fix.
 
+## Participate in community studies
+
+Drift runs open empirical studies to validate signal precision, measure
+actionability, and understand architectural erosion patterns. Participation
+is a first-class contribution — you do not need to write code.
+
+| Level | Time | What you do | Template |
+|:---:|---|---|---|
+| 1 | ~15 min | Run `drift analyze` on your own repo, rate findings | [Self-analysis](https://github.com/sauremilk/drift/issues/new?template=study_self_analysis.md) |
+| 2 | ~30 min | Classify a set of findings as TP / FP / Unclear | [Finding rating](https://github.com/sauremilk/drift/issues/new?template=study_finding_rating.md) |
+| 3 | 1–3 h | Analyze a repo for a specific study (security, debt, etc.) | [Repo benchmark](https://github.com/sauremilk/drift/issues/new?template=study_repo_benchmark.md) |
+
+Currently open studies are documented in [STUDY.md §15–§17](docs/STUDY.md).
+All studies follow the quality criteria in [POLICY.md §13](POLICY.md).
+
 <details>
 <summary>Without Make</summary>
 

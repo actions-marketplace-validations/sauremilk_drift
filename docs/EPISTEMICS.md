@@ -115,3 +115,48 @@ Das ist eine Frage über *epistemische Integrität*, nicht über strukturelle Ko
 3. **Von Single-Codebase zu Codebase-als-Konversation.** Wenn 80% des Codes KI-generiert ist, ist die Codebase nicht mehr ein Artefakt menschlicher Entscheidungen, sondern ein *Transkript eines Dialogs* zwischen Mensch und Maschine. Die Erosion liegt dann nicht im Code, sondern im *Verlust des Dialogs* — wenn Prompts verloren gehen, wenn Kontext nicht übertragen wird, wenn das Warum verschwindet. Drift müsste diesen Dialog als Analyseeinheit behandeln, nicht nur den resultierenden Code.
 
 **Die fundamentale Verschiebung:** Von **"Wie sieht der Code aus?"** zu **"Weiß jemand, warum der Code so aussieht?"** — und wenn die Antwort nein ist, das als die eigentliche Erosion benennen. Nicht die syntaktische Varianz ist das Problem der Zukunft. Sondern die *epistemische Leere*, die entsteht, wenn Code schneller erzeugt als verstanden wird.
+
+---
+
+## 6. Taxonomie der gewollten Inkohärenz
+
+**Status:** `[PLANNED]` — Community-Studie S8
+
+EPISTEMICS.md §1 stellt fest: Kohärenz ist nicht identisch mit Qualität. Ein hoher PFS-Score kann *gewollte Varianz* messen — bewussten Polymorphismus, Interface-Segregation, Framework-erzwungene Pattern-Unterschiede.
+
+**Die offene Frage:** Wie groß ist der Anteil architekturisch *gewollter* Varianz an den PFS-Findings in aktiv gewarteten Repos? Und lassen sich aus der Antwort Suppressions-Regeln ableiten, die False Positives reduzieren, ohne reale Inkohärenz zu verbergen?
+
+**Vier Kategorien stehen zur Erprobung:**
+
+- **A — Ungewollte Inkohärenz:** Pattern-Fragmentierung ohne architektonische Begründung.
+- **B — Gewollte Varianz:** Bewusster Polymorphismus, Interface-Segregation, Adapter/Strategy-Pattern.
+- **C — Migrations-Transit:** Altes und neues Pattern koexistieren während eines geplanten Übergangs.
+- **D — Framework-erzwungene Varianz:** Verschiedene Patterns sind Framework-bedingt nötig (z.B. Class-based vs. Function-based Views in Django).
+
+**Methodik:** Cross-Repo-Rating — jeder Rater klassifiziert PFS-Findings aus einem *fremden* Repo, um Rationalisierungs-Bias zu vermeiden. Inter-Rater-Agreement via Cohen's κ, Dissens-Auflösung durch dritten Rater.
+
+**Erwarteter Erkenntnisbeitrag:** Wenn Kategorie B+C+D zusammen ≥20% der Findings ausmachen, sind Suppressions-Heuristiken notwendig. Wenn <10%, ist das PFS-Signal robuster als in §1 befürchtet.
+
+Auswertungs-Script: `scripts/study_rater_agreement.py`. Quantitative Ergebnisse in [STUDY.md §16](STUDY.md).
+
+**Ergebnisse:** *Ausstehend — Community-Beiträge werden gesammelt.*
+
+---
+
+## 7. Dokumentation als Frühindikator für Wartungsschuld
+
+**Status:** `[PLANNED]` — Community-Studie S6
+
+Die These: Day-2-Vernachlässigung manifestiert sich zuerst in der Dokumentation. Wenn ein Team aufhört, Docs zu pflegen, ist das ein Frühindikator dafür, dass auch der Code bald erodiert — eine *dokumentarische Drift*, die der Code-Drift vorausgeht.
+
+**Die offene Frage:** Korreliert das DIA-Signal (Documentation-Implementation Asymmetry) stärker mit der Zeit seit dem letzten Dokumentations-Commit als mit der absoluten Codebasis-Größe?
+
+Falls ja: DIA misst nicht Umfang, sondern *Aufmerksamkeit*. Das wäre eine epistemisch bedeutsame Unterscheidung — der Score wäre dann nicht nur ein Entropie-Maß (vgl. §3), sondern ein Proxy für die kognitive Bindung des Teams an die eigene Codebase.
+
+Falls nein: DIA korreliert primär mit LOC, und der scheinbare Maintenance-Effekt ist ein Größen-Artefakt. Das würde das Signal nicht entwerten, aber seine Interpretation grundlegend verändern.
+
+**Erwarteter Erkenntnisbeitrag:** Klärung der Frage, ob das DIA-Signal Erosion oder Komplexität misst — eine der offenen Fragen aus der Django-Studie (§3).
+
+Quantitative Ergebnisse in [STUDY.md §16.3](STUDY.md). Statistische Auswertung via Steiger's Z-Test für abhängige Korrelationskoeffizienten.
+
+**Ergebnisse:** *Ausstehend — Community-Beiträge werden gesammelt.*

@@ -1,0 +1,36 @@
+[
+  {
+    "participant_id": "anon-001",
+    "drift_version": "1.1.13",
+    "repo_description": "Django web app, ~15k LOC",
+    "experience_months": 24,
+    "findings": [
+      {"signal": "PFS", "severity": "HIGH", "known": true, "real_problem": true, "will_fix": true, "surprise": 1,
+       "actionability": {"understandable": 5, "actionable": 4, "prioritizable": 4}},
+      {"signal": "PFS", "severity": "MEDIUM", "known": false, "real_problem": true, "will_fix": true, "surprise": 4,
+       "actionability": {"understandable": 4, "actionable": 3, "prioritizable": 3}},
+      {"signal": "DIA", "severity": "HIGH", "known": true, "real_problem": true, "will_fix": false, "surprise": 2,
+       "actionability": {"understandable": 5, "actionable": 5, "prioritizable": 4}},
+      {"signal": "DIA", "severity": "MEDIUM", "known": true, "real_problem": false, "will_fix": false, "surprise": 1,
+       "actionability": {"understandable": 3, "actionable": 2, "prioritizable": 2}},
+      {"signal": "MDS", "severity": "LOW", "known": false, "real_problem": true, "will_fix": true, "surprise": 5,
+       "actionability": {"understandable": 4, "actionable": 4, "prioritizable": 5}}
+    ],
+    "followup_30d": {"completed": true, "findings_fixed": 2, "findings_promised": 3}
+  },
+  {
+    "participant_id": "anon-002",
+    "drift_version": "1.1.13",
+    "repo_description": "FastAPI microservice, ~8k LOC",
+    "experience_months": 12,
+    "findings": [
+      {"signal": "PFS", "severity": "HIGH", "known": false, "real_problem": true, "will_fix": true, "surprise": 5,
+       "actionability": {"understandable": 4, "actionable": 4, "prioritizable": 5}},
+      {"signal": "TVS", "severity": "MEDIUM", "known": true, "real_problem": true, "will_fix": false, "surprise": 2,
+       "actionability": {"understandable": 3, "actionable": 3, "prioritizable": 3}},
+      {"signal": "EDS", "severity": "HIGH", "known": false, "real_problem": true, "will_fix": true, "surprise": 4,
+       "actionability": {"understandable": 5, "actionable": 5, "prioritizable": 4}}
+    ],
+    "followup_30d": {"completed": false, "findings_fixed": 0, "findings_promised": 2}
+  }
+]

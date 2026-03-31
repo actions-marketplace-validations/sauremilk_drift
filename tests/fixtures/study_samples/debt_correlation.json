@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "study": "S11",
+    "description": "Sample debt correlation data for tests"
+  },
+  "repos": [
+    {
+      "repo": "example/alpha",
+      "composite_score": 72.5,
+      "issue_count": 15,
+      "debt_label_count": 8,
+      "loc": 12000
+    },
+    {
+      "repo": "example/beta",
+      "composite_score": 45.3,
+      "issue_count": 42,
+      "debt_label_count": 22,
+      "loc": 35000
+    },
+    {
+      "repo": "example/gamma",
+      "composite_score": 88.1,
+      "issue_count": 5,
+      "debt_label_count": 1,
+      "loc": 8000
+    },
+    {
+      "repo": "example/delta",
+      "composite_score": 31.0,
+      "issue_count": 67,
+      "debt_label_count": 45,
+      "loc": 50000
+    }
+  ]
+}
