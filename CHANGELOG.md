@@ -13,6 +13,7 @@
 - Reset PowerShell native exit code after release checks so non-existent releases no longer fail the auto-release check step.
 - Skip Dependency Review and Labeler jobs for `dependabot[bot]` PRs to prevent recurring billing-locked failures in automated dependency update traffic.
 - Track `.secrets.baseline` (plus allowlist entry) so Security Hygiene can execute detect-secrets without baseline-path failures.
+- Run `pip-audit` with `--skip-editable` in Security Hygiene to avoid false failures on local editable package metadata not present on PyPI.
 
 ## [1.3.1] – 2026-04-01
 

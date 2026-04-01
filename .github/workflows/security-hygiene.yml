@@ -55,4 +55,4 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             python -m pip install -e .
           }
-          python -m pip_audit --strict --desc
+          python -m pip_audit --strict --desc --skip-editable
