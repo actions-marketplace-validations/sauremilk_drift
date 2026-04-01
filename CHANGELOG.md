@@ -7,6 +7,9 @@
 - Force release-tag validation and release-creation steps to use bash semantics so POSIX conditional blocks no longer fail on PowerShell runners.
 - Move Security Hygiene execution to self-hosted to avoid hosted-runner billing locks.
 - Add manual dispatch support to Workflow Sanity for direct post-fix verification runs.
+- Install Python in Workflow Sanity explicitly on self-hosted runners to avoid missing interpreter failures.
+- Make auto-release release-existence checks PowerShell-safe by handling `gh release view` misses without hard failure.
+- Restrict CodeQL execution to manual dispatch so push/PR runs are no longer hard-failed by billing-locked code scanning.
 
 ## [1.3.1] – 2026-04-01
 
