@@ -1,0 +1,44 @@
+{
+  "version": "1.3.0",
+  "date": "2026-04-01",
+  "feature": "Phase 3: Project-specific constraint extraction for AVS/CCC/ECM/HSC",
+  "evidence": {
+    "tests_added": 15,
+    "generators_enhanced": 4,
+    "metadata_keys_used": {
+      "AVS": [
+        "src_layer",
+        "dst_layer",
+        "rule",
+        "import",
+        "blast_radius",
+        "instability"
+      ],
+      "CCC": [
+        "file_a",
+        "file_b",
+        "co_change_weight",
+        "confidence",
+        "commit_samples"
+      ],
+      "ECM": [
+        "diverged_functions",
+        "divergence_count",
+        "comparison_ref",
+        "module_function_count"
+      ],
+      "HSC": [
+        "variable",
+        "rule_id",
+        "cwe"
+      ]
+    },
+    "test_suite_result": "1337 passed, 0 failed"
+  },
+  "fmea_coverage": {
+    "FM-14": "AVS project-specific",
+    "FM-17": "CCC project-specific",
+    "FM-08": "ECM project-specific",
+    "FM-04": "HSC project-specific"
+  }
+}

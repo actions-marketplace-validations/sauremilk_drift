@@ -351,3 +351,227 @@ class TestJsonOutputIntegration:
         data = json.loads(raw)
         assert "negative_context" in data
         assert isinstance(data["negative_context"], list)
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: Project-specific constraint extraction
+# ---------------------------------------------------------------------------
+
+
+class TestAVSProjectSpecific:
+    """AVS generator extracts concrete import rules from metadata."""
+
+    def test_uses_src_dst_layers(self) -> None:
+        f = _finding(
+            signal_type=SignalType.ARCHITECTURE_VIOLATION,
+            metadata={
+                "src_layer": "presentation",
+                "dst_layer": "infrastructure",
+                "rule": "presentation → infrastructure",
+            },
+        )
+        result = findings_to_negative_context([f])
+        assert len(result) >= 1
+        nc = result[0]
+        assert "presentation" in nc.description
+        assert "infrastructure" in nc.description
+        assert nc.confidence == 0.90  # higher with explicit rule
+
+    def test_includes_import_path(self) -> None:
+        f = _finding(
+            signal_type=SignalType.ARCHITECTURE_VIOLATION,
+            metadata={
+                "src_layer": "api",
+                "dst_layer": "db",
+                "import": "db.models",
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "db.models" in nc.forbidden_pattern
+
+    def test_includes_blast_radius(self) -> None:
+        f = _finding(
+            signal_type=SignalType.ARCHITECTURE_VIOLATION,
+            metadata={
+                "src_layer": "core",
+                "dst_layer": "utils",
+                "blast_radius": 12,
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "12" in nc.description
+        assert nc.metadata.get("blast_radius") == 12
+
+    def test_includes_instability(self) -> None:
+        f = _finding(
+            signal_type=SignalType.ARCHITECTURE_VIOLATION,
+            metadata={
+                "src_layer": "api",
+                "dst_layer": "core",
+                "instability": 0.83,
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "0.83" in nc.canonical_alternative
+        assert nc.metadata.get("instability") == 0.83
+
+
+class TestCCCProjectSpecific:
+    """CCC generator uses actual co-change pairs from metadata."""
+
+    def test_uses_file_a_b(self) -> None:
+        f = _finding(
+            signal_type=SignalType.CO_CHANGE_COUPLING,
+            metadata={
+                "file_a": "models.py",
+                "file_b": "serializers.py",
+                "co_change_weight": 8.5,
+                "confidence": 0.92,
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "models.py" in nc.description
+        assert "serializers.py" in nc.description
+        assert "8.5" in nc.description
+
+    def test_commit_samples_in_metadata(self) -> None:
+        f = _finding(
+            signal_type=SignalType.CO_CHANGE_COUPLING,
+            metadata={
+                "file_a": "a.py",
+                "file_b": "b.py",
+                "commit_samples": ["abc123", "def456", "ghi789"],
+                "confidence": 0.8,
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert nc.metadata.get("commit_samples") == ["abc123", "def456", "ghi789"]
+
+    def test_confidence_scales_with_signal(self) -> None:
+        f_strong = _finding(
+            signal_type=SignalType.CO_CHANGE_COUPLING,
+            metadata={"confidence": 1.0, "file_a": "a.py", "file_b": "b.py"},
+            title="strong",
+        )
+        f_weak = _finding(
+            signal_type=SignalType.CO_CHANGE_COUPLING,
+            metadata={"confidence": 0.1, "file_a": "c.py", "file_b": "d.py"},
+            title="weak",
+        )
+        results = findings_to_negative_context([f_strong, f_weak])
+        # Strong coupling should have higher NC confidence
+        strong_nc = next(r for r in results if "a.py" in r.description)
+        weak_nc = next(r for r in results if "c.py" in r.description)
+        assert strong_nc.confidence > weak_nc.confidence
+
+
+class TestECMProjectSpecific:
+    """ECM generator extracts concrete exception contracts from metadata."""
+
+    def test_uses_diverged_functions(self) -> None:
+        f = _finding(
+            signal_type=SignalType.EXCEPTION_CONTRACT_DRIFT,
+            metadata={
+                "module": "services.payment",
+                "exception_types": ["PaymentError", "ValidationError"],
+                "diverged_functions": ["process_refund", "charge_card"],
+                "divergence_count": 2,
+                "module_function_count": 8,
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "process_refund" in nc.description
+        assert "2/8" in nc.description
+        assert nc.confidence == 0.85  # higher with diverged_fns
+
+    def test_includes_comparison_ref(self) -> None:
+        f = _finding(
+            signal_type=SignalType.EXCEPTION_CONTRACT_DRIFT,
+            metadata={
+                "comparison_ref": "HEAD~5",
+                "diverged_functions": ["fetch_data"],
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "HEAD~5" in nc.description
+
+    def test_concrete_forbidden_with_diverged_fn(self) -> None:
+        f = _finding(
+            signal_type=SignalType.EXCEPTION_CONTRACT_DRIFT,
+            metadata={
+                "diverged_functions": ["handle_request"],
+                "exception_types": ["AppError"],
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "handle_request" in nc.forbidden_pattern
+
+    def test_exception_count_in_rationale(self) -> None:
+        f = _finding(
+            signal_type=SignalType.EXCEPTION_CONTRACT_DRIFT,
+            metadata={
+                "exception_types": ["TypeError", "ValueError", "KeyError"],
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "3 established exception types" in nc.rationale
+
+
+class TestHSCProjectSpecific:
+    """HSC generator uses concrete detection rules from metadata."""
+
+    def test_api_token_rule(self) -> None:
+        f = _finding(
+            signal_type=SignalType.HARDCODED_SECRET,
+            metadata={
+                "variable": "OPENAI_KEY",
+                "rule_id": "hardcoded_api_token",
+                "cwe": "CWE-798",
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "API token" in nc.description
+        assert "OPENAI_KEY" in nc.forbidden_pattern
+        assert nc.metadata["rule_id"] == "hardcoded_api_token"
+
+    def test_placeholder_secret_rule(self) -> None:
+        f = _finding(
+            signal_type=SignalType.HARDCODED_SECRET,
+            metadata={
+                "variable": "db_password",
+                "rule_id": "placeholder_secret",
+            },
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "placeholder" in nc.description.lower()
+        assert "changeme" in nc.forbidden_pattern
+
+    def test_uses_variable_key(self) -> None:
+        """Phase 3: uses 'variable' metadata key (actual HSC metadata name)."""
+        f = _finding(
+            signal_type=SignalType.HARDCODED_SECRET,
+            metadata={"variable": "SECRET_TOKEN"},
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "SECRET_TOKEN" in nc.description
+
+    def test_rule_id_in_rationale(self) -> None:
+        f = _finding(
+            signal_type=SignalType.HARDCODED_SECRET,
+            metadata={"rule_id": "hardcoded_api_token"},
+        )
+        result = findings_to_negative_context([f])
+        nc = result[0]
+        assert "hardcoded_api_token" in nc.rationale

@@ -332,11 +332,60 @@ def _gen_bem(finding: Finding) -> list[NegativeContext]:
 
 @_register(SignalType.EXCEPTION_CONTRACT_DRIFT)
 def _gen_ecm(finding: Finding) -> list[NegativeContext]:
-    """FM-08 (RPN 252): Inconsistent error contract."""
+    """FM-08 (RPN 252): Inconsistent error contract — project-specific."""
     meta = finding.metadata
-    module = meta.get("module", finding.file_path.as_posix() if finding.file_path else "module")
+    module = meta.get(
+        "module",
+        finding.file_path.as_posix() if finding.file_path else "module",
+    )
     exception_types = meta.get("exception_types", [])
-    exc_str = ", ".join(str(e) for e in exception_types[:3]) if exception_types else "mixed types"
+    exc_str = (
+        ", ".join(str(e) for e in exception_types[:5])
+        if exception_types
+        else "mixed types"
+    )
+    # Phase 3: extract concrete drift details
+    diverged_fns = meta.get("diverged_functions", [])
+    divergence_count = meta.get("divergence_count", 0)
+    comparison_ref = meta.get("comparison_ref", "")
+    module_fn_count = meta.get("module_function_count", 0)
+
+    # Build enriched description
+    desc_parts = [
+        f"Module '{module}' has inconsistent exception types: {exc_str}.",
+    ]
+    if diverged_fns:
+        fn_list = ", ".join(str(f) for f in diverged_fns[:3])
+        desc_parts.append(
+            f"Functions with changed contracts: {fn_list}"
+            f" ({divergence_count}/{module_fn_count} diverged)."
+        )
+    if comparison_ref:
+        desc_parts.append(
+            f"Contract changed relative to {comparison_ref}."
+        )
+    desc_parts.append("Do NOT introduce new exception hierarchies.")
+
+    # Concrete forbidden pattern showing actual diverged function
+    if diverged_fns:
+        example_fn = diverged_fns[0]
+        forbidden = (
+            f"# ANTI-PATTERN: Exception contract drift in '{module}'\n"
+            f"# '{example_fn}' changed its exception behavior\n"
+            "class MyNewError(Exception): ...  # ← Conflicts with contract"
+        )
+    else:
+        forbidden = (
+            "# ANTI-PATTERN: Introducing a new exception type in a module\n"
+            "# that already uses a different exception hierarchy\n"
+            "class MyNewError(Exception): ...  # ← Conflicts with contract"
+        )
+
+    enriched_meta: dict[str, Any] = {}
+    if diverged_fns:
+        enriched_meta["diverged_functions"] = diverged_fns[:5]
+    if comparison_ref:
+        enriched_meta["comparison_ref"] = comparison_ref
 
     return [NegativeContext(
         anti_pattern_id=_neg_id(SignalType.EXCEPTION_CONTRACT_DRIFT, finding),
@@ -344,25 +393,22 @@ def _gen_ecm(finding: Finding) -> list[NegativeContext]:
         source_signal=SignalType.EXCEPTION_CONTRACT_DRIFT,
         severity=finding.severity,
         scope=NegativeContextScope.MODULE,
-        description=(
-            f"Module '{module}' has inconsistent exception types: {exc_str}. "
-            f"Do not introduce new exception hierarchies."
-        ),
-        forbidden_pattern=(
-            "# ANTI-PATTERN: Introducing a new exception type in a module\n"
-            "# that already uses a different exception hierarchy\n"
-            "class MyNewError(Exception): ...  # ← Conflicts with existing contract"
-        ),
+        description=" ".join(desc_parts),
+        forbidden_pattern=forbidden,
         canonical_alternative=(
-            f"# REQUIRED: Use the existing exception types in this module: {exc_str}\n"
-            "# Before adding new exceptions, check what the module already uses"
+            f"# REQUIRED: Use the existing exception types in '{module}': "
+            f"{exc_str}\n"
+            "# Before adding new exceptions, check what the module already uses\n"
+            "# Align error handling with the module's established contract"
         ),
         affected_files=_affected(finding),
-        confidence=0.8,
+        confidence=0.85 if diverged_fns else 0.8,
         rationale=(
             "AI agents introduce new exception types without knowing the module's "
-            "existing contract (FMEA FM-08, RPN 252)."
+            "existing contract (FMEA FM-08, RPN 252). "
+            f"This module has {len(exception_types)} established exception types."
         ),
+        metadata=enriched_meta,
     )]
 
 
@@ -373,10 +419,61 @@ def _gen_ecm(finding: Finding) -> list[NegativeContext]:
 
 @_register(SignalType.ARCHITECTURE_VIOLATION)
 def _gen_avs(finding: Finding) -> list[NegativeContext]:
-    """FM-14 (RPN 240): Architecture layer violation."""
+    """FM-14 (RPN 240): Architecture layer violation — project-specific."""
     meta = finding.metadata
-    source_layer = meta.get("source_layer", "unknown")
-    target_layer = meta.get("target_layer", "unknown")
+    # Phase 3: extract concrete layer identities from actual metadata
+    src_layer = meta.get("src_layer") or meta.get("source_layer", "unknown")
+    dst_layer = meta.get("dst_layer") or meta.get("target_layer", "unknown")
+    rule = meta.get("rule", "")
+    import_path = meta.get("import", "")
+    blast_radius = meta.get("blast_radius")
+    instability = meta.get("instability")
+
+    # Build enriched description from real project data
+    desc_parts = [
+        f"Layer violation: '{src_layer}' → '{dst_layer}'.",
+    ]
+    if rule:
+        desc_parts.append(f"Boundary rule violated: {rule}.")
+    if blast_radius is not None:
+        desc_parts.append(f"Blast radius: {blast_radius} modules affected.")
+    desc_parts.append(
+        "Do NOT introduce imports that cross this boundary."
+    )
+
+    # Concrete forbidden import from actual finding
+    if import_path:
+        forbidden = (
+            f"# ANTI-PATTERN: Forbidden cross-layer import\n"
+            f"import {import_path}  # ← violates {src_layer} → {dst_layer} boundary"
+        )
+    else:
+        forbidden = (
+            f"# ANTI-PATTERN: Importing from forbidden layer\n"
+            f"from {dst_layer} import ...  # ← violates layer boundary"
+        )
+
+    # Stability-aware canonical alternative
+    canonical_parts = [
+        "# REQUIRED: Respect layer boundaries in this project:\n",
+        f"# {src_layer} must NOT depend on {dst_layer}\n",
+    ]
+    if instability is not None:
+        canonical_parts.append(
+            f"# Module instability={instability:.2f} — "
+            "depend on stable (low-I) modules only\n"
+        )
+    canonical_parts.append(
+        "# Use dependency injection or interfaces for cross-layer access"
+    )
+
+    enriched_meta: dict[str, Any] = {}
+    if rule:
+        enriched_meta["boundary_rule"] = rule
+    if blast_radius is not None:
+        enriched_meta["blast_radius"] = blast_radius
+    if instability is not None:
+        enriched_meta["instability"] = instability
 
     return [NegativeContext(
         anti_pattern_id=_neg_id(SignalType.ARCHITECTURE_VIOLATION, finding),
@@ -384,34 +481,75 @@ def _gen_avs(finding: Finding) -> list[NegativeContext]:
         source_signal=SignalType.ARCHITECTURE_VIOLATION,
         severity=finding.severity,
         scope=NegativeContextScope.MODULE,
-        description=(
-            f"Layer violation detected: '{source_layer}' imports from '{target_layer}'. "
-            "Do not introduce cross-layer imports that violate the architecture."
-        ),
-        forbidden_pattern=(
-            f"# ANTI-PATTERN: Importing from forbidden layer\n"
-            f"from {target_layer} import ...  # ← violates layer boundary"
-        ),
-        canonical_alternative=(
-            "# REQUIRED: Respect layer boundaries\n"
-            "# Use dependency injection or interface modules for cross-layer access"
-        ),
+        description=" ".join(desc_parts),
+        forbidden_pattern=forbidden,
+        canonical_alternative="".join(canonical_parts),
         affected_files=_affected(finding),
-        confidence=0.85,
+        confidence=0.90 if rule else 0.85,
         rationale=(
             "AI agents do not see the import graph and create layer violations "
-            "(FMEA FM-14, RPN 240)."
+            "(FMEA FM-14, RPN 240). "
+            "This project has explicit boundary rules that MUST be respected."
         ),
+        metadata=enriched_meta,
     )]
 
 
 @_register(SignalType.CO_CHANGE_COUPLING)
 def _gen_ccc(finding: Finding) -> list[NegativeContext]:
-    """FM-17 (RPN 240): Co-change coupling ignored."""
+    """FM-17 (RPN 240): Co-change coupling — project-specific pairs."""
     meta = finding.metadata
+    # Phase 3: use actual CCC metadata for concrete coupled pair
+    file_a = meta.get("file_a") or (
+        finding.file_path.as_posix() if finding.file_path else "file_a"
+    )
+    file_b = meta.get("file_b", "")
+    co_change_weight = meta.get("co_change_weight")
+    confidence_val = meta.get("confidence", 0.0)
+    commit_samples = meta.get("commit_samples", [])
     coupled_files = meta.get("coupled_files", [])
-    file_a = finding.file_path.as_posix() if finding.file_path else "file_a"
-    files_str = ", ".join(str(f) for f in coupled_files[:3]) if coupled_files else "related files"
+
+    # Determine the concrete partner files
+    partners: list[str] = []
+    if file_b:
+        partners.append(str(file_b))
+    partners.extend(str(f) for f in coupled_files if str(f) != file_b)
+    partners_str = ", ".join(partners[:5]) if partners else "related files"
+
+    # Enriched description with coupling strength
+    desc_parts = [
+        f"'{file_a}' is historically co-changed with: {partners_str}.",
+    ]
+    if co_change_weight is not None:
+        desc_parts.append(
+            f"Co-change strength: {co_change_weight:.1f}"
+            f" (confidence {confidence_val:.0%})."
+        )
+    desc_parts.append(
+        "When changing one file, you MUST review and update the others."
+    )
+
+    # Evidence from commit history
+    evidence_note = ""
+    if commit_samples:
+        samples = commit_samples[:3]
+        evidence_note = (
+            f"\n# Evidence: {len(commit_samples)} commits show co-change, "
+            f"e.g. {', '.join(str(s)[:8] for s in samples)}"
+        )
+
+    all_partners = partners[:5]
+    canonical_lines = [f"# REQUIRED: When modifying '{file_a}', also review:"]
+    for p in all_partners:
+        canonical_lines.append(f"# - {p}")
+    if evidence_note:
+        canonical_lines.append(evidence_note)
+
+    enriched_meta: dict[str, Any] = {}
+    if co_change_weight is not None:
+        enriched_meta["co_change_weight"] = co_change_weight
+    if commit_samples:
+        enriched_meta["commit_samples"] = commit_samples[:3]
 
     return [NegativeContext(
         anti_pattern_id=_neg_id(SignalType.CO_CHANGE_COUPLING, finding),
@@ -419,32 +557,57 @@ def _gen_ccc(finding: Finding) -> list[NegativeContext]:
         source_signal=SignalType.CO_CHANGE_COUPLING,
         severity=finding.severity,
         scope=NegativeContextScope.MODULE,
-        description=(
-            f"'{file_a}' is tightly coupled to: {files_str}. "
-            "When changing one, you MUST check/update the others."
-        ),
+        description=" ".join(desc_parts),
         forbidden_pattern=(
-            f"# ANTI-PATTERN: Changing '{file_a}' without checking coupled files\n"
-            f"# These files are historically co-changed: {files_str}"
+            f"# ANTI-PATTERN: Changing '{file_a}' in isolation\n"
+            f"# These files are historically co-changed: {partners_str}\n"
+            f"# Modifying one without the other causes hidden regressions"
         ),
-        canonical_alternative=(
-            f"# REQUIRED: When modifying '{file_a}', also review:\n"
-            + "\n".join(f"# - {f}" for f in coupled_files[:5])
-        ),
+        canonical_alternative="\n".join(canonical_lines),
         affected_files=_affected(finding),
-        confidence=0.7,
+        confidence=min(0.95, 0.6 + confidence_val * 0.35),
         rationale=(
             "AI agents change files in isolation without seeing co-change history "
-            "(FMEA FM-17, RPN 240)."
+            "(FMEA FM-17, RPN 240). "
+            f"This pair has been co-changed in {len(commit_samples)} commits."
         ),
+        metadata=enriched_meta,
     )]
 
 
 @_register(SignalType.HARDCODED_SECRET)
 def _gen_hsc(finding: Finding) -> list[NegativeContext]:
-    """FM-04 (RPN 200): Hardcoded secrets."""
+    """FM-04 (RPN 200): Hardcoded secrets — project-specific."""
     meta = finding.metadata
-    var_name = meta.get("variable_name", finding.symbol or "secret")
+    var_name = meta.get("variable") or meta.get(
+        "variable_name", finding.symbol or "secret",
+    )
+    # Phase 3: use concrete detection rule for specific guidance
+    rule_id = meta.get("rule_id", "hardcoded_secret")
+    cwe = meta.get("cwe", "CWE-798")
+
+    # Map rule_id to specific forbidden pattern
+    if rule_id == "hardcoded_api_token":
+        forbidden = (
+            f"# ANTI-PATTERN: Hardcoded API token ({cwe})\n"
+            f'{var_name} = "sk-A1B2C3..."  '
+            f"# ← NEVER hardcode API tokens"
+        )
+        desc_detail = "API token"
+    elif rule_id == "placeholder_secret":
+        forbidden = (
+            f"# ANTI-PATTERN: Placeholder secret left in code ({cwe})\n"
+            f"{var_name} = \"changeme\"  "
+            f"# ← Placeholder secrets get deployed to production"
+        )
+        desc_detail = "placeholder secret"
+    else:
+        forbidden = (
+            f"# ANTI-PATTERN: Hardcoded credentials ({cwe})\n"
+            f'{var_name} = "secret_value"  '
+            f"# ← NEVER embed secrets in source"
+        )
+        desc_detail = "hardcoded credential"
 
     return [NegativeContext(
         anti_pattern_id=_neg_id(SignalType.HARDCODED_SECRET, finding),
@@ -453,25 +616,25 @@ def _gen_hsc(finding: Finding) -> list[NegativeContext]:
         severity=Severity.HIGH,
         scope=_scope_from_finding(finding),
         description=(
-            f"Hardcoded secret detected in variable '{var_name}'. "
-            "Never embed credentials, API keys, or tokens in source code."
+            f"Hardcoded {desc_detail} in variable '{var_name}'. "
+            "Never embed credentials, API keys, or tokens in source code. "
+            f"Detection rule: {rule_id}."
         ),
-        forbidden_pattern=(
-            "# ANTI-PATTERN: Hardcoded credentials (CWE-798)\n"
-            f'{var_name} = "sk-A1B2C3..."  # ← NEVER hardcode secrets'
-        ),
+        forbidden_pattern=forbidden,
         canonical_alternative=(
-            "# REQUIRED: Use environment variables or config files\n"
+            "# REQUIRED: Use environment variables or a secrets manager\n"
             "import os\n"
-            f'{var_name} = os.environ["{var_name.upper()}"]'
+            f'{var_name} = os.environ["{var_name.upper()}"]\n'
+            "# Alternative: use a .env file with python-dotenv or similar"
         ),
         affected_files=_affected(finding),
         confidence=0.95,
         rationale=(
             "AI agents copy credential patterns from tutorials "
-            "(FMEA FM-04, RPN 200, CWE-798)."
+            f"(FMEA FM-04, RPN 200, {cwe}). "
+            f"Detection: {rule_id}."
         ),
-        metadata={"cwe": "CWE-798"},
+        metadata={"cwe": cwe, "rule_id": rule_id},
     )]
 
 

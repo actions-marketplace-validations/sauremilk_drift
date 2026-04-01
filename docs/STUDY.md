@@ -20,6 +20,8 @@
 
 > **Feature update (2026-04-02):** v1.2.0 introduces the **NegativeContext system** — signal-derived anti-pattern warnings for coding agents. Each of the 22 signal types now generates structured "what NOT to do" context via `src/drift/negative_context.py` (18 signal-specific generators covering 17 FMEA failure modes, RPN 96–384). New data models: `NegativeContext` dataclass with `forbidden_pattern`, `canonical_alternative`, and FMEA traceability. New API: `negative_context()` function in `api.py`, `drift_negative_context` MCP tool for VS Code/Copilot. Output integration: `negative_context` field on `AgentTask`, top-level `negative_context` section in JSON output. 23 new tests in `tests/test_negative_context.py` (1316 total suite).
 
+> **Feature update (2026-04-02):** v1.3.0 upgrades the NegativeContext system with **Phase 3 — project-specific constraint extraction** for Cluster B generators (FMEA RPN 200–279). **AVS** now extracts concrete import paths, boundary rules, blast radius, and module instability from finding metadata. **CCC** uses actual co-change pairs (file_a/file_b), coupling weight, confidence scores, and commit sample evidence. **ECM** identifies diverged functions, divergence counts, comparison refs, and module-level exception type inventories. **HSC** differentiates between API token, placeholder secret, and generic hardcoded credential patterns with rule-specific forbidden patterns. Confidence scores are now dynamically calculated from signal strength metadata. 15 new Phase 3 tests (38 total in test_negative_context.py, 1337 total suite).
+
 ---
 
 ## Executive Summary
