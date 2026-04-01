@@ -19,6 +19,15 @@
 - Run `pip-audit` with `--skip-editable` in Security Hygiene to avoid false failures on local editable package metadata not present on PyPI.
 - Downgrade `pip-audit` in Security Hygiene to a non-blocking signal (`continue-on-error`) to avoid recurring CI hard-failures from local package resolution edge cases.
 
+## [1.3.4] – 2026-04-01
+
+Short version: Fail-open embedding cache writes and init. (+1 more commits)
+
+### Changed
+
+- Fail-open embedding cache writes and init. (+1 more commits)
+
+
 ## [1.3.3] – 2026-04-01
 
 Short version: Maintenance and dependency updates.
