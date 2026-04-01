@@ -5,9 +5,11 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from drift.cache import ParseCache
+from drift.embeddings import EmbeddingCache
 from drift.models import ParseResult
 
 
@@ -58,3 +60,33 @@ def test_concurrent_put_get_does_not_crash(tmp_path: Path) -> None:
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         list(executor.map(_worker, range(64)))
+
+
+def test_embedding_cache_init_swallows_mkdir_oserror(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    def _raise_oserror(*_args: object, **_kwargs: object) -> None:
+        raise OSError("permission denied")
+
+    monkeypatch.setattr(Path, "mkdir", _raise_oserror)
+
+    # Embedding cache init must fail open.
+    cache = EmbeddingCache(tmp_path)
+    assert cache._dir is None
+
+
+def test_embedding_cache_put_swallows_oserror_on_write(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    cache = EmbeddingCache(tmp_path)
+
+    def _raise_oserror(*_args: object, **_kwargs: object) -> int:
+        raise OSError("disk full")
+
+    monkeypatch.setattr("drift.embeddings._EMBEDDINGS_AVAILABLE", True)
+    monkeypatch.setattr(Path, "write_bytes", _raise_oserror)
+
+    # Write failures must never crash analysis.
+    cache.put("hello", np.array([1.0, 2.0], dtype=np.float32))

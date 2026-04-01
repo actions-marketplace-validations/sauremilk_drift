@@ -62,8 +62,13 @@ class EmbeddingCache:
     """
 
     def __init__(self, cache_dir: Path) -> None:
-        self._dir = cache_dir / "embeddings"
-        self._dir.mkdir(parents=True, exist_ok=True)
+        self._dir: Path | None = cache_dir / "embeddings"
+        try:
+            self._dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            # Cache is optional; disable it when the filesystem is unavailable.
+            logger.warning("Embedding cache disabled: could not create cache directory (%s)", exc)
+            self._dir = None
 
     @staticmethod
     def _key(text: str) -> str:
@@ -71,6 +76,8 @@ class EmbeddingCache:
 
     def get(self, text: str) -> np.ndarray | None:
         if not _EMBEDDINGS_AVAILABLE:
+            return None
+        if self._dir is None:
             return None
         path = self._dir / f"{self._key(text)}.bin"
         if not path.exists():
@@ -84,8 +91,16 @@ class EmbeddingCache:
     def put(self, text: str, vector: np.ndarray) -> None:
         if not _EMBEDDINGS_AVAILABLE:
             return
+        if self._dir is None:
+            return
         path = self._dir / f"{self._key(text)}.bin"
-        path.write_bytes(vector.astype(np.float32).tobytes())
+        try:
+            path.write_bytes(vector.astype(np.float32).tobytes())
+        except OSError as exc:
+            logger.warning(
+                "Embedding cache write failed; continuing without persisted cache (%s)",
+                exc,
+            )
 
     def get_batch(self, texts: list[str]) -> tuple[list[int], list[np.ndarray], list[int]]:
         """Look up multiple texts.  Returns (hit_indices, hit_vectors, miss_indices)."""
