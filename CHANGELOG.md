@@ -3,6 +3,7 @@
 ### Fixed
 
 - Make PyPI publish workflow runner-agnostic by using Twine upload for token-based publishing (works on Windows/self-hosted runners).
+- Allow `.pre-commit-config.yaml` in the repo-root allowlist so repo hardening commits pass the local repo-guard gate.
 
 ## [1.3.0] – 2026-04-01
 
