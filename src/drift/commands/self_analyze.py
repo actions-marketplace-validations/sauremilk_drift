@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import click
 from rich.console import Console
 
 from drift.commands import console
+from drift.errors import DriftSystemError
 
 
 @click.command(name="self")
@@ -29,8 +29,11 @@ def self_analyze(since: int, output_format: str) -> None:
     # Locate drift's own source tree (package root -> src/drift -> repo)
     drift_root = Path(__file__).resolve().parent.parent.parent.parent
     if not (drift_root / "pyproject.toml").exists():
-        console.print("[red]Could not locate drift repository root.[/red]")
-        sys.exit(1)
+        raise DriftSystemError(
+            "DRIFT-2001",
+            message="Could not locate drift repository root.",
+            path=str(drift_root),
+        )
 
     cfg = DriftConfig.load(drift_root)
 

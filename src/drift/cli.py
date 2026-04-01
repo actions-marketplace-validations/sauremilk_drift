@@ -26,9 +26,44 @@ from drift.errors import (
 )
 
 
-def _machine_error_enabled() -> bool:
-    """Return True if CLI errors should be emitted as JSON."""
-    return os.getenv("DRIFT_ERROR_FORMAT", "").strip().lower() == "json"
+def _machine_error_enabled(argv: list[str] | None = None) -> bool:
+    """Return True if CLI errors should be emitted as JSON.
+
+    Machine-readable errors are enabled when:
+    - ``DRIFT_ERROR_FORMAT=json`` is set, or
+    - the active CLI invocation requests JSON output (``--json`` or
+      ``--format json`` / ``--output-format json``).
+    """
+    if os.getenv("DRIFT_ERROR_FORMAT", "").strip().lower() == "json":
+        return True
+
+    args = list(argv if argv is not None else sys.argv[1:])
+    idx = 0
+    while idx < len(args):
+        token = args[idx]
+
+        if token == "--json":
+            return True
+
+        if token in {"--format", "--output-format", "-f"}:
+            if idx + 1 < len(args) and args[idx + 1].strip().lower() == "json":
+                return True
+            idx += 2
+            continue
+
+        if token.startswith("--format=") or token.startswith("--output-format="):
+            _, value = token.split("=", 1)
+            if value.strip().lower() == "json":
+                return True
+
+        if token.startswith("-f="):
+            _, value = token.split("=", 1)
+            if value.strip().lower() == "json":
+                return True
+
+        idx += 1
+
+    return False
 
 
 def _emit_error_payload(payload: dict[str, object]) -> None:
@@ -50,6 +85,7 @@ def _build_error_payload(
     recoverable = category == "user"
     suggested_action = info.action if info else hint
     return {
+        "error": True,
         "schema_version": "2.0",
         "type": "error",
         "error_code": error_code,
@@ -59,6 +95,7 @@ def _build_error_payload(
         "exit_code": exit_code,
         "hint": hint,
         "recoverable": recoverable,
+        "suggested_fix": suggested_action,
         "suggested_action": suggested_action,
     }
 
@@ -122,7 +159,7 @@ main.add_command(badge)
 
 def safe_main() -> None:
     """Entry point with user-friendly error handling."""
-    machine_errors = _machine_error_enabled()
+    machine_errors = _machine_error_enabled(sys.argv[1:])
     try:
         main(standalone_mode=True)
     except click.exceptions.Exit:

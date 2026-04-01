@@ -5,6 +5,7 @@ from __future__ import annotations
 from click.testing import CliRunner
 
 from drift.cli import main
+from drift.errors import DriftSystemError
 
 
 class TestSelfCommand:
@@ -29,3 +30,13 @@ class TestSelfCommand:
             data = json.loads(raw[json_start:])
             assert "drift_score" in data
             assert "findings" in data
+
+    def test_self_outside_repo_raises_structured_error(self, monkeypatch) -> None:
+        from drift.commands import self_analyze as self_cmd
+
+        monkeypatch.setattr(self_cmd.Path, "exists", lambda _self: False)
+        runner = CliRunner()
+        result = runner.invoke(main, ["self", "--format", "json"])
+
+        assert isinstance(result.exception, DriftSystemError)
+        assert result.exception.code == "DRIFT-2001"

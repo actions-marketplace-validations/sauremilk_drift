@@ -332,6 +332,24 @@ class TestCLICommands:
         result = runner.invoke(main, ["mcp"])
         assert "drift mcp --serve" in result.output
 
+    def test_mcp_missing_extra_raises_structured_error(self, monkeypatch) -> None:
+        from click.testing import CliRunner
+
+        from drift import mcp_server
+        from drift.cli import main
+        from drift.errors import DriftSystemError
+
+        def _raise_missing_dependency() -> None:
+            raise RuntimeError("requires optional dependency 'mcp'")
+
+        monkeypatch.setattr(mcp_server, "main", _raise_missing_dependency)
+
+        runner = CliRunner()
+        result = runner.invoke(main, ["mcp", "--serve"])
+
+        assert isinstance(result.exception, DriftSystemError)
+        assert result.exception.code == "DRIFT-2010"
+
     def test_copilot_context_help(self) -> None:
         from click.testing import CliRunner
 
