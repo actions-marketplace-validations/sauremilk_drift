@@ -21,11 +21,11 @@
 
 ## [1.3.4] – 2026-04-01
 
-Short version: Fail-open embedding cache writes and init. (+1 more commits)
+Short version: Resolve pre-push ruff line-length blockers.
 
 ### Changed
 
-- Fail-open embedding cache writes and init. (+1 more commits)
+- Resolve pre-push ruff line-length blockers.
 
 
 ## [1.3.3] – 2026-04-01
