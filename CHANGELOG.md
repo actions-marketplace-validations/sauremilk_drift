@@ -18,11 +18,11 @@
 
 ## [1.3.2] – 2026-04-01
 
-Short version: Make security hygiene audit non-blocking. (+7 more commits)
+Short version: Release 1.3.2. (+8 more commits)
 
 ### Changed
 
-- Make security hygiene audit non-blocking. (+7 more commits)
+- Release 1.3.2. (+8 more commits)
 
 
 ## [1.3.1] – 2026-04-01
