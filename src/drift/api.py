@@ -1731,6 +1731,7 @@ def negative_context(
     target_file: str | None = None,
     max_items: int = 10,
     since_days: int = 90,
+    disable_embeddings: bool = False,
 ) -> dict[str, Any]:
     """Generate anti-pattern warnings from drift findings for agent consumption.
 
@@ -1746,6 +1747,8 @@ def negative_context(
         Maximum items to return (prioritized by severity).
     since_days:
         Days of git history to consider.
+    disable_embeddings:
+        Disable embedding-based analysis to keep response latency low.
 
     Returns
     -------
@@ -1767,10 +1770,13 @@ def negative_context(
         "scope": scope,
         "target_file": target_file,
         "max_items": max_items,
+        "disable_embeddings": disable_embeddings,
     }
 
     try:
         cfg = DriftConfig.load(repo_path)
+        if disable_embeddings:
+            cfg.embeddings_enabled = False
         analysis = analyze_repo(
             repo_path, config=cfg, since_days=since_days,
         )

@@ -6,15 +6,17 @@
 
 [![CI](https://github.com/sauremilk/drift/actions/workflows/ci.yml/badge.svg)](https://github.com/sauremilk/drift/actions/workflows/ci.yml)
 [![Precision (lenient)](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/sauremilk/drift/main/benchmark_results/ground_truth_analysis.json&query=%24.total.precision_lenient&label=precision%20lenient&color=yellow)](benchmark_results/ground_truth_analysis.json)
+[![Signals](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/sauremilk/drift/main/benchmark_results/signal_coverage_matrix.json&query=%24.current_total&label=signals&color=blue)](benchmark_results/signal_coverage_matrix.json)
 [![codecov](https://codecov.io/gh/sauremilk/drift/branch/main/graph/badge.svg)](https://codecov.io/gh/sauremilk/drift)
 [![SARIF](https://img.shields.io/badge/output-SARIF-blueviolet)](https://docs.github.com/en/code-security/code-scanning)
+[![Agent API](https://img.shields.io/badge/API-MCP%20agent--native-green)](docs/STUDY.md#15-agent-loop-efficiency)
 <br>
 [![PyPI](https://img.shields.io/pypi/v/drift-analyzer?cacheSeconds=300)](https://pypi.org/project/drift-analyzer/)
 [![Python versions](https://img.shields.io/pypi/pyversions/drift-analyzer)](https://pypi.org/project/drift-analyzer/)
 [![License](https://img.shields.io/github/license/sauremilk/drift)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/sauremilk/drift?style=social)](https://github.com/sauremilk/drift)
 
-97.3% precision (single-rater) · 22 signals · deterministic · no LLM in pipeline · [full study](docs/STUDY.md) · [docs](https://sauremilk.github.io/drift/)
+97.3% precision (single-rater) · 23 signals · deterministic · no LLM in pipeline · [full study](docs/STUDY.md) · [docs](https://sauremilk.github.io/drift/)
 
 </div>
 

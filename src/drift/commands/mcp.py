@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import NoReturn
 
 import click
@@ -41,7 +42,13 @@ def _raise_missing_mcp_extra(exc: Exception) -> NoReturn:
     default=False,
     help="Print MCP tool parameter schema as JSON and exit.",
 )
-def mcp(serve: bool, list_tools: bool, show_schema: bool) -> None:
+@click.option(
+    "--allow-tty",
+    is_flag=True,
+    default=False,
+    help="Allow --serve on interactive terminals (debug only).",
+)
+def mcp(serve: bool, list_tools: bool, show_schema: bool, allow_tty: bool) -> None:
     """
     Start drift as an MCP server for VS Code / Copilot Chat.
 
@@ -77,16 +84,25 @@ def mcp(serve: bool, list_tools: bool, show_schema: bool) -> None:
         console.print("Usage:", style="yellow")
         console.print(
             "  drift mcp --serve\n"
+            "  drift mcp --serve --allow-tty\n"
             "  drift mcp --list\n"
             "  drift mcp --schema\n\n"
             "Starts drift as an MCP (Model Context Protocol) server on stdio.\n"
             "VS Code / Copilot Chat can then call drift analysis tools directly.\n\n"
             "Inspect tools without MCP extra via --list / --schema.\n"
-            "Requires for --serve: pip install drift-analyzer[mcp]",
+            "Requires for --serve: pip install drift-analyzer[mcp].\n"
+            "Interactive TTY launch is blocked by default to prevent accidental hanging.\n"
+            "Use --allow-tty only for manual debugging.",
             style="dim",
             markup=False,
         )
         raise SystemExit(0)
+
+    if sys.stdin.isatty() and not allow_tty:
+        raise click.UsageError(
+            "Refusing to start MCP stdio server on interactive TTY. "
+            "Use VS Code MCP integration, or pass --allow-tty for manual debugging.",
+        )
 
     try:
         from drift.mcp_server import main as mcp_main

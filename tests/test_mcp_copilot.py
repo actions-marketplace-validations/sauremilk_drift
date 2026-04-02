@@ -318,6 +318,80 @@ class TestMcpServerHelpers:
         assert result["summary"] == "Optional dependency missing: mcp"
         assert result["action"] == "Install with: pip install drift-analyzer[mcp]"
 
+    def test_drift_negative_context_uses_embedding_guard(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """MCP negative-context uses embedding-disabled mode for low latency."""
+        import json as _json
+
+        from drift import mcp_server
+
+        captured: dict[str, object] = {}
+
+        def _fake_negative_context(
+            path: str,
+            *,
+            scope: str | None = None,
+            target_file: str | None = None,
+            max_items: int = 10,
+            since_days: int = 90,
+            disable_embeddings: bool = False,
+        ) -> dict[str, object]:
+            captured["path"] = path
+            captured["scope"] = scope
+            captured["target_file"] = target_file
+            captured["max_items"] = max_items
+            captured["since_days"] = since_days
+            captured["disable_embeddings"] = disable_embeddings
+            return {"status": "ok", "negative_context": []}
+
+        monkeypatch.setattr("drift.api.negative_context", _fake_negative_context)
+
+        result = _json.loads(
+            mcp_server.drift_negative_context(
+                path=".",
+                scope="repo",
+                target_file="src/drift/commands/mcp.py",
+                max_items=7,
+            )
+        )
+
+        assert result["status"] == "ok"
+        assert captured["disable_embeddings"] is True
+        assert captured["scope"] == "repo"
+        assert captured["max_items"] == 7
+
+    def test_drift_negative_context_timeout_guard(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """MCP negative-context returns structured timeout instead of hanging."""
+        import json as _json
+        import time
+
+        from drift import mcp_server
+
+        def _slow_negative_context(
+            path: str,
+            *,
+            scope: str | None = None,
+            target_file: str | None = None,
+            max_items: int = 10,
+            since_days: int = 90,
+            disable_embeddings: bool = False,
+        ) -> dict[str, object]:
+            time.sleep(0.2)
+            return {"status": "ok", "negative_context": []}
+
+        monkeypatch.setattr("drift.api.negative_context", _slow_negative_context)
+        monkeypatch.setattr(mcp_server, "_NEGATIVE_CONTEXT_TIMEOUT_SECONDS", 0.0)
+
+        result = _json.loads(mcp_server.drift_negative_context(path="."))
+
+        assert result["status"] == "error"
+        assert result["error_code"] == "DRIFT-2031"
+
 
 # ---------------------------------------------------------------------------
 # CLI command — smoke tests

@@ -15,8 +15,12 @@ Tool surface (v2):
 
 from __future__ import annotations
 
+import contextlib
 import inspect
+import io
 import json
+import os
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -350,13 +354,98 @@ def drift_negative_context(
     """
     from drift.api import negative_context
 
-    result = negative_context(
-        path,
-        scope=scope,
-        target_file=target_file,
-        max_items=max_items,
+    holder: dict[str, Any] = {}
+    errors: list[BaseException] = []
+
+    def _worker() -> None:
+        try:
+            # Keep MCP stdio clean if dependencies emit accidental stdout lines.
+            with contextlib.redirect_stdout(io.StringIO()):
+                holder["result"] = negative_context(
+                    path,
+                    scope=scope,
+                    target_file=target_file,
+                    max_items=max_items,
+                    disable_embeddings=True,
+                )
+        except BaseException as exc:  # pragma: no cover - defensive safety net
+            errors.append(exc)
+
+    thread = threading.Thread(
+        target=_worker,
+        name="drift-mcp-negative-context",
+        daemon=True,
     )
+    thread.start()
+    thread.join(_NEGATIVE_CONTEXT_TIMEOUT_SECONDS)
+
+    if thread.is_alive():
+        timeout_response = _negative_context_timeout_response(
+            path=path,
+            scope=scope,
+            target_file=target_file,
+            max_items=max_items,
+            timeout_seconds=_NEGATIVE_CONTEXT_TIMEOUT_SECONDS,
+        )
+        return json.dumps(timeout_response, default=str)
+
+    if errors:
+        raise errors[0]
+
+    result = holder.get("result")
+    if not isinstance(result, dict):
+        fallback = {
+            "status": "error",
+            "error_code": "DRIFT-2032",
+            "message": "MCP tool returned no structured response.",
+            "recoverable": True,
+            "agent_instruction": "Retry the call once; if it repeats, run drift_validate.",
+        }
+        return json.dumps(fallback, default=str)
+
     return json.dumps(result, default=str)
+
+
+def _load_negative_context_timeout_seconds() -> float:
+    """Resolve MCP timeout for drift_negative_context from environment."""
+    raw = os.getenv("DRIFT_MCP_NEGATIVE_CONTEXT_TIMEOUT_SECONDS", "20")
+    try:
+        return max(0.0, float(raw))
+    except (TypeError, ValueError):
+        return 20.0
+
+
+_NEGATIVE_CONTEXT_TIMEOUT_SECONDS = _load_negative_context_timeout_seconds()
+
+
+def _negative_context_timeout_response(
+    *,
+    path: str,
+    scope: str | None,
+    target_file: str | None,
+    max_items: int,
+    timeout_seconds: float,
+) -> dict[str, Any]:
+    """Build a structured timeout response for MCP tool callers."""
+    return {
+        "status": "error",
+        "error_code": "DRIFT-2031",
+        "message": (
+            "MCP tool 'drift_negative_context' timed out before producing a "
+            "response. This guard prevents silent chat hangs."
+        ),
+        "recoverable": True,
+        "timeout_seconds": timeout_seconds,
+        "path": path,
+        "scope": scope,
+        "target_file": target_file,
+        "max_items": max_items,
+        "agent_instruction": (
+            "Retry with a narrower target_file or lower max_items. "
+            "If timeout persists, run drift export-context offline and use the "
+            "cached .drift-negative-context.md."
+        ),
+    }
 
 
 _EXPORTED_MCP_TOOLS = (

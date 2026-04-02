@@ -1086,6 +1086,135 @@ observed for scoring signals after calibration (§5).
 | ----------------- | --: | --: | --: | ---------- |
 | Ground-truth precision | 4/4 (100%) | 4/4 (100%) | 4/4 (100%) | All fixtures correct |
 | Mutation recall | 0/1 (0%) | 0/1 (0%) | 0/1 (0%) | Current CLI harness accounting bug |
+
+---
+
+## §13 Signal Coverage Matrix
+
+Signal availability has grown from 7 (v0.5.0) to 23 (v2.1.0) across six
+milestone releases. The matrix below tracks which signals were available at each
+version, providing a quantifiable coverage progression.
+
+**Reproduction:** `python scripts/signal_coverage_matrix.py --markdown`
+
+| Signal | v0.5.0 | v0.7.0 | v0.8.0 | v0.10.0 | v1.1.11 | v2.1.0 | Introduced |
+|--------|:-:|:-:|:-:|:-:|:-:|:-:|------------|
+| **PFS** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | v0.5.0 |
+| **AVS** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | v0.5.0 |
+| **MDS** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | v0.5.0 |
+| **TVS** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | v0.5.0 |
+| **EDS** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | v0.5.0 |
+| **SMS** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | v0.5.0 |
+| **DIA** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | v0.5.0 |
+| **NBV** | — | ✓ | ✓ | ✓ | ✓ | ✓ | v0.7.0 |
+| **BAT** | — | ✓ | ✓ | ✓ | ✓ | ✓ | v0.7.0 |
+| **ECM** | — | ✓ | ✓ | ✓ | ✓ | ✓ | v0.7.0 |
+| **TSA** | — | ✓ | ✓ | ✓ | ✓ | ✓ | v0.7.0 |
+| **BEM** | — | ✓ | ✓ | ✓ | ✓ | ✓ | v0.7.0 |
+| **TPD** | — | ✓ | ✓ | ✓ | ✓ | ✓ | v0.7.0 |
+| **GCD** | — | ✓ | ✓ | ✓ | ✓ | ✓ | v0.7.0 |
+| **CCC** | — | — | ✓ | ✓ | ✓ | ✓ | v0.8.0 |
+| **COD** | — | — | ✓ | ✓ | ✓ | ✓ | v0.8.0 |
+| **CIR** | — | — | — | ✓ | ✓ | ✓ | v0.10.0 |
+| **CXS** | — | — | — | ✓ | ✓ | ✓ | v0.10.0 |
+| **FOE** | — | — | — | ✓ | ✓ | ✓ | v0.10.0 |
+| **DCA** | — | — | — | ✓ | ✓ | ✓ | v0.10.0 |
+| **MAZ** | — | — | — | — | ✓ | ✓ | v1.1.11 |
+| **HSC** | — | — | — | — | ✓ | ✓ | v1.1.11 |
+| **ISD** | — | — | — | — | ✓ | ✓ | v1.1.11 |
+| **Total** | 7 | 14 | 16 | 20 | 23 | 23 | — |
+
+**Growth phases:**
+- **v0.5.0 → v0.7.0** (7→14): +7 signals — NBV, BAT, ECM, TSA (scoring), BEM, TPD, GCD (report-only)
+- **v0.7.0 → v0.8.0** (14→16): +2 signals — CCC, COD (cross-file coupling and cohesion)
+- **v0.8.0 → v0.10.0** (16→20): +4 signals — CIR, CXS, FOE, DCA (complexity and dead code)
+- **v0.10.0 → v1.1.11** (20→23): +3 signals — MAZ, HSC, ISD (security, report-only pending validation)
+
+Machine-readable artifact: `benchmark_results/signal_coverage_matrix.json`
+
+---
+
+## §14 Cross-Version Benchmark Delta
+
+To quantify detection improvement across releases, a **stable benchmark corpus**
+(`benchmarks/corpus/`) contains 16 intentionally injected drift patterns across
+10 signal categories. The corpus is version-controlled and independent of the
+drift package itself.
+
+**Corpus design:** Each pattern is a minimal Python file exhibiting exactly one
+drift anti-pattern (e.g., exact-duplicate functions for MDS, 4 error-handling
+variants for PFS, high-CC undocumented functions for EDS). The manifest
+(`benchmarks/corpus/manifest.json`) defines expected detection counts per signal.
+
+**Reproduction:**
+
+```bash
+python scripts/benchmark_cross_version.py --versions 1.3.0 2.0.0 2.1.0
+```
+
+The runner installs each drift-analyzer version in an isolated venv, runs
+`drift analyze` against the corpus, and records per-signal recall. Results are
+stored in `benchmark_results/cross_version_benchmark.json`.
+
+**Interpretation notes:**
+- Older versions may not detect signals that didn't exist yet (e.g., v1.3.0
+  cannot detect NBV/COD patterns added in v0.7.0/v0.8.0 if the detection logic
+  was refined later).
+- TVS (Temporal Volatility) is excluded from the corpus because it requires
+  git history — making cross-version comparison unreliable.
+- Security signals (MAZ, HSC, ISD) are excluded because they were introduced
+  in v1.1.11 as report-only.
+
+---
+
+## §15 Agent-Loop Efficiency
+
+The strongest differentiator of drift's value proposition is its **agent-native
+API surface** (introduced v0.10.5). Three deterministic scenarios measure API
+call overhead for typical agent workflows:
+
+**Reproduction:** `python scripts/benchmark_agent_loop.py`
+
+### 15.1 Scenario: Gate Check
+
+**Task:** Agent must decide whether a commit is safe.
+
+| API Surface | API Calls | Mechanism |
+|-------------|-----------|-----------|
+| Pre-v0.10.5 (analyze only) | 1 + manual JSON parsing | Parse findings array, check severity, threshold logic in agent prompt |
+| Post-v0.10.5 (nudge) | 1 | `nudge()` returns `safe_to_commit` (bool) + `blocking_reasons` |
+
+`nudge()` reduces the agent's decision logic from multi-step JSON traversal
+to a single boolean check. Blocking reasons are machine-readable, eliminating
+prompt engineering for threshold interpretation.
+
+### 15.2 Scenario: Fix Cycle
+
+**Task:** Agent scans, gets a fix plan, applies fixes, verifies.
+
+| Step | API Call | Returns |
+|------|----------|---------|
+| 1 | `scan()` | Findings with scores, severity, top signals |
+| 2 | `fix_plan()` | Prioritized tasks with effort/impact estimates |
+| 3 | `scan()` (verify) | Updated findings for delta comparison |
+
+Total: **3 API calls** for a complete scan→plan→verify cycle. Pre-v0.10.5,
+agents needed to manually extract findings, rank by score, and guess repair
+priorities — typically requiring 5–8 iterative prompt rounds.
+
+### 15.3 Scenario: Context Export
+
+**Task:** Agent enriches its prompt with "what NOT to do" before generating code.
+
+| API Call | Returns |
+|----------|---------|
+| `negative_context()` | Forbidden patterns + canonical alternatives per signal |
+
+Token efficiency: The compact prompt format (`--format prompt`) produces ~20
+tokens per pattern vs. ~80 tokens in verbose markdown. For a workspace with
+10 active signals, this saves ~600 tokens per prompt injection.
+
+Machine-readable artifact: `benchmark_results/agent_loop_benchmark.json`
 | Self-analysis findings | 0 | 1 | 4 | All plausible and actionable |
 
 The consistency proxy signals demonstrate correct deterministic behavior on

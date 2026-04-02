@@ -157,6 +157,7 @@ runner = "python -m pytest tests/ -x -q --timeout=30 -m 'not slow'"
 target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
+exclude = ["benchmarks/corpus"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]

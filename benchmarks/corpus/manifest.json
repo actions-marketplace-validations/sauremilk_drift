@@ -1,0 +1,24 @@
+{
+  "description": "Stable benchmark corpus with known drift patterns for cross-version comparison.",
+  "version": "1.0.0",
+  "signals_tested": 10,
+  "expectations": {
+    "mutant_duplicate": 3,
+    "pattern_fragmentation": 2,
+    "explainability_deficit": 2,
+    "architecture_violation": 2,
+    "system_misalignment": 1,
+    "doc_impl_drift": 2,
+    "broad_exception_monoculture": 1,
+    "test_polarity_deficit": 1,
+    "guard_clause_deficit": 1,
+    "naming_contract_violation": 1
+  },
+  "total_expected": 16,
+  "notes": [
+    "TVS (temporal_volatility) excluded — requires git history, version-dependent.",
+    "Security signals (MAZ, ISD, HSC) excluded — introduced v1.1.11, report-only.",
+    "Each expectation count = minimum number of findings a correct detector should produce.",
+    "A detector may produce additional findings beyond the expected count."
+  ]
+}
