@@ -162,9 +162,9 @@ class TestGenerateInstructions:
 
     def test_includes_actionable_signals(self, _analysis: RepoAnalysis) -> None:
         result = generate_instructions(_analysis)
-        assert "Layer Boundaries" in result
-        assert "Code Pattern Consistency" in result
-        assert "Exception Handling" in result
+        assert "### Layer Boundaries (AVS)" in result
+        assert "### Code Pattern Consistency (PFS)" in result
+        assert "### Exception Handling (BEM)" in result
 
     def test_excludes_temporal_signals(self, _analysis: RepoAnalysis) -> None:
         result = generate_instructions(_analysis)

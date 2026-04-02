@@ -12,6 +12,7 @@ import hashlib
 from collections import Counter
 from pathlib import Path
 
+from drift.api_helpers import signal_abbrev
 from drift.models import Finding, RepoAnalysis, SignalType
 
 # ---------------------------------------------------------------------------
@@ -48,6 +49,11 @@ _MIN_FINDING_COUNT = 2
 # ---------------------------------------------------------------------------
 
 
+def _heading(title: str, signal: SignalType) -> str:
+    """Build a section heading that includes the canonical signal ID."""
+    return f"### {title} ({signal_abbrev(signal)})"
+
+
 def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
     """Produce a Markdown rule block for one signal type.
 
@@ -69,28 +75,28 @@ def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
     lines: list[str] = []
 
     if signal == SignalType.ARCHITECTURE_VIOLATION:
-        lines.append("### Layer Boundaries")
+        lines.append(_heading("Layer Boundaries", signal))
         for f in findings[:5]:
             if f.fix:
                 lines.append(f"- {f.fix}")
             elif f.description:
                 lines.append(f"- {f.title}: {f.description}")
     elif signal == SignalType.PATTERN_FRAGMENTATION:
-        lines.append("### Code Pattern Consistency")
+        lines.append(_heading("Code Pattern Consistency", signal))
         for f in findings[:5]:
             if f.fix:
                 lines.append(f"- {f.fix}")
             else:
                 lines.append(f"- {f.title}")
     elif signal == SignalType.NAMING_CONTRACT_VIOLATION:
-        lines.append("### Naming Conventions")
+        lines.append(_heading("Naming Conventions", signal))
         for f in findings[:5]:
             if f.fix:
                 lines.append(f"- {f.fix}")
             else:
                 lines.append(f"- {f.title}")
     elif signal == SignalType.GUARD_CLAUSE_DEFICIT:
-        lines.append("### Input Validation")
+        lines.append(_heading("Input Validation", signal))
         lines.append(
             "- Public functions must validate inputs with guard clauses "
             "before processing."
@@ -98,7 +104,7 @@ def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
         if top_files:
             lines.append(f"- Priority modules: {', '.join(f'`{f}`' for f in top_files[:3])}")
     elif signal == SignalType.BROAD_EXCEPTION_MONOCULTURE:
-        lines.append("### Exception Handling")
+        lines.append(_heading("Exception Handling", signal))
         lines.append(
             "- Use specific exception types instead of bare `except Exception`. "
             "Re-raise or convert to domain exceptions."
@@ -106,7 +112,7 @@ def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
         if top_files:
             lines.append(f"- Priority modules: {', '.join(f'`{f}`' for f in top_files[:3])}")
     elif signal == SignalType.DOC_IMPL_DRIFT:
-        lines.append("### Documentation Alignment")
+        lines.append(_heading("Documentation Alignment", signal))
         lines.append(
             "- Keep README and architectural documentation in sync with implementation."
         )
@@ -114,7 +120,7 @@ def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
             if f.description:
                 lines.append(f"- {f.title}")
     elif signal == SignalType.MUTANT_DUPLICATE:
-        lines.append("### Deduplication")
+        lines.append(_heading("Deduplication", signal))
         lines.append(
             "- Before creating a new function, check for near-duplicates in the same file. "
             "Extract common logic into shared helpers."
@@ -122,7 +128,7 @@ def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
         if top_files:
             lines.append(f"- Files with duplicates: {', '.join(f'`{f}`' for f in top_files[:3])}")
     elif signal == SignalType.EXPLAINABILITY_DEFICIT:
-        lines.append("### Code Documentation")
+        lines.append(_heading("Code Documentation", signal))
         lines.append(
             "- Complex functions (cyclomatic complexity >10) must have docstrings "
             "and complete type annotations."
@@ -130,13 +136,13 @@ def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
         if top_files:
             lines.append(f"- Priority: {', '.join(f'`{f}`' for f in top_files[:3])}")
     elif signal == SignalType.BYPASS_ACCUMULATION:
-        lines.append("### TODO/FIXME Hygiene")
+        lines.append(_heading("TODO/FIXME Hygiene", signal))
         lines.append(
             "- Do not add `# TODO`, `# FIXME`, `# HACK` markers without a linked "
             "issue or timeline. Resolve existing bypass markers before adding new ones."
         )
     elif signal == SignalType.EXCEPTION_CONTRACT_DRIFT:
-        lines.append("### Exception Contracts")
+        lines.append(_heading("Exception Contracts", signal))
         for f in findings[:3]:
             if f.fix:
                 lines.append(f"- {f.fix}")
@@ -144,7 +150,7 @@ def _format_rule(signal: SignalType, findings: list[Finding]) -> str | None:
                 lines.append(f"- {f.title}")
     else:
         # Generic fallback
-        lines.append(f"### {signal.value.replace('_', ' ').title()}")
+        lines.append(_heading(signal.value.replace("_", " ").title(), signal))
         if fix:
             lines.append(f"- {fix}")
         elif desc:

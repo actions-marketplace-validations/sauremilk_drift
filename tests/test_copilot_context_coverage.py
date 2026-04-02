@@ -25,6 +25,7 @@ import drift.signals.pattern_fragmentation  # noqa: F401
 import drift.signals.system_misalignment  # noqa: F401
 import drift.signals.temporal_volatility  # noqa: F401
 import drift.signals.test_polarity_deficit  # noqa: F401
+from drift.api_helpers import signal_abbrev
 from drift.config import DriftConfig
 from drift.copilot_context import generate_instructions
 from drift.ingestion.ast_parser import parse_file
@@ -213,7 +214,8 @@ class _CoverageResults:
 
                 analysis = _build_analysis(aggregated)
                 instructions = generate_instructions(analysis)
-                heading_found = f"### {heading}" in instructions
+                heading_with_id = f"### {heading} ({signal_abbrev(signal_type)})"
+                heading_found = heading_with_id in instructions
                 inst.coverage[signal_type] = heading_found
 
                 if not heading_found:
@@ -226,7 +228,7 @@ class _CoverageResults:
                     elif len(actionable) < 2:
                         inst.miss_reason[signal_type] = "below min_finding_count"
                     else:
-                        inst.miss_reason[signal_type] = "heading not in output"
+                        inst.miss_reason[signal_type] = "heading with signal id not in output"
 
                 # TN fixtures → check no false instructions
                 tn_fixtures = [
@@ -243,7 +245,7 @@ class _CoverageResults:
                     )
                     tn_analysis = _build_analysis(tn_findings)
                     tn_instr = generate_instructions(tn_analysis)
-                    if f"### {heading}" in tn_instr:
+                    if f"### {heading} ({signal_abbrev(signal_type)})" in tn_instr:
                         inst.tn_noise[signal_type].append(tn_fix.name)
 
         cls._instance = inst
@@ -278,7 +280,8 @@ def test_signal_instruction_coverage(signal_type: SignalType) -> None:
         if reason in ("no findings above score threshold", "below min_finding_count"):
             pytest.skip(f"Expected miss: {reason}")
     assert covered, (
-        f"generate_instructions() did not produce '### {SIGNAL_SECTION_MAP[signal_type]}' "
+        f"generate_instructions() did not produce "
+        f"'### {SIGNAL_SECTION_MAP[signal_type]} ({signal_abbrev(signal_type)})' "
         f"for aggregated TP fixtures of {signal_type.value}"
     )
 
@@ -289,7 +292,8 @@ def test_signal_no_noise(signal_type: SignalType) -> None:
     results = _CoverageResults.get()
     noisy = results.tn_noise.get(signal_type, [])
     assert not noisy, (
-        f"generate_instructions() produced '### {SIGNAL_SECTION_MAP[signal_type]}' "
+        f"generate_instructions() produced "
+        f"'### {SIGNAL_SECTION_MAP[signal_type]} ({signal_abbrev(signal_type)})' "
         f"for TN fixtures: {noisy}"
     )
 
