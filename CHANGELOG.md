@@ -2,6 +2,8 @@
 
 ## [2.1.0] - 2026-04-02
 
+Short version: Ship agent UX improvements, release hardening, and output consistency updates.
+
 ### Added
 
 - `drift patterns` now supports `--output-format json` and `-o` for machine-readable output (#102).
