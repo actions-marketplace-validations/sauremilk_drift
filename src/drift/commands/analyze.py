@@ -168,7 +168,10 @@ def analyze(
     compact_json: bool,
     no_color: bool,
 ) -> None:
-    """Analyze a repository for architectural drift."""
+    """Detailed drift analysis \u2014 produces comprehensive findings for investigation and triage.
+
+    For CI-compatible exit codes on diffs, use ``check``.
+    """
     from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 
     from drift.analyzer import _DEFAULT_WORKERS, analyze_repo
@@ -254,7 +257,7 @@ def analyze(
     if quiet:
         sev = analysis.severity.value.upper()
         n = len(analysis.findings)
-        click.echo(f"score: {analysis.drift_score:.2f}  severity: {sev}  findings: {n}")
+        click.echo(f"score: {analysis.drift_score:.3f}  severity: {sev}  findings: {n}")
     elif output_format == "json":
         from drift.output.json_output import analysis_to_json
 

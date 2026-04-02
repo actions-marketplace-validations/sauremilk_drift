@@ -1,5 +1,16 @@
 ## [Unreleased]
 
+### Added
+
+- `drift patterns` now supports `--output-format json` and `-o` for machine-readable output (#102).
+- `drift self` now supports `-o` / `--output` to write JSON/SARIF to a file (#101).
+- `drift trend` shows a freshness warning when all snapshots fall within a short time window (#98).
+
+### Fixed
+
+- Standardize drift score precision to 3 decimal places across `check`, `analyze`, `trend`, and JSON output (#99).
+- Make `check` vs `analyze` role distinction explicit in help text (#100).
+
 ### Fixed
 
 - Use `gh release create` instead of `semantic-release publish` for GitHub Release creation on self-hosted Windows runner.

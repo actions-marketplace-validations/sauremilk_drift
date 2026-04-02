@@ -250,7 +250,7 @@ def analysis_to_json(analysis: RepoAnalysis, indent: int = 2, compact: bool = Fa
         "version": __version__,
         "repo": analysis.repo_path.as_posix(),
         "analyzed_at": analysis.analyzed_at.isoformat(),
-        "drift_score": analysis.drift_score,
+        "drift_score": round(analysis.drift_score, 3),
         "severity": analysis.severity.value,
         "analysis_status": _analysis_status_to_dict(analysis),
         "trend": {

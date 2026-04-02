@@ -144,7 +144,11 @@ def check(
     compact_json: bool,
     no_color: bool,
 ) -> None:
-    """Check a diff for drift (CI mode)."""
+    """CI gate — analyze a diff and exit non-zero when findings exceed a threshold.
+
+    Use in CI pipelines and pre-merge checks.
+    For detailed investigation, use ``analyze``.
+    """
     from drift.analyzer import _DEFAULT_WORKERS, analyze_diff
     from drift.config import DriftConfig
     from drift.scoring.engine import severity_gate_pass
@@ -225,7 +229,7 @@ def check(
     if quiet:
         sev = analysis.severity.value.upper()
         n = len(analysis.findings)
-        click.echo(f"score: {analysis.drift_score:.2f}  severity: {sev}  findings: {n}")
+        click.echo(f"score: {analysis.drift_score:.3f}  severity: {sev}  findings: {n}")
     elif output_format == "json":
         from drift.output.json_output import analysis_to_json
 

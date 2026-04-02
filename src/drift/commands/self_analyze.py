@@ -21,7 +21,15 @@ from drift.errors import DriftSystemError
     default="rich",
     help="Output format.",
 )
-def self_analyze(since: int, output_format: str) -> None:
+@click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write machine output (JSON/SARIF) to a file instead of stdout.",
+)
+def self_analyze(since: int, output_format: str, output_file: Path | None) -> None:
     """Analyze Drift's own codebase — proof-of-concept demo."""
     from drift.analyzer import analyze_repo
     from drift.config import DriftConfig
@@ -40,8 +48,7 @@ def self_analyze(since: int, output_format: str) -> None:
         )
 
     cfg = DriftConfig.load(drift_root)
-    # CI self-checks can leave temporary launch virtualenvs in the repo root.
-    # Exclude them so self-analysis reflects drift's code, not tool artifacts.
+    # Self-checks run after tests in CI; temporary launch venvs can inflate score gates.
     if "**/.tmp_*venv*/**" not in cfg.exclude:
         cfg.exclude.append("**/.tmp_*venv*/**")
 
@@ -55,15 +62,30 @@ def self_analyze(since: int, output_format: str) -> None:
     if output_format == "json":
         from drift.output.json_output import analysis_to_json
 
-        click.echo(analysis_to_json(analysis))
+        text = analysis_to_json(analysis)
+        if output_file:
+            output_file.write_text(text + "\n", encoding="utf-8")
+            click.echo(f"Output written to {output_file}", err=True)
+        else:
+            click.echo(text)
     elif output_format == "sarif":
         from drift.output.json_output import findings_to_sarif
 
-        click.echo(findings_to_sarif(analysis))
+        text = findings_to_sarif(analysis)
+        if output_file:
+            output_file.write_text(text + "\n", encoding="utf-8")
+            click.echo(f"Output written to {output_file}", err=True)
+        else:
+            click.echo(text)
     elif output_format == "agent-tasks":
         from drift.output.agent_tasks import analysis_to_agent_tasks_json
 
-        click.echo(analysis_to_agent_tasks_json(analysis))
+        text = analysis_to_agent_tasks_json(analysis)
+        if output_file:
+            output_file.write_text(text + "\n", encoding="utf-8")
+            click.echo(f"Output written to {output_file}", err=True)
+        else:
+            click.echo(text)
     else:
         from drift.output.rich_output import render_full_report, render_recommendations
 

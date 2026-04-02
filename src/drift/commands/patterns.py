@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import click
@@ -37,13 +38,34 @@ from drift.commands import console
     default=None,
     help="Restrict pattern discovery to a subdirectory.",
 )
-def patterns(repo: Path, category: str | None, target_path: str | None) -> None:
+@click.option(
+    "--output-format",
+    "--format",
+    "-f",
+    "output_format",
+    type=click.Choice(["rich", "json"]),
+    default="rich",
+    help="Output format (rich terminal table or JSON).",
+)
+@click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write output to a file instead of stdout.",
+)
+def patterns(
+    repo: Path,
+    category: str | None,
+    target_path: str | None,
+    output_format: str,
+    output_file: Path | None,
+) -> None:
     """Show discovered code patterns in the repository.
 
     Use ``target_path`` to scope discovery to a specific subdirectory.
     """
-    from rich.table import Table
-
     from drift.analyzer import analyze_repo
     from drift.config import DriftConfig
 
@@ -51,6 +73,33 @@ def patterns(repo: Path, category: str | None, target_path: str | None) -> None:
 
     with console.status("[bold blue]Discovering patterns..."):
         analysis = analyze_repo(repo, cfg, target_path=target_path)
+
+    if output_format == "json":
+        data: dict[str, list[dict]] = {}
+        for cat, instances in sorted(
+            analysis.pattern_catalog.items(), key=lambda x: x[0].value
+        ):
+            if category and cat.value != category:
+                continue
+            data[cat.value] = [
+                {
+                    "file": inst.file_path.as_posix(),
+                    "function": inst.function_name,
+                    "start_line": inst.start_line,
+                    "end_line": inst.end_line,
+                    "variant": inst.variant_id or None,
+                }
+                for inst in instances
+            ]
+        text = json.dumps(data, indent=2)
+        if output_file:
+            output_file.write_text(text + "\n", encoding="utf-8")
+            click.echo(f"Output written to {output_file}", err=True)
+        else:
+            click.echo(text)
+        return
+
+    from rich.table import Table
 
     for cat, instances in sorted(analysis.pattern_catalog.items(), key=lambda x: x[0].value):
         if category and cat.value != category:

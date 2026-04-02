@@ -75,6 +75,31 @@ def trend(repo: Path, days: int, config: Path | None) -> None:
     console.print(table)
     console.print()
 
+    # Freshness indicator: warn when snapshots are clustered in a short window
+    from datetime import datetime
+
+    try:
+        first_ts = datetime.fromisoformat(snapshots[0]["timestamp"])
+        last_ts = datetime.fromisoformat(snapshots[-1]["timestamp"])
+        span = last_ts - first_ts
+        span_minutes = span.total_seconds() / 60
+
+        if span.total_seconds() < 86400:  # less than 1 day
+            if span_minutes < 60:
+                span_label = f"{span_minutes:.0f} minutes"
+            else:
+                span_label = f"{span_minutes / 60:.1f} hours"
+            console.print(
+                f"  [bold yellow]\u26a0 All {len(snapshots)} snapshots span only"
+                f" {span_label}.[/bold yellow]"
+            )
+            console.print(
+                "  [dim]For meaningful trends, accumulate snapshots over days/weeks.[/dim]"
+            )
+            console.print()
+    except (ValueError, KeyError):
+        pass
+
     # Summary
     first_score = snapshots[0]["drift_score"]
     latest_score = snapshots[-1]["drift_score"]
@@ -90,7 +115,7 @@ def trend(repo: Path, days: int, config: Path | None) -> None:
         f"  Overall trend ({len(snapshots)} snapshots): {direction}  ({overall_delta:+.3f})"
     )
 
-    console.print(f"  Current drift score: [bold]{analysis.drift_score:.2f}[/bold]")
+    console.print(f"  Current drift score: [bold]{analysis.drift_score:.3f}[/bold]")
     console.print(f"  Files analyzed: {analysis.total_files}")
     console.print(f"  Total findings: {len(analysis.findings)}")
     console.print(f"  AI-attributed commits: {analysis.ai_attributed_ratio:.0%}")
