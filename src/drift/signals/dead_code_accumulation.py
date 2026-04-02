@@ -216,6 +216,9 @@ class DeadCodeAccumulationSignal(BaseSignal):
             severity = Severity.HIGH if score >= 0.7 else Severity.MEDIUM
             dead_names = [s[0] for s in dead_symbols[:10]]
 
+            # Use line of first dead symbol for SARIF region support (#88)
+            first_dead_line = dead_symbols[0][2] if dead_symbols[0][2] else None
+
             findings.append(
                 Finding(
                     signal_type=self.signal_type,
@@ -234,6 +237,7 @@ class DeadCodeAccumulationSignal(BaseSignal):
                         f"contributors."
                     ),
                     file_path=file_path,
+                    start_line=first_dead_line,
                     fix=(
                         f"Review and remove {dead_count} unused exports in "
                         f"{file_path.name}: {', '.join(dead_names)}. "

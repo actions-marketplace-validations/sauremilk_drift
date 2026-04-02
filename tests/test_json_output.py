@@ -126,6 +126,46 @@ def test_findings_to_sarif_handles_finding_without_file_path() -> None:
     assert "FIX:" in result["message"]["text"]
 
 
+def test_sarif_propagates_start_line_when_available() -> None:
+    """#88: SARIF region.startLine must be present when finding has start_line."""
+    finding_with_line = Finding(
+        signal_type=SignalType.DEAD_CODE_ACCUMULATION,
+        severity=Severity.MEDIUM,
+        score=0.5,
+        title="Dead code",
+        description="Unused exports.",
+        file_path=Path("src/utils.py"),
+        start_line=42,
+        end_line=50,
+        fix="Remove unused exports.",
+    )
+    finding_without_line = Finding(
+        signal_type=SignalType.PATTERN_FRAGMENTATION,
+        severity=Severity.HIGH,
+        score=0.7,
+        title="Pattern drift",
+        description="Multiple patterns.",
+        file_path=Path("src/core/"),
+        start_line=None,
+        fix="Consolidate.",
+    )
+    analysis = _sample_analysis()
+    analysis.findings = [finding_with_line, finding_without_line]
+
+    sarif = json.loads(findings_to_sarif(analysis))
+    results = sarif["runs"][0]["results"]
+
+    # Finding with start_line must have region
+    loc_with = results[0]["locations"][0]["physicalLocation"]
+    assert "region" in loc_with
+    assert loc_with["region"]["startLine"] == 42
+    assert loc_with["region"]["endLine"] == 50
+
+    # Finding without start_line must NOT have region
+    loc_without = results[1]["locations"][0]["physicalLocation"]
+    assert "region" not in loc_without
+
+
 def test_analysis_to_json_orders_findings_deterministically() -> None:
     first = _sample_finding()
     first.file_path = Path("src/a.py")

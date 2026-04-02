@@ -192,6 +192,19 @@ def check(
             since_days=effective_since,
         )
 
+    # Signal filtering: remove findings from disabled signals (#87)
+    if select_signals or ignore_signals:
+        from drift.config import SignalWeights
+        from drift.models import SignalType
+
+        _active = {
+            SignalType(field)
+            for field in SignalWeights.model_fields
+            if getattr(cfg.weights, field, 0.0) > 0.0
+        }
+        analysis.findings = [f for f in analysis.findings if f.signal_type in _active]
+        _recompute_summary()
+
     # Baseline filtering: remove known findings if --baseline is provided
     if baseline_file is not None:
         from drift.baseline import baseline_diff, load_baseline
@@ -199,6 +212,7 @@ def check(
         fingerprints = load_baseline(baseline_file)
         new, _known = baseline_diff(analysis.findings, fingerprints)
         analysis.findings = new
+        analysis.suppressed_count += len(_known)
         _recompute_summary()
 
     if quiet:

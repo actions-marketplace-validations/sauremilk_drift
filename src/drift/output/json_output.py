@@ -342,11 +342,11 @@ def findings_to_sarif(analysis: RepoAnalysis) -> str:
                     "artifactLocation": {"uri": f.file_path.as_posix()},
                 },
             }
-            if f.start_line:
+            if f.start_line is not None and f.start_line > 0:
                 location["physicalLocation"]["region"] = {
                     "startLine": f.start_line,
                 }
-                if f.end_line:
+                if f.end_line and f.end_line > 0:
                     location["physicalLocation"]["region"]["endLine"] = f.end_line
             result["locations"] = [location]
 

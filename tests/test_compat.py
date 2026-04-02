@@ -306,3 +306,75 @@ class TestOutputFormatAlias:
             analyze, ["--output-format", "json", "--help"], catch_exceptions=False
         )
         assert result.exit_code == 0
+
+
+# ---------------------------------------------------------------------------
+# --select filters findings in check output (#87)
+# ---------------------------------------------------------------------------
+
+
+class TestCheckSelectFilter:
+    def test_select_filters_findings_to_selected_signal(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """#87: --select PFS should only emit PFS findings."""
+        import json
+
+        from drift.cli import main
+        from drift.models import Finding, RepoAnalysis, Severity, SignalType
+
+        repo = tmp_path / "repo"
+        repo.mkdir(parents=True, exist_ok=True)
+
+        pfs_finding = Finding(
+            signal_type=SignalType.PATTERN_FRAGMENTATION,
+            severity=Severity.HIGH,
+            score=0.8,
+            title="PFS finding",
+            description="PFS",
+            file_path=Path("src/a.py"),
+            start_line=10,
+            fix="Fix PFS.",
+        )
+        avs_finding = Finding(
+            signal_type=SignalType.ARCHITECTURE_VIOLATION,
+            severity=Severity.MEDIUM,
+            score=0.5,
+            title="AVS finding",
+            description="AVS",
+            file_path=Path("src/b.py"),
+            start_line=20,
+            fix="Fix AVS.",
+        )
+
+        def _fake_analyze_diff(*_args, **_kwargs) -> RepoAnalysis:
+            return RepoAnalysis(
+                repo_path=repo,
+                analyzed_at=datetime.datetime.now(datetime.UTC),
+                drift_score=0.7,
+                findings=[pfs_finding, avs_finding],
+            )
+
+        monkeypatch.setattr("drift.analyzer.analyze_diff", _fake_analyze_diff)
+
+        out_file = tmp_path / "result.json"
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "check",
+                "--repo", str(repo),
+                "--select", "PFS",
+                "--json", "--compact",
+                "-o", str(out_file),
+                "--exit-zero",
+            ],
+        )
+        assert result.exit_code == 0
+
+        payload = json.loads(out_file.read_text(encoding="utf-8"))
+        signals = {f["signal"] for f in payload["findings_compact"]}
+        assert signals == {"pattern_fragmentation"}
+        assert len(payload["findings_compact"]) == 1
