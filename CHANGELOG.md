@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [2.1.0] - 2026-04-02
+
 ### Added
 
 - `drift patterns` now supports `--output-format json` and `-o` for machine-readable output (#102).
