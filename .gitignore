@@ -30,6 +30,7 @@ site/
 drift_score.json
 work_artifacts/
 master-backlog/
+.internal/
 scripts/_*
 tagesplanung/
 *-ruleset.json
