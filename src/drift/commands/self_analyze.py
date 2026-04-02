@@ -30,7 +30,7 @@ from drift.errors import DriftSystemError
     help="Write machine output (JSON/SARIF) to a file instead of stdout.",
 )
 def self_analyze(since: int, output_format: str, output_file: Path | None) -> None:
-    """Analyze Drift's own codebase — proof-of-concept demo."""
+    """Analyze Drift's own codebase and optionally write machine output to a file."""
     from drift.analyzer import analyze_repo
     from drift.config import DriftConfig
 

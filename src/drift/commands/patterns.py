@@ -64,7 +64,8 @@ def patterns(
 ) -> None:
     """Show discovered code patterns in the repository.
 
-    Use ``target_path`` to scope discovery to a specific subdirectory.
+    Use ``target_path`` to scope discovery to a specific subdirectory and
+    ``output_format`` / ``output_file`` for machine-readable exports.
     """
     from drift.analyzer import analyze_repo
     from drift.config import DriftConfig
