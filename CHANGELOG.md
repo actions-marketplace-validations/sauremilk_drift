@@ -4,6 +4,14 @@
 
 - Stabilize self-hosted CI Python setup by moving the test matrix to `actions/setup-python@v6` and keep Security Hygiene green by refreshing the detect-secrets baseline plus excluding known false-positive test/documentation files at the pre-commit hook level.
 
+## [2.1.1] - 2026-04-02
+
+Short version: Release follow-up after 2.1.0.
+
+### Fixed
+
+- Cut the automated 2.1.1 release line so repository version metadata stays aligned with the published package version.
+
 ## [2.1.0] - 2026-04-02
 
 Short version: Ship agent UX improvements, release hardening, and output consistency updates.
