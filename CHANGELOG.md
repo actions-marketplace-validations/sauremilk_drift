@@ -30,6 +30,19 @@
 - Isolate publish workflow concurrency by tag/manual target so stale queued runs no longer block newer release publications.
 - Make CI self-analysis report-only by passing `--fail-on none`, so informational findings no longer fail the `Test (Python 3.12)` job.
 
+## [2.0.0] – 2026-04-02
+
+Short version: Migrate release automation to python-semantic-release in CI.
+
+### Changed
+
+- Replace manual `chore: Release`-gated workflow with `python-semantic-release` automation in `.github/workflows/release.yml`.
+- Move release versioning/changelog/tag orchestration to PSR with conventional-commit parsing on push to `main`.
+
+### Fixed
+
+- Align README trust signals by reconciling development-status wording, removing hardcoded coverage percentage, softening single-rater badge framing, and updating stale pre-commit revision example.
+
 ## [1.4.2] – 2026-04-02
 
 Short version: Harden release automation tag fallback logic.
