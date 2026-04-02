@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+### Changed
+
+- Replace manual release-trigger convention with `python-semantic-release` in CI via `.github/workflows/release.yml`, including semantic-release config in `pyproject.toml` and updated release instructions/skills.
+
+### Fixed
+
+- Resolve README trust inconsistencies by aligning development-status wording with package metadata, replacing the hardcoded coverage percentage badge, reducing single-rater precision badge framing strength, and updating the pre-commit revision example to `v1.4.2`.
+
 ### Fixed
 
 - Run the Welcome workflow on `ubuntu-latest` so `actions/first-interaction@v1` no longer fails on the self-hosted Windows runner.
