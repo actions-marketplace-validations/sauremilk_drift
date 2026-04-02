@@ -2,6 +2,7 @@
 
 ### Fixed
 
+- Run the Welcome workflow on `ubuntu-latest` so `actions/first-interaction@v1` no longer fails on the self-hosted Windows runner.
 - Document the NegativeContext system in docs-site (field contract, enums, output locations, contributor registration rule) and link it from API outputs, signal docs, navigation, and README.
 - Re-enable GitHub Security scanning by running CodeQL and Dependency Review workflows on `ubuntu-latest` for `main` push/PR events, and document both workflows in `SECURITY.md`.
 - Make PyPI publish workflow runner-agnostic by using Twine upload for token-based publishing (works on Windows/self-hosted runners).
