@@ -28,6 +28,10 @@ The task is complete only if you can answer:
 - whether the generated context is precise enough to help an agent act
 - whether MCP startup and usage are understandable and testable
 - which AI-facing outputs are redundant, noisy, or missing key structure
+- whether each format fits in realistic LLM context budgets (8k / 32k tokens)
+- whether output is stable across repeated runs on the same repo state
+- whether format structure is machine-parsable without NLP
+- which format is recommended for each concrete integration use case
 
 ## Operating Rules
 
@@ -78,6 +82,52 @@ For each format, judge:
 - actionability
 - compatibility with agent workflows
 
+### Token-Budget Check
+
+For each format, estimate token cost and fit:
+
+```bash
+python -c "import pathlib; txt = pathlib.Path('export_instructions.md').read_text(); words = len(txt.split()); print(f'words={words}, tokens_est={int(words*1.35)}')"
+```
+
+Repeat for each saved artifact (`export_prompt.md`, `export_raw.md`, `copilot_context_preview.md`).
+
+| Format       | Words (approx) | Tokens (approx) | Fits 8k? | Fits 32k? | Usable as single-file agent context? |
+|--------------|---------------|-----------------|----------|-----------|--------------------------------------|
+| instructions |               |                 |          |           |                                      |
+| prompt       |               |                 |          |           |                                      |
+| raw          |               |                 |          |           |                                      |
+| copilot-ctx  |               |                 |          |           |                                      |
+
+If a format exceeds 32k tokens at typical repo size, flag it as **context-budget-risk**.
+
+### Stability Check
+
+Run each format twice without any repo changes and diff:
+
+```bash
+drift export-context --repo . --format instructions -o run1.md
+drift export-context --repo . --format instructions -o run2.md
+diff run1.md run2.md
+```
+
+Classify each format:
+- `stable`: no diff or only metadata (timestamp, version)
+- `format-unstable`: same content, different ordering/formatting — bad for caching
+- `content-unstable`: content differs without repo change — this is a bug
+
+### Structure Check
+
+For each format, assess machine parseability:
+- Are there stable sections (headings, keys) extractable programmatically?
+- Are signal identifiers in sync with CLI output (same abbreviations, IDs)?
+- Can an automation tool isolate individual rules/constraints without NLP?
+
+Classify:
+- `unstructured`: free text only, not parsable
+- `semi-structured`: lists/sections but no stable keys
+- `structured`: clearly parsable blocks with stable IDs/keys
+
 ### Phase 2: Test usefulness as agent context
 
 Evaluate whether the exported content would help an LLM:
@@ -85,6 +135,33 @@ Evaluate whether the exported content would help an LLM:
 - identify likely architectural risks
 - choose a sensible next command or fix path
 - avoid wasting context window on low-value repetition
+
+### Phase 2b: End-to-End Inject Test
+
+This is the only test that empirically proves whether `export-context` improves model behavior.
+
+Prepare a minimal oracle file with 2–3 known Drift violations (use an existing benchmark fixture or create a small synthetic example). Then run two variants:
+
+**Variant A — without Drift context:**
+Provide only the oracle code to the model. Ask: "What architectural problems do you see in this codebase?"
+
+**Variant B — with Drift context:**
+Inject the best-scoring export format as a system prompt. Ask the identical question.
+
+Document for both variants:
+- Which violations were identified?
+- Which were missed?
+- Were there hallucinations not in the oracle?
+- Did the injected context cause any false guidance?
+
+| Metric | Without context | With context | Delta |
+|--------|----------------|--------------|-------|
+| Violations identified | | | |
+| Violations missed | | | |
+| Hallucinations | | | |
+| Token cost of context injection | n/a | | |
+
+Conclusion: Is the token cost justified by the quality gain?
 
 ### Phase 3: Test MCP readiness
 
@@ -100,6 +177,18 @@ Judge:
 - startup clarity
 - failure clarity if optional dependencies are missing
 - practical usability for a real agent client
+
+### MCP Client Perspective
+
+Extract the tool definitions exposed by the MCP server (via `--list` flag, startup output, or JSON schema). For each tool:
+- Is the name self-explanatory from an LLM perspective?
+- Is the description sufficient to invoke the tool correctly without extra documentation?
+- Are parameters clearly typed with sensible defaults?
+
+Classify overall MCP readiness:
+- `mcp-ready`: directly usable in a standard MCP client without extra documentation
+- `mcp-fragile`: functional, but only with hand-written supplementary explanation
+- `mcp-unusable`: missing or misleading tool metadata that prevents reliable use
 
 ### Phase 4: Produce the report
 
@@ -136,6 +225,16 @@ Use this report structure:
 1. [...]
 2. [...]
 3. [...]
+
+## Recommended Integration Paths
+
+| Use case | Recommended format | Reason |
+|----------|--------------------|--------|
+| System-Prompt in Coding Agent | | |
+| GitHub Actions annotation | | |
+| MCP Tool Integration | | |
+| Human Code Review Prep | | |
+| Automated Orchestration Pipeline | | |
 ```
 
 ## Decision Rule

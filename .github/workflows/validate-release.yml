@@ -25,8 +25,9 @@ concurrency:
 jobs:
   validate-tag:
     name: Validate tag & pyproject.toml consistency
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v4
 
@@ -63,8 +64,9 @@ jobs:
   create-release:
     name: Create GitHub release from validated tag
     needs: validate-tag
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
-
     steps:
       - name: Create published release if missing
         shell: powershell

@@ -14,9 +14,9 @@ name: "Drift — Vibe-Coding Gate"
 
 on:
   pull_request:
-    branches: [main, master]
+    branches: [main]
   push:
-    branches: [main, master]
+    branches: [main]
 
 permissions:
   contents: read

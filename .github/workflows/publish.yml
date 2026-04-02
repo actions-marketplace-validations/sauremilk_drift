@@ -18,10 +18,17 @@ concurrency:
 jobs:
   validate-version:
     name: Validate tag & version consistency
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Resolve Python executable
         shell: powershell
@@ -62,6 +69,8 @@ jobs:
   publish:
     name: Build and publish to PyPI
     needs: validate-version
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
     environment: pypi
     env:
@@ -69,6 +78,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Resolve Python executable
         shell: powershell
@@ -117,6 +132,8 @@ jobs:
   update-major-tag:
     name: Update major-version tag (e.g. v1 → latest patch)
     needs: publish
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
     permissions:
       contents: write

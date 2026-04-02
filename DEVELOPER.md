@@ -266,6 +266,71 @@ See [CONTRIBUTING.md → Versioning](CONTRIBUTING.md#versioning) for details.
 | `welcome.yml` | First issue/PR | Automated welcome message for new contributors |
 | `stale.yml` | Weekly cron | Mark and close inactive issues/PRs |
 
+### Temporary Cirrus CI fallback
+
+While GitHub-hosted runners are blocked at account level, this repository can run a parallel fallback via `.cirrus.yml`.
+
+1. Install the Cirrus CI GitHub App for the repository.
+2. Keep `.cirrus.yml` in the repository root (already present).
+3. Open a small PR and verify Cirrus checks appear for Python 3.11, 3.12, and 3.13.
+4. Treat Cirrus as temporary fallback only; migration back to GitHub-hosted runners is tracked in issue `#90`.
+
+Operational notes:
+
+- Cirrus runs Linux containers (`python:3.11`, `python:3.12`, `python:3.13`) and executes the same quick pytest gate used in local/CI fallback checks.
+- Keep required checks conservative while fallback is active (do not remove existing GitHub Actions checks unless explicitly replaced by governance decision).
+- After billing is resolved and `ubuntu-latest` is stable again, remove `.cirrus.yml` in the same change that closes issue `#90`.
+
+## Branch Governance (Main-Only)
+
+This repository uses `main` as the single integration branch.
+
+### 1) Verify branch state
+
+```bash
+gh api repos/sauremilk/drift/branches --paginate --jq ".[] | {name: .name, protected: .protected}"
+```
+
+### 2) Configure branch protection for `main`
+
+Requires repository admin permissions. This setup enforces pull requests, at least one review, and status checks.
+
+```bash
+gh api -X PUT repos/sauremilk/drift/branches/main/protection \
+     -H "Accept: application/vnd.github+json" \
+     --input - <<'JSON'
+{
+     "required_status_checks": {
+          "strict": true,
+          "contexts": [
+               "Version format check",
+               "Test (Python 3.12)"
+          ]
+     },
+     "enforce_admins": true,
+     "required_pull_request_reviews": {
+          "dismiss_stale_reviews": true,
+          "required_approving_review_count": 1,
+          "require_code_owner_reviews": true
+     },
+     "restrictions": null,
+     "allow_force_pushes": false,
+     "allow_deletions": false,
+     "required_linear_history": true
+}
+JSON
+```
+
+### 3) Deprecate and remove `master`
+
+After confirming no active work depends on it:
+
+```bash
+git push origin --delete master
+```
+
+If deletion is temporarily not possible, keep `master` read-only and open an issue to track final removal.
+
 ---
 
 ## Pre-Push Gates (for contributors)

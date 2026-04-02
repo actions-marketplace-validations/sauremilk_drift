@@ -81,6 +81,24 @@ For each oracle case, record:
 - why this should be considered a positive case
 - what a false positive would look like nearby
 
+### Synthetisches Fixture-Template
+
+Wenn kein sauberer repo-interner Oracle-Fall existiert, erstelle unter `work_artifacts/drift_signal_quality_<DATE>/fixtures/` eine Datei pro Signal:
+
+```python
+# fixture_<SIGNAL>.py
+# Signal: <SIGNAL_ABBREVIATION>
+# Expected: 1 TP, 0 FP
+# Description: <Warum dieses Muster das Signal triggern soll>
+
+<minimal code pattern>
+```
+
+Pro Fixture dokumentiere explizit:
+- Welche Code-Zeile genau das Signal triggern soll
+- Was eine benachbarte nicht-verletzende Variante waere (Precision/FP-Pruefung)
+- Aus welcher `drift explain`-Ausgabe das Trigger-Muster abgeleitet wurde
+
 ### Phase 2: Measure repository results
 
 Run both user-facing and deeper analysis commands where relevant, such as:
@@ -98,6 +116,30 @@ For each tested signal, capture:
 - false negatives
 - ambiguous cases that require maintainer judgment
 
+### Severity-Kalibrierung
+
+Fuer jeden TP zusaetzlich bewerten:
+- Ist die gemeldete Severity (`high`/`medium`/`low`) plausibel fuer den konkreten Code-Kontext?
+- Wenn Severity falsch erscheint: dokumentiere die Diskrepanz als `severity_mismatch`
+
+### Stabilitaets-Check
+
+Fuehre `drift scan` und `drift analyze` je zweimal aus, ohne Code-Aenderungen dazwischen:
+
+```bash
+drift scan --max-findings 25 --json > scan_run1.json
+drift scan --max-findings 25 --json > scan_run2.json
+drift analyze --repo . --output-format json > analyze_run1.json
+drift analyze --repo . --output-format json > analyze_run2.json
+```
+
+Vergleiche jeweils nach Entfernen nicht-deterministischer Metadaten.
+
+Klassifikation:
+- `stable`: keine Differenz außer Laufmetadaten/Timestamps
+- `ordering-unstable`: gleiche Findings, aber instabile Reihenfolge (Ranking nicht verlaesslich)
+- `content-unstable`: unterschiedliche Findings ohne Codeaenderung (Product-Bug, als Issue erfassen)
+
 ### Phase 3: Cross-validate outputs
 
 Compare `scan` and `analyze` for the same repository state.
@@ -109,12 +151,42 @@ Check whether:
 
 Document mismatches explicitly.
 
+### Cross-Validation Tiefencheck
+
+Pro Finding, das in beiden Commands auftaucht, vergleiche:
+- Signal-ID oder Signalbezeichnung: identisch?
+- Severity: identisch?
+- Betroffene Datei und Zeile: identisch?
+- Beschreibungstext: semantisch konsistent (nicht zwingend woertlich)?
+
+Klassifikation pro Diskrepanz:
+- `metadata-only`: nur kosmetisch, kein Entscheidungsimpact
+- `priority-shift`: Severity oder Ranking unterscheiden sich und koennen Agenten fehlleiten
+- `contradiction`: inhaltlich gegensaetzliche Aussage, als `unsafe` bewerten
+
 ### Phase 4: Judge actionability
 
 For each tested signal, answer:
 - Can an agent trust this signal enough to start a fix plan?
 - Does the output identify a clear cause or only a vague symptom?
 - Would an autonomous change based on this signal be safe, risky, or blocked?
+
+### Actionability-Score (1-4)
+
+Ergaenze pro Signal einen Actionability-Score:
+- `1 automated`: Agent kann direkt handeln, Fix ist mechanisch ableitbar
+- `2 guided`: Agent kann handeln, braucht aber einen expliziten Fix-Plan als Zwischenschritt
+- `3 human-review-required`: Signal ist plausibel, aber Fix-Entscheidung braucht Maintainer-Urteil
+- `4 blocked`: keine sichere naechste Aktion moeglich
+
+### Signal-to-Noise Threshold
+
+Nach der TP/FP/FN-Messung:
+- Berechne geschaetzte Precision pro Signal: `TP / (TP + FP)`
+- Nutze Schwellenwerte fuer das Urteil:
+	- unter 70%: mindestens `needs_review`
+	- unter 50%: `unsafe`
+- Berechne zusaetzlich auf Repo-Ebene den Anteil voraussichtlich legitimer Findings
 
 ### Phase 5: Produce the report
 
@@ -129,13 +201,15 @@ Use this report structure:
 
 ## Summary Table
 
-| Signal | Oracle coverage | TP | FP | FN | Verdict | Notes |
-|--------|------------------|----|----|----|---------|-------|
+| Signal | Oracle coverage | TP | FP | FN | Severity-Matches | Severity-Mismatches | Precision | Actionability (1-4) | Verdict | Notes |
+|--------|------------------|----|----|----|------------------|---------------------|-----------|--------------------|---------|-------|
 
 ## Cross-Validation
 
 | Comparison | Consistent? | Evidence | Impact |
 |------------|-------------|----------|--------|
+
+Use discrepancy labels in this section when relevant: `metadata-only`, `priority-shift`, `contradiction`.
 
 ## Trusted Signals
 

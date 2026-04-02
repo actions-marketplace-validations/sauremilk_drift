@@ -89,8 +89,8 @@ Creating release commit...
 ✓ Committed: chore: Release 0.11.0 — update version and changelog
 ▶ Creating git tag v0.11.0...
 ✓ Tagged: v0.11.0
-Pushing to origin/master and tags...
-✓ Pushed master and v0.11.0
+Pushing to origin/main and tags...
+✓ Pushed main and v0.11.0
 
 ✅ Release v0.11.0 complete!
    → GitHub release will be created automatically
@@ -109,7 +109,7 @@ Pushing to origin/master and tags...
 | Tests fail | Fix errors in code first, don't proceed with release |
 | Version calculation wrong | Check recent commits use correct `feat:` / `fix:` / `BREAKING:` prefixes |
 | Tag already exists | Increment the patch version manually (e.g., v0.11.0 → v0.11.1) |
-| Push fails | Ensure you have write access to master branch |
+| Push fails | Ensure you have write access to main branch |
 | PyPI publish fails | GitHub release was created OK — PyPI will retry on next workflow trigger |
 
 ## Important Notes

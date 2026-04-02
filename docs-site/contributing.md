@@ -1,7 +1,7 @@
 # Contributing
 
-See [CONTRIBUTING.md](https://github.com/sauremilk/drift/blob/master/CONTRIBUTING.md) for the full contributing guide
-and [ROADMAP.md](https://github.com/sauremilk/drift/blob/master/ROADMAP.md) for current priorities.
+See [CONTRIBUTING.md](https://github.com/sauremilk/drift/blob/main/CONTRIBUTING.md) for the full contributing guide
+and [ROADMAP.md](https://github.com/sauremilk/drift/blob/main/ROADMAP.md) for current priorities.
 
 ## Who this page is for
 

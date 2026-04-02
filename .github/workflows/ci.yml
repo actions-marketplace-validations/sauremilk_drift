@@ -14,8 +14,9 @@ concurrency:
 jobs:
   version-check:
     name: Version format check
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v4
 
@@ -58,16 +59,24 @@ jobs:
           & $env:PYTHON_BIN scripts/check_model_consistency.py
 
   test:
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
     needs: version-check
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     name: Test (Python ${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Resolve Python executable
         shell: powershell
@@ -115,13 +124,13 @@ jobs:
       - name: Run tests with coverage
         shell: powershell
         run: |
-          & $env:PYTHON_BIN -m pytest -v --tb=short --cov=drift --cov-report=xml --cov-report=term-missing -m "not slow"
+          & $env:PYTHON_BIN -m pytest -v --tb=short --cov=drift --cov-report=term-missing --cov-report=xml -m "not slow"
 
       - name: Upload coverage to Codecov
-        if: false
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v5
         with:
-          files: coverage.xml
+          files: ./coverage.xml
+          flags: py${{ matrix.python-version }}
           fail_ci_if_error: false
 
       - name: Self-analysis

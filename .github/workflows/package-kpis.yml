@@ -20,14 +20,17 @@ on:
 
 jobs:
   collect-kpis:
+    # NOTE: Uses self-hosted Windows runner (GitHub-hosted runners temporarily unavailable).
+    # Migration to ubuntu-latest tracked in: https://github.com/sauremilk/drift/issues/90
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install package
         shell: bash
