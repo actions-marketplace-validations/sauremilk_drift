@@ -9,6 +9,7 @@ contract.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
@@ -248,6 +249,28 @@ def _format_scan_response(
         )
         limited = ranked[:max_findings]
 
+    selected_signal_counts: Counter[str] = Counter(
+        signal_abbrev(f.signal_type) for f in selected_findings
+    )
+    included_signal_counts: Counter[str] = Counter(
+        signal_abbrev(f.signal_type) for f in limited
+    )
+    omitted_signals: list[dict[str, Any]] = []
+    for signal in sorted(selected_signal_counts.keys()):
+        total = selected_signal_counts[signal]
+        included = included_signal_counts.get(signal, 0)
+        omitted = max(total - included, 0)
+        if omitted:
+            omitted_signals.append({
+                "signal": signal,
+                "total": total,
+                "included": included,
+                "omitted": omitted,
+                "reason": "deprioritized_by_strategy",
+            })
+
+    omitted_signals.sort(key=lambda item: (-int(item["omitted"]), item["signal"]))
+
     prioritized_for_fix_first, excluded_for_fix_first, context_counts = split_findings_by_context(
         selected_findings,
         config,
@@ -307,6 +330,17 @@ def _format_scan_response(
             "excluded_from_fix_first": len(excluded_for_fix_first),
         },
     )
+
+    if omitted_signals:
+        result["selection_diagnostics"] = {
+            "strategy": strategy,
+            "max_findings": max_findings,
+            "signals_with_omitted_findings": omitted_signals,
+            "note": (
+                "Some findings are not returned due to max_findings truncation "
+                "and selection strategy."
+            ),
+        }
 
     # detailed mode adds fix_first, recommended_next_actions, agent_instruction
     if detail == "detailed":

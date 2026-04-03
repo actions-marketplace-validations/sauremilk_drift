@@ -150,6 +150,90 @@ class TestDiverseFindings:
         signals_in_findings = {f["signal"] for f in result["findings"]}
         assert len(signals_in_findings) >= 3
 
+    def test_scan_reports_omitted_signals_when_truncated(self, monkeypatch):
+        """scan response should expose signals omitted by truncation strategy."""
+        import drift.api as api_module
+
+        dia_findings = [
+            _make_finding(SignalType.DOC_IMPL_DRIFT, 0.45, 0.45 - i * 0.01)
+            for i in range(3)
+        ]
+        high_findings = [
+            _make_finding(PFS, 0.95, 0.95 - i * 0.01)
+            for i in range(4)
+        ] + [
+            _make_finding(AVS, 0.9, 0.9 - i * 0.01)
+            for i in range(3)
+        ]
+        analysis = SimpleNamespace(
+            findings=high_findings + dia_findings,
+            drift_score=0.7,
+            severity=Severity.HIGH,
+            total_files=12,
+            total_functions=60,
+            ai_attributed_ratio=0.1,
+            trend=None,
+        )
+        monkeypatch.setattr(
+            api_module, "_finding_concise",
+            lambda f: {"signal": api_module.signal_abbrev(f.signal_type), "title": f.title},
+        )
+        monkeypatch.setattr(
+            api_module, "_fix_first_concise",
+            lambda analysis, max_items=5: [],
+        )
+
+        result = _format_scan_response(
+            analysis,
+            config=DriftConfig(),
+            max_findings=3,
+            strategy="top-severity",
+        )
+
+        assert result["response_truncated"] is True
+        assert "selection_diagnostics" in result
+        omitted = result["selection_diagnostics"]["signals_with_omitted_findings"]
+        dia_entry = next(item for item in omitted if item["signal"] == "DIA")
+        assert dia_entry["included"] == 0
+        assert dia_entry["omitted"] == 3
+        assert dia_entry["reason"] == "deprioritized_by_strategy"
+
+    def test_scan_omission_diagnostics_absent_without_truncation(self, monkeypatch):
+        """No omission diagnostics when all selected findings are returned."""
+        import drift.api as api_module
+
+        findings = [
+            _make_finding(PFS, 0.8, 0.8),
+            _make_finding(AVS, 0.7, 0.7),
+        ]
+        analysis = SimpleNamespace(
+            findings=findings,
+            drift_score=0.2,
+            severity=Severity.MEDIUM,
+            total_files=4,
+            total_functions=8,
+            ai_attributed_ratio=0.0,
+            trend=None,
+        )
+        monkeypatch.setattr(
+            api_module, "_finding_concise",
+            lambda f: {"signal": api_module.signal_abbrev(f.signal_type), "title": f.title},
+        )
+        monkeypatch.setattr(
+            api_module, "_fix_first_concise",
+            lambda analysis, max_items=5: [],
+        )
+
+        result = _format_scan_response(
+            analysis,
+            config=DriftConfig(),
+            max_findings=10,
+            strategy="top-severity",
+        )
+
+        assert result["response_truncated"] is False
+        assert "selection_diagnostics" not in result
+
 
 # --- Task 2: fix_first dedup by (file, signal) ---
 
