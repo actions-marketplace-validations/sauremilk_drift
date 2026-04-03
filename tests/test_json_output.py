@@ -164,9 +164,10 @@ def test_sarif_propagates_start_line_when_available() -> None:
     assert loc_with["region"]["startLine"] == 42
     assert loc_with["region"]["endLine"] == 50
 
-    # Finding without start_line must NOT have region
+    # Finding without start_line gets fallback region startLine=1 (#95)
     loc_without = results[1]["locations"][0]["physicalLocation"]
-    assert "region" not in loc_without
+    assert "region" in loc_without
+    assert loc_without["region"]["startLine"] == 1
 
 
 def test_analysis_to_json_orders_findings_deterministically() -> None:

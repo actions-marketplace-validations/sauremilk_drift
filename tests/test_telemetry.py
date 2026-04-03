@@ -302,6 +302,7 @@ def test_api_scan_returns_acceptance_fields(monkeypatch) -> None:
         start_line=12,
         impact=0.9,
         fix="Consolidate validation flow.",
+        metadata={},
     )
     analysis = SimpleNamespace(
         findings=[finding],

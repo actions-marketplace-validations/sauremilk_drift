@@ -367,6 +367,10 @@ def findings_to_sarif(analysis: RepoAnalysis) -> str:
                 }
                 if f.end_line and f.end_line > 0:
                     location["physicalLocation"]["region"]["endLine"] = f.end_line
+            else:
+                # Fallback: provide startLine 1 so GitHub can create
+                # file-level inline annotations (#95).
+                location["physicalLocation"]["region"] = {"startLine": 1}
             result["locations"] = [location]
 
         # Include all related locations (Opt-2: expose every location in SARIF)

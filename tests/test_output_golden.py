@@ -78,6 +78,7 @@ class TestJsonOutputGolden:
             "findings_compact",
             "compact_summary",
             "fix_first",
+            "finding_context_policy",
             "suppressed_count",
             "context_tagged_count",
             "negative_context",
@@ -121,6 +122,7 @@ class TestJsonOutputGolden:
             "related_files",
             "ai_attributed",
             "deferred",
+            "finding_context",
             "metadata",
         }
         assert set(data["findings"][0].keys()) == expected_finding_keys
@@ -210,6 +212,16 @@ class TestSarifOutputGolden:
         data = json.loads(findings_to_sarif(analysis))
         result = data["runs"][0]["results"][0]
         assert "locations" not in result
+
+    def test_sarif_finding_file_without_line_gets_fallback_region(self) -> None:
+        """#95: finding with file_path but no start_line gets startLine=1 fallback."""
+        f = _finding(start_line=None, end_line=None)
+        analysis = _minimal_analysis(findings=[f])
+        data = json.loads(findings_to_sarif(analysis))
+        result = data["runs"][0]["results"][0]
+        region = result["locations"][0]["physicalLocation"]["region"]
+        assert region["startLine"] == 1
+        assert "endLine" not in region
 
     def test_sarif_related_files(self) -> None:
         f = _finding(related_files=[Path("src/a.py"), Path("src/b.py")])
