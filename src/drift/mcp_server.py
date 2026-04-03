@@ -16,6 +16,7 @@ Tool surface (v2):
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import inspect
 import io
@@ -24,8 +25,6 @@ import os
 import re as _re
 from pathlib import Path
 from typing import Annotated, Any
-
-import anyio
 
 MCPFastMCPImpl: Any
 
@@ -235,7 +234,7 @@ async def drift_scan(
             error["tool"] = "drift_scan"
             return json.dumps(error, default=str)
 
-    payload: str = await anyio.to_thread.run_sync(_sync)
+    payload: str = await asyncio.to_thread(_sync)
     return payload
 
 
@@ -292,7 +291,7 @@ async def drift_diff(
         )
         return json.dumps(result, default=str)
 
-    payload: str = await anyio.to_thread.run_sync(_sync)
+    payload: str = await asyncio.to_thread(_sync)
     return payload
 
 
@@ -323,7 +322,7 @@ async def drift_explain(
 
         return json.dumps(explain(topic), default=str)
 
-    payload: str = await anyio.to_thread.run_sync(_sync)
+    payload: str = await asyncio.to_thread(_sync)
     return payload
 
 
@@ -383,7 +382,7 @@ async def drift_fix_plan(
         )
         return json.dumps(result, default=str)
 
-    payload: str = await anyio.to_thread.run_sync(_sync)
+    payload: str = await asyncio.to_thread(_sync)
     return payload
 
 
@@ -411,7 +410,7 @@ async def drift_validate(
         result = validate(path, config_file=config_file)
         return json.dumps(result, default=str)
 
-    payload: str = await anyio.to_thread.run_sync(_sync)
+    payload: str = await asyncio.to_thread(_sync)
     return payload
 
 
@@ -544,7 +543,7 @@ async def drift_brief(
             )
             return json.dumps(error, default=str)
 
-    payload: str = await anyio.to_thread.run_sync(_sync)
+    payload: str = await asyncio.to_thread(_sync)
     return payload
 
 
@@ -612,11 +611,8 @@ async def drift_negative_context(
         return json.dumps(result, default=str)
 
     try:
-        with anyio.fail_after(_NEGATIVE_CONTEXT_TIMEOUT_SECONDS):
-            payload: str = await anyio.to_thread.run_sync(
-                _sync,
-                abandon_on_cancel=True,
-            )
+        async with asyncio.timeout(_NEGATIVE_CONTEXT_TIMEOUT_SECONDS):
+            payload: str = await asyncio.to_thread(_sync)
             return payload
     except TimeoutError:
         timeout_response = _negative_context_timeout_response(
