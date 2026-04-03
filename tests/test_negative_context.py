@@ -245,7 +245,7 @@ class TestGenerators:
 
     def test_fallback_only_policy_is_explicit(self) -> None:
         # Every fallback-only signal must be explicitly declared and enum-valid.
-        assert _FALLBACK_ONLY_SIGNALS <= set(SignalType)
+        assert set(SignalType) >= _FALLBACK_ONLY_SIGNALS
         assert _FALLBACK_ONLY_SIGNALS.isdisjoint(_GENERATORS)
 
 
