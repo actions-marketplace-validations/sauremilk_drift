@@ -83,6 +83,8 @@ nav:
       - API and Outputs: reference/api-outputs.md
       - Negative Context: reference/negative-context.md
       - Performance: reference/performance.md
+      - Signals:
+          - PFS (Pattern Fragmentation): reference/signals/pfs.md
   - Product:
       - Product Strategy: product-strategy.md
       - Example Findings: product/example-findings.md
