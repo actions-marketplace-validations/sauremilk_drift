@@ -27,6 +27,7 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 site/
+audit_results/
 drift_score.json
 work_artifacts/
 master-backlog/
