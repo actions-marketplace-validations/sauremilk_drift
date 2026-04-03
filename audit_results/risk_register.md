@@ -130,9 +130,10 @@ Dieses Risk Register gilt für drift-analyzer als:
 | **RD-02** | Degradation | max_files Limit erreicht → Repo nur teilweise analysiert | RPN 144 🟡 | FMEA DG-03, FTA E3 | Maintainer | — | Warnung bei Limit | „N/M Dateien analysiert" Warnung | **Offen** | Q3 2026 |
 | **RD-04** | Degradation | Vendor-/Environment-Dateien wurden als Projektinput verarbeitet und verzerrten Self-Analyse-Laufzeit + Finding-Dichte | RPN 150 🟡 | FMEA DG-06, FTA E8 | Maintainer | Self-Analyse Budget-Einhaltung | ≤ 30s im CI-Budget-Test | Discovery-Default-Excludes für `site-packages`/`.pixi`/`.tmp_*venv*` plus produktionsfokussierte Scope-Grenzen (`tests`/`scripts` standardmäßig ausgeschlossen); Budget-Regressionstest beibehalten | **Mitigiert** (2026-04-02, erweitert 2026-04-02) | Q2 2026 |
 | **RD-05** | Degradation | SARIF-Regionen ohne valide `startLine` führten zu eingeschränkt nutzbaren Befunden in Downstream-Tools | RPN 144 🟡 | FMEA DG-07, FTA E9 | Maintainer | SARIF-Region-Validität | 100% Findings mit Zeilenkontext, wenn verfügbar | `start_line` aus Signal setzen; SARIF nur mit `start_line > 0` serialisieren | **Mitigiert** (2026-04-02) | Q2 2026 |
-| **RM-01** | Messung | TVS weight=0.13 im Score trotz 0% validierter Precision (30/30 Disputed) | RPN 210 🟡 | FMEA SC-01 | Maintainer | TVS Precision (strict) | ≥ 0.50 | TVS auf report-only (weight=0.0) bis Validierung; oder Confidence-Discount | **Offen** — Priorität | Q2 2026 |
+| **RM-01** | Messung | TVS war im Score trotz 0% validierter Precision (30/30 Disputed) gewichtet | RPN 210 🟡 | FMEA SC-01 | Maintainer | TVS Precision (strict) | ≥ 0.50 | TVS auf report-only (weight=0.0) gesetzt; optional später Confidence-Discount | **In Verifikation** (Fix implementiert 2026-04-03, Feldvalidierung ausstehend) | Q2 2026 |
 | **RM-02** | Messung | Ground-Truth-Labels sind partiell selbst-generiert → Zirkularitätsrisiko | Mittel | AI-RMF Measure | Maintainer | External-Rater-Anteil | ≥ 30% extern validiert | Finding-Rating-Kit an 2–3 externe Rater (A4) | **In Arbeit** (Rating-Kit existiert) | Q2 2026 |
 | **RO-01** | Operativ | Self-hosted Runner offline → Publish-Queue blockiert | Niedrig | Repo-Memory | Maintainer | Runner-Status | Online | Runner-Health-Check; Fallback auf GitHub-hosted Runner | **Bekannt** | Q3 2026 |
+| **RO-02** | Agent-UX | JSON-Output-Inkonsistenz: Signal-Identifier variieren zwischen Commands (Abbreviation vs Full Name) → Agents können Findings nicht kross-referenzieren | Niedrig | Issue #106 | Maintainer | Signal-ID-Konsistenz | Beide Formen in allen Outputs | `signal_abbrev` Feld zu json_output.py hinzugefügt; `signal_type` zu API-concise-Response | **Mitigiert** (2026-04-03, Issue #106) | Q3 2026 |
 
 ---
 
@@ -142,7 +143,7 @@ Dieses Risk Register gilt für drift-analyzer als:
 |------|----------|----------|---------|---------------|---------------|
 | 1 | **Degradation-Badge + Coverage-Metric** | RD-01, RD-02 | Niedrig | -57% auf DG-01/02/03 | Phase 1 (Vertrauen) |
 | 2 | **Library-Kontext-Erkennung** | RQ-01, RC-01 | Mittel | -67% auf FP-01, -60% auf KX-01 | Phase 1 (Vertrauen) |
-| 3 | **TVS report-only oder Confidence-Discount** | RM-01 | Niedrig | -100% Score-Impact (TVS) | Phase 1 (Vertrauen) |
+| 3 | **TVS report-only (Monitoring) / Confidence-Discount optional** | RM-01 | Niedrig | -100% Score-Impact (TVS) | Phase 1 (Vertrauen) |
 | 4 | **External Precision Validation (Rating-Kit)** | RM-02 | Mittel | Validiert Metriken-Framework | Phase 1 (Vertrauen) |
 | 5 | **SMS Import-Pattern-Update** | RQ-04 | Niedrig | -50% auf FN-01 | Phase 2 (Relevanz) |
 | 6 | **DIA URL-Fragment-Exclusion** | RQ-02 | Niedrig | -63% auf FP-02 | Phase 2 (Relevanz) |

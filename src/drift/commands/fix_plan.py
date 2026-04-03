@@ -31,6 +31,7 @@ from drift.api import to_json
 @click.option("--max-tasks", type=int, default=5, help="Maximum tasks to return.")
 @click.option(
     "--target-path",
+    "--path",
     default=None,
     help="Restrict tasks to findings inside this subpath.",
 )

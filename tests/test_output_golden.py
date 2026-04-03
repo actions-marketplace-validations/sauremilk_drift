@@ -105,6 +105,7 @@ class TestJsonOutputGolden:
 
         expected_finding_keys = {
             "signal",
+            "signal_abbrev",
             "rule_id",
             "severity",
             "score",

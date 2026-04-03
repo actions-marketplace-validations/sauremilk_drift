@@ -78,6 +78,7 @@ def _finding_concise(f: Any) -> dict[str, Any]:
 
     return {
         "signal": signal_abbrev(f.signal_type),
+        "signal_type": f.signal_type.value,
         "severity": f.severity.value,
         "title": f.title,
         "file": f.file_path.as_posix() if f.file_path else None,
@@ -138,10 +139,19 @@ def _trend_dict(analysis: RepoAnalysis) -> dict[str, Any] | None:
     }
 
 
+def _signal_weight(abbrev: str, config: Any) -> float:
+    """Return the scoring weight for a signal abbreviation."""
+    sig_type = _ABBREV_TO_SIGNAL.get(abbrev)
+    if sig_type is None or not hasattr(config, "weights"):
+        return 1.0
+    return float(getattr(config.weights, sig_type.value, 1.0))
+
+
 def _top_signals(
     analysis: RepoAnalysis,
     *,
     signal_filter: set[str] | None = None,
+    config: Any = None,
 ) -> list[dict[str, Any]]:
     """Aggregate signal scores and finding counts."""
     from collections import Counter
@@ -155,11 +165,19 @@ def _top_signals(
         counts[abbr] += 1
         score_sums[abbr] = max(score_sums.get(abbr, 0.0), f.score)
 
+    result = []
+    for sig in counts:
+        w = _signal_weight(sig, config) if config else 1.0
+        result.append({
+            "signal": sig,
+            "score": round(score_sums[sig], 3),
+            "finding_count": counts[sig],
+            "weight": round(w, 4),
+            "report_only": w == 0.0,
+        })
+
     return sorted(
-        [
-            {"signal": sig, "score": round(score_sums[sig], 3), "finding_count": counts[sig]}
-            for sig in counts
-        ],
+        result,
         key=lambda x: (-x["score"], -x["finding_count"], x["signal"]),
     )
 

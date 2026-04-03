@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import sys
+import time
 from pathlib import Path
 
 import click
@@ -9,6 +12,21 @@ import click
 from drift.api import scan as api_scan
 from drift.api import to_json
 from drift.commands._io import _write_output_file
+
+_progress_start: float = 0.0
+
+
+def _json_progress_callback(phase: str, current: int, total: int) -> None:
+    """Emit structured JSON-lines progress on stderr for agent consumption."""
+    msg = {
+        "type": "progress",
+        "step": current,
+        "total": total,
+        "signal": phase,
+        "elapsed_s": round(time.monotonic() - _progress_start, 1),
+    }
+    sys.stderr.write(json.dumps(msg) + "\n")
+    sys.stderr.flush()
 
 
 @click.command("scan")
@@ -20,7 +38,7 @@ from drift.commands._io import _write_output_file
     default=Path("."),
     help="Path to the repository root.",
 )
-@click.option("--target-path", default=None, help="Restrict analysis to a subdirectory.")
+@click.option("--target-path", "--path", default=None, help="Restrict analysis to a subdirectory.")
 @click.option("--since", "since_days", type=int, default=90, help="Days of git history.")
 @click.option(
     "--select",
@@ -54,6 +72,12 @@ from drift.commands._io import _write_output_file
     help="Include fixture/generated/migration/docs findings in prioritization queues.",
 )
 @click.option(
+    "--progress",
+    type=click.Choice(["auto", "json", "none"]),
+    default="auto",
+    help="Progress reporting: auto (silent), json (JSON-lines on stderr), none.",
+)
+@click.option(
     "--output",
     "-o",
     type=click.Path(path_type=Path),
@@ -69,9 +93,16 @@ def scan(
     strategy: str,
     response_detail: str,
     include_non_operational: bool,
+    progress: str,
     output: Path | None,
 ) -> None:
     """Run the agent-native scan workflow and emit structured JSON."""
+
+    progress_cb = None
+    if progress == "json":
+        global _progress_start
+        _progress_start = time.monotonic()
+        progress_cb = _json_progress_callback
 
     signals = [item.strip() for item in select.split(",") if item.strip()] if select else None
     result = api_scan(
@@ -83,6 +114,7 @@ def scan(
         response_detail=response_detail,
         strategy=strategy,
         include_non_operational=include_non_operational,
+        on_progress=progress_cb,
     )
     text = to_json(result)
     if output is not None:

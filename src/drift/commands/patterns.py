@@ -35,6 +35,7 @@ from drift.commands import console
 )
 @click.option(
     "--target-path",
+    "--path",
     default=None,
     help="Restrict pattern discovery to a subdirectory.",
 )

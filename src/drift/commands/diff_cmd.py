@@ -34,6 +34,7 @@ from drift.api import to_json
 )
 @click.option(
     "--target-path",
+    "--path",
     default=None,
     help="Restrict decision logic to a subdirectory while surfacing out-of-scope noise.",
 )

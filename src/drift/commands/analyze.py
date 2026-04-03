@@ -22,7 +22,11 @@ from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
     default=".",
     help="Path to the repository root.",
 )
-@click.option("--path", "-p", default=None, help="Restrict analysis to a subdirectory.")
+@click.option(
+    "--path", "--target-path", "-p",
+    default=None,
+    help="Restrict analysis to a subdirectory.",
+)
 @click.option("--since", "-s", default=90, type=int, help="Days of git history to analyze.")
 @click.option(
     "--output-format",
@@ -144,6 +148,13 @@ from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
     default=False,
     help="Disable colored output (also respects NO_COLOR env variable).",
 )
+@click.option(
+    "--progress",
+    "progress_format",
+    type=click.Choice(["auto", "json", "none"]),
+    default="auto",
+    help="Progress reporting: auto (Rich bar), json (JSON-lines on stderr), none.",
+)
 def analyze(
     repo: Path,
     path: str | None,
@@ -168,6 +179,7 @@ def analyze(
     json_shortcut: bool,
     compact_json: bool,
     no_color: bool,
+    progress_format: str,
 ) -> None:
     """Detailed drift analysis \u2014 produces comprehensive findings for investigation and triage.
 
@@ -218,6 +230,10 @@ def analyze(
     # For machine-readable formats, send progress to stderr so stdout stays clean
     progress_console = Console(stderr=True) if output_format != "rich" else effective_console
 
+    use_json_progress = progress_format == "json"
+    use_rich_progress = progress_format == "auto" and not quiet
+    use_no_progress = progress_format == "none" or quiet
+
     progress = Progress(
         TextColumn("[bold blue]{task.description}"),
         BarColumn(),
@@ -236,18 +252,44 @@ def analyze(
         _last_total = max(total, 1)
         task_id = progress.add_task(phase, total=_last_total, completed=current)
 
-    progress_context = nullcontext() if quiet else progress
+    def _on_progress_json(phase: str, current: int, total: int) -> None:
+        import json as _json
+        import time
+
+        msg = {
+            "type": "progress",
+            "step": current,
+            "total": total,
+            "signal": phase,
+            "elapsed_s": round(time.monotonic() - _json_start, 1),
+        }
+        sys.stderr.write(_json.dumps(msg) + "\n")
+        sys.stderr.flush()
+
+    _json_start = 0.0
+    if use_json_progress:
+        import time
+        _json_start = time.monotonic()
+
+    if use_json_progress:
+        effective_callback = _on_progress_json
+    elif use_no_progress:
+        effective_callback = None
+    else:
+        effective_callback = _on_progress
+
+    progress_context = nullcontext() if not use_rich_progress else progress
     with progress_context:
         analysis = analyze_repo(
             repo,
             cfg,
             since_days=since,
             target_path=path,
-            on_progress=None if quiet else _on_progress,
+            on_progress=effective_callback,
             workers=workers if workers is not None else _DEFAULT_WORKERS,
             active_signals=active_signals,
         )
-        if not quiet and task_id is not None:
+        if use_rich_progress and task_id is not None:
             progress.update(task_id, completed=_last_total)
 
     # Baseline filtering: remove known findings if --baseline is provided

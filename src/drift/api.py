@@ -9,6 +9,7 @@ contract.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
@@ -74,6 +75,7 @@ def scan(
     response_detail: str = "concise",
     strategy: str = "diverse",
     include_non_operational: bool = False,
+    on_progress: Callable[[str, int, int], None] | None = None,
 ) -> dict[str, Any]:
     """Run full drift analysis and return a structured result dict.
 
@@ -96,6 +98,8 @@ def scan(
     include_non_operational:
         Include non-operational contexts (fixture/generated/migration/docs)
         in prioritization queues when ``True``.
+    on_progress:
+        Optional callback ``(phase, current, total)`` for structured progress.
     """
     from drift.analyzer import analyze_repo
     from drift.config import DriftConfig, apply_signal_filter, resolve_signal_names
@@ -136,6 +140,7 @@ def scan(
             since_days=since_days,
             target_path=target_path,
             active_signals=active_signals,
+            on_progress=on_progress,
         )
         result = _format_scan_response(
             analysis,
@@ -261,14 +266,17 @@ def _format_scan_response(
     else:
         findings_list = [_finding_detailed(f, rank=i + 1) for i, f in enumerate(limited)]
 
-    top_sigs = _top_signals(analysis, signal_filter=signal_filter)
+    top_sigs = _top_signals(analysis, signal_filter=signal_filter, config=config)
 
     # Deterministic tie-breaker: highest finding_count among max-score
     # signals, then alphabetical by signal abbreviation.
+    # Only recommend signals with non-zero weight (scored signals).
     primary_signal: str | None = None
     if top_sigs:
-        max_score = top_sigs[0]["score"]
-        tied = [s for s in top_sigs if s["score"] == max_score]
+        scored_sigs = [s for s in top_sigs if not s.get("report_only", False)]
+        candidate_sigs = scored_sigs if scored_sigs else top_sigs
+        max_score = candidate_sigs[0]["score"]
+        tied = [s for s in candidate_sigs if s["score"] == max_score]
         tied.sort(key=lambda s: (-s["finding_count"], s["signal"]))
         primary_signal = tied[0]["signal"]
 

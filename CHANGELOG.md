@@ -3,6 +3,7 @@
 ### Added
 
 - Introduce configurable finding-context triage policy with precedence-based glob rules to keep non-operational findings out of default remediation queues unless explicitly requested.
+- Add `--progress json` option to `scan` and `analyze` commands for structured JSON-lines progress feedback on stderr, enabling agents to distinguish running from hung processes (#104).
 
 ### Changed
 
@@ -17,6 +18,10 @@
 - Prevent CI/release false failures on self-hosted Windows by pinning test jobs back to `actions/setup-python@v5`, making no-tag release detection PowerShell-safe, and allowlisting the signal map `hardcoded_secret` label for detect-secrets.
 - Document and enforce the Windows runner workaround for `actions/setup-python` registry-permission failures so CI uses `@v5` until runner permissions are fixed.
 - Improve AVS mutation detection and recommendation edge-case handling to reduce unstable or misleading remediation output.
+- Add missing conda/pip-env exclude patterns (`.conda/`, `.env/`, `.tox/`, `.nox/`, `site-packages/`, `.pixi/`) to `drift init` generated config so scanning never picks up virtualenv stdlib as project findings (#105).
+- Standardize path-scoping flags: all commands now accept both `--path` and `--target-path` as aliases to avoid agent round-trip failures (#107).
+- `primary_signal_for_next_step` in `drift scan` now skips weight-0 (report-only) signals so agents are not directed toward zero-impact remediation (#108).
+- All JSON outputs now include both `signal_abbrev` (e.g. `PFS`) and full signal name for cross-command finding correlation (#106).
 
 ## [2.1.3] - 2026-04-02
 

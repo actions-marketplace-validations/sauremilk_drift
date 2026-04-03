@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from drift import __version__
+from drift.api_helpers import signal_abbrev
 from drift.config import DriftConfig
 from drift.finding_context import classify_finding_context, split_findings_by_context
 from drift.models import Finding, ModuleScore, RepoAnalysis, Severity, SignalType
@@ -128,6 +129,7 @@ def _fix_first_list(ranked_findings: list[Finding], max_items: int = 10) -> list
                 "rank": idx,
                 "priority_class": _priority_class(f),
                 "signal": f.signal_type.value,
+                "signal_abbrev": signal_abbrev(f.signal_type),
                 "rule_id": f.rule_id,
                 "severity": f.severity.value,
                 "finding_context": classify_finding_context(f, DriftConfig()),
@@ -159,6 +161,7 @@ def _finding_to_dict(f: Finding, *, impact_rank: int | None = None) -> dict[str,
     rec = generate_recommendation(f)
     d: dict[str, Any] = {
         "signal": f.signal_type.value,
+        "signal_abbrev": signal_abbrev(f.signal_type),
         "rule_id": f.rule_id,
         "severity": f.severity.value,
         "score": f.score,
@@ -208,6 +211,7 @@ def _finding_compact_dict(
     return {
         "rank": rank,
         "signal": finding.signal_type.value,
+        "signal_abbrev": signal_abbrev(finding.signal_type),
         "rule_id": finding.rule_id,
         "severity": finding.severity.value,
         "finding_context": classify_finding_context(finding, DriftConfig()),
