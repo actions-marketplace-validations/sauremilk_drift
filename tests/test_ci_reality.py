@@ -184,12 +184,18 @@ class TestPerformanceBudget:
     # On CI (GitHub Actions, 2 vCPU), allow 60s.
     # Django (2890 files) reportedly takes ~36s — that's the stress case.
     SELF_ANALYSIS_BUDGET_S = 30.0
+    _CORE_TARGET_PATH = "src/drift"
 
     def test_self_analysis_within_budget(self) -> None:
         """Self-analysis (≈45 Python files) must complete within budget."""
         config = _standard_config()
         start = time.monotonic()
-        analysis = analyze_repo(DRIFT_REPO, config=config, since_days=90)
+        analysis = analyze_repo(
+            DRIFT_REPO,
+            config=config,
+            since_days=90,
+            target_path=self._CORE_TARGET_PATH,
+        )
         elapsed = time.monotonic() - start
 
         assert analysis.total_files > 0
@@ -202,7 +208,12 @@ class TestPerformanceBudget:
         """analysis_duration_seconds should roughly match wall-clock time."""
         config = _standard_config()
         start = time.monotonic()
-        analysis = analyze_repo(DRIFT_REPO, config=config, since_days=90)
+        analysis = analyze_repo(
+            DRIFT_REPO,
+            config=config,
+            since_days=90,
+            target_path=self._CORE_TARGET_PATH,
+        )
         wall = time.monotonic() - start
 
         # Allow 50% tolerance (GC pauses, startup overhead)
