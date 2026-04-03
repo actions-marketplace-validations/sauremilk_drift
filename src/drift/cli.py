@@ -86,11 +86,12 @@ def _build_error_payload(
     *,
     detail: str | None = None,
     hint: str | None = None,
+    suggested_action_override: str | None = None,
 ) -> dict[str, object]:
     """Build a v2.0 machine-readable error payload with recovery info."""
     info = ERROR_REGISTRY.get(error_code)
     recoverable = category == "user"
-    suggested_action = info.action if info else hint
+    suggested_action = suggested_action_override or (info.action if info else hint)
     return {
         "error": True,
         "schema_version": "2.0",
@@ -214,6 +215,7 @@ def safe_main() -> None:
                     exc.exit_code,
                     detail=exc.detail,
                     hint=exc.hint,
+                    suggested_action_override=exc.suggested_action,
                 ),
             )
         else:

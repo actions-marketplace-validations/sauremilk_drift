@@ -4,6 +4,8 @@
 
 - Introduce configurable finding-context triage policy with precedence-based glob rules to keep non-operational findings out of default remediation queues unless explicitly requested.
 - Add `--progress json` option to `scan` and `analyze` commands for structured JSON-lines progress feedback on stderr, enabling agents to distinguish running from hung processes (#104).
+- `drift check` now supports `--save-baseline` and `--max-findings` options for CI parity with `drift analyze` (#116).
+- `drift diff` JSON output now includes `score_basis` field (`"historical"` or `"zero_default"`) to clarify when `score_before` reflects actual repo baseline vs. synthetic zero (#119).
 
 ### Changed
 
@@ -26,6 +28,9 @@
 - Add `description` fields to all MCP tool parameters via `Annotated[type, Field(description=...)]` and include descriptions in `drift mcp --schema` catalog output so agents can infer valid parameter ranges and formats (#110).
 - Replace all non-ASCII characters (emoji severity icons, arrows, ellipsis) in Markdown export output with ASCII equivalents to eliminate mojibake on Windows (#111).
 - Add cross-reference notes between `copilot-context` and `export-context` outputs so agents using either surface are made aware of the complementary context (#112).
+- Suppress Rich progress bar on stderr for machine-readable output formats (`--json`, `--sarif`) to prevent PowerShell `NativeCommandError` from non-JSON prelude (#118).
+- Map git-root-relative paths to repo-relative paths in `analyze_diff` and `parse_git_history` so `--repo` on nested subdirectories no longer leaks parent-repo file scope (#117).
+- `drift self` error guidance now suggests valid next actions (`drift scan`/`drift analyze`) instead of invalid `--repo` flag (#120).
 
 ## [2.2.0] - 2026-04-03
 

@@ -190,11 +190,13 @@ class DriftError(Exception):
         message: str | None = None,
         *,
         context: str | None = None,
+        suggested_action: str | None = None,
         **kwargs: Any,
     ) -> None:
         self.code = code
         self._kwargs = kwargs
         self._context = context
+        self.suggested_action = suggested_action
 
         info = ERROR_REGISTRY.get(code)
         if info and not message:

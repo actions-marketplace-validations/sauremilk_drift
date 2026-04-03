@@ -231,8 +231,14 @@ def analyze(
     progress_console = Console(stderr=True) if output_format != "rich" else effective_console
 
     use_json_progress = progress_format == "json"
-    use_rich_progress = progress_format == "auto" and not quiet
-    use_no_progress = progress_format == "none" or quiet
+    # Auto-suppress Rich progress for machine-readable formats to avoid
+    # stderr noise that triggers NativeCommandError in PowerShell (#118).
+    use_rich_progress = (
+        progress_format == "auto" and not quiet and output_format == "rich"
+    )
+    use_no_progress = progress_format == "none" or quiet or (
+        progress_format == "auto" and output_format != "rich"
+    )
 
     progress = Progress(
         TextColumn("[bold blue]{task.description}"),

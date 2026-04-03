@@ -41,10 +41,14 @@ def self_analyze(since: int, output_format: str, output_file: Path | None) -> No
             "DRIFT-2001",
             message=(
                 "drift self only works inside the drift source code repository "
-                "(github.com/mick-gsk/drift). "
+                "(github.com/sauremilk/drift). "
                 "For your project, use 'drift scan' instead."
             ),
             path=str(drift_root),
+            suggested_action=(
+                "Run inside the drift source repository, or use "
+                "'drift scan' / 'drift analyze' for other projects."
+            ),
         )
 
     cfg = DriftConfig.load(drift_root)

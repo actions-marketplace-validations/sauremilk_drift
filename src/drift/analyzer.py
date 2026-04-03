@@ -312,6 +312,18 @@ def analyze_diff(
         )
         return analysis
 
+    # Map git-root-relative paths to repo-relative paths when repo_path is
+    # a subdirectory of the git root (#117).
+    from drift.ingestion.git_history import _git_repo_prefix
+
+    prefix = _git_repo_prefix(repo_path)
+    if prefix:
+        mapped: list[str] = []
+        for fp in changed_files:
+            if fp.startswith(prefix):
+                mapped.append(fp[len(prefix):])
+        changed_files = mapped
+
     if not changed_files:
         return RepoAnalysis(
             repo_path=repo_path,

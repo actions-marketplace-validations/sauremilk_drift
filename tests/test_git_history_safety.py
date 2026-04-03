@@ -31,8 +31,13 @@ def test_parse_git_history_uses_arg_list_not_shell(
 
     parse_git_history(tmp_path, since_days=30)
 
-    assert len(calls) == 1
-    cmd, kwargs = calls[0]
+    # _git_repo_prefix issues an additional subprocess call for
+    # `git rev-parse --show-toplevel`, so expect 2 calls total.
+    assert len(calls) == 2
+    # First call: git rev-parse --show-toplevel (scope detection)
+    assert calls[0][0][:2] == ["git", "rev-parse"]
+    # Second call: git log
+    cmd, kwargs = calls[1]
     assert cmd[0] == "git"
     assert cmd[1] == "log"
     assert any(part.startswith("--since=") for part in cmd)

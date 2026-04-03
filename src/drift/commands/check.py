@@ -124,6 +124,19 @@ from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
     default=False,
     help="Disable colored output (also respects NO_COLOR env variable).",
 )
+@click.option(
+    "--save-baseline",
+    "save_baseline_path",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Save the current findings as a baseline file after analysis.",
+)
+@click.option(
+    "--max-findings",
+    type=int,
+    default=20,
+    help="Maximum number of findings to display (default: 20).",
+)
 def check(
     repo: Path,
     diff_ref: str,
@@ -144,6 +157,8 @@ def check(
     json_shortcut: bool,
     compact_json: bool,
     no_color: bool,
+    save_baseline_path: Path | None,
+    max_findings: int,
 ) -> None:
     """CI gate — analyze a diff and exit non-zero when findings exceed a threshold.
 
@@ -270,7 +285,19 @@ def check(
     else:
         from drift.output.rich_output import render_full_report
 
-        render_full_report(analysis, effective_console, show_code=not no_code)
+        render_full_report(
+            analysis, effective_console, max_findings=max_findings, show_code=not no_code,
+        )
+
+    # Save baseline if requested (--save-baseline)
+    if save_baseline_path is not None:
+        from drift.baseline import save_baseline as _save_bl
+
+        _save_bl(analysis, save_baseline_path)
+        effective_console.print(
+            f"[bold green]\u2713 Baseline saved:[/bold green] {save_baseline_path} "
+            f"({len(analysis.findings)} findings)",
+        )
 
     if not severity_gate_pass(analysis.findings, threshold):
         if not quiet:

@@ -523,12 +523,20 @@ def diff(
 
         # Score comparison via trend context
         score_after = diff_analysis.drift_score
-        score_before = (
-            diff_analysis.trend.previous_score
-            if diff_analysis.trend and diff_analysis.trend.previous_score is not None
-            else 0.0
-        )
+        score_before: float = 0.0
+        if (
+            diff_analysis.trend is not None
+            and diff_analysis.trend.previous_score is not None
+        ):
+            score_before = diff_analysis.trend.previous_score
+            has_trend_baseline = True
+        else:
+            has_trend_baseline = False
         delta = round(score_after - score_before, 4)
+
+        # When no historical baseline exists, flag the score fields as
+        # synthetic so agents don't misinterpret zero as the repo baseline (#119).
+        score_basis = "historical" if has_trend_baseline else "zero_default"
 
         from drift.output.json_output import _priority_class
 
@@ -666,6 +674,7 @@ def diff(
             score_before=round(score_before, 4),
             score_after=round(score_after, 4),
             delta=delta,
+            score_basis=score_basis,
             score_regressed=delta > 0.0,
             confidence=confidence,
             diff_ref=diff_ref,

@@ -205,6 +205,39 @@ def _is_defect_correlated(message: str) -> bool:
     return bool(DEFECT_MARKERS.search(message))
 
 
+def _git_repo_prefix(repo_path: Path) -> str:
+    """Return the POSIX prefix of *repo_path* relative to the git root.
+
+    When ``repo_path`` **is** the git root the prefix is ``""``.
+    When it is a subdirectory (e.g. ``/repo/sub/dir``) the prefix is
+    ``"sub/dir/"`` so that git-root-relative paths can be mapped to
+    repo-relative paths by stripping the prefix.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=str(repo_path),
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return ""
+        git_root = Path(result.stdout.strip()).resolve()
+        resolved = repo_path.resolve()
+        if resolved == git_root:
+            return ""
+        try:
+            rel = resolved.relative_to(git_root).as_posix()
+            return rel + "/"
+        except ValueError:
+            return ""
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return ""
+
+
 # ---------------------------------------------------------------------------
 # Git History Parser
 # ---------------------------------------------------------------------------
@@ -234,6 +267,11 @@ def parse_git_history(
     large repositories.
     """
     since_date = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(days=since_days)
+
+    # When repo_path is a subdirectory of the git root, git log returns
+    # paths relative to the root.  Compute the prefix so we can map those
+    # paths back to repo-relative paths that match file_filter (#117).
+    repo_prefix = _git_repo_prefix(repo_path)
 
     # Use a unique record separator that won't appear in commit messages.
     # Format each commit as: RS hash RS author RS email RS timestamp RS message RS
@@ -306,6 +344,13 @@ def parse_git_history(
                         dels = int(numstat_parts[1]) if numstat_parts[1] != "-" else 0
                         fpath = numstat_parts[2].strip()
                         if fpath:
+                            # Map git-root-relative paths to repo-relative
+                            # paths when repo_path is a subdirectory (#117).
+                            if repo_prefix and fpath.startswith(repo_prefix):
+                                fpath = fpath[len(repo_prefix):]
+                            elif repo_prefix:
+                                # File is outside repo_path scope — skip it
+                                continue
                             files_changed.append(fpath)
                             total_ins += ins
                             total_del += dels
