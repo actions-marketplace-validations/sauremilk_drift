@@ -1,5 +1,21 @@
 # Fault Tree Analysis
 
+## 2026-04-04 - MCP stdio deadlock hardening on Windows
+
+### FT-1: Tool call blocks on subprocess stdin inheritance
+- Top event: MCP tool call does not return when child process is spawned.
+- Branch A: Tool path invokes `subprocess.run(...)` without explicit stdin handling.
+- Branch B: Child process inherits stdio handle from MCP server transport.
+- Branch C: Windows IOCP path enters blocking state and call never completes.
+- Mitigation implemented: Explicit `stdin=subprocess.DEVNULL` in affected subprocess paths plus regression test to prevent omissions.
+
+### FT-2: Threaded first import deadlock with C-extension modules
+- Top event: MCP request hangs during `asyncio.to_thread` execution.
+- Branch A: Heavy module import (for example numpy/torch/faiss) occurs first time inside worker thread.
+- Branch B: Event loop already owns IOCP resources.
+- Branch C: DLL loader lock contention causes deadlock.
+- Mitigation implemented: `_eager_imports()` called before `mcp.run()` so heavy imports happen before threaded tool execution.
+
 ## 2026-04-03 - PFS/NBV low-actionability output paths (Issue #125)
 
 ### FT-1: PFS remediation cannot be applied directly

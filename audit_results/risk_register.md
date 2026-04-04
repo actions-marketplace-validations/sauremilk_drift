@@ -1,5 +1,22 @@
 # Risk Register
 
+## 2026-04-04 - MCP stdio deadlock hardening on Windows
+
+- Risk ID: RISK-MCP-2026-04-04-STDIO
+- Component: src/drift/mcp_server.py, src/drift/analyzer.py, src/drift/api.py, src/drift/incremental.py, src/drift/ingestion/git_history.py, src/drift/pipeline.py, src/drift/signals/exception_contract_drift.py
+- Type: Runtime availability and transport safety
+- Description: MCP tool calls could hang permanently on Windows when subprocesses inherited server stdin handles or when heavy C-extension modules were first imported from worker threads after event-loop startup.
+- Trigger examples:
+  - `subprocess.run(...)` without `stdin=subprocess.DEVNULL` inside MCP-invoked paths.
+  - First-time lazy import of heavy dependencies (for example numpy/torch/faiss) during `asyncio.to_thread` execution.
+- Impact: Tool invocation stalls, session instability, and reduced trust because MCP responses do not complete.
+- Mitigation:
+  - Add `stdin=subprocess.DEVNULL` to affected subprocess calls across analyzer/API/ingestion/signal paths.
+  - Ensure MCP tools remain async and return structured error envelopes on exceptions.
+  - Add eager imports before `mcp.run()` to avoid loader-lock deadlocks during threaded execution.
+- Verification: tests/test_mcp_hardening.py, tests/test_nudge.py, quick no-smoke pytest suite.
+- Residual risk: Low; remaining risk is limited to future regressions where new subprocess calls omit explicit stdin handling.
+
 ## 2026-04-03 - Parse I/O resilience and malformed trend history hardening
 
 - Risk ID: RISK-ING-2026-04-03-RESILIENCE

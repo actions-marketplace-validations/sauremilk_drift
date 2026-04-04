@@ -253,6 +253,7 @@ def _git_show_file(repo_path: Path, ref: str, file_posix: str) -> str | None:
             cwd=str(repo_path),
             check=True,
             timeout=10,
+            stdin=subprocess.DEVNULL,
         )
         return result.stdout
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):

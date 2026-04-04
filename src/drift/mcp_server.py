@@ -217,15 +217,16 @@ async def drift_scan(
                 if signals
                 else None
             )
-            result = scan(
-                path,
-                target_path=target_path,
-                since_days=since_days,
-                signals=signal_list,
-                max_findings=max_findings,
-                response_detail=response_detail,
-                include_non_operational=include_non_operational,
-            )
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = scan(
+                    path,
+                    target_path=target_path,
+                    since_days=since_days,
+                    signals=signal_list,
+                    max_findings=max_findings,
+                    response_detail=response_detail,
+                    include_non_operational=include_non_operational,
+                )
             return json.dumps(result, default=str)
         except Exception as exc:
             from drift.api_helpers import _error_response
@@ -280,16 +281,24 @@ async def drift_diff(
     def _sync() -> str:
         from drift.api import diff
 
-        result = diff(
-            path,
-            diff_ref=diff_ref,
-            uncommitted=uncommitted,
-            staged_only=staged_only,
-            baseline_file=baseline_file,
-            max_findings=max_findings,
-            response_detail=response_detail,
-        )
-        return json.dumps(result, default=str)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = diff(
+                    path,
+                    diff_ref=diff_ref,
+                    uncommitted=uncommitted,
+                    staged_only=staged_only,
+                    baseline_file=baseline_file,
+                    max_findings=max_findings,
+                    response_detail=response_detail,
+                )
+            return json.dumps(result, default=str)
+        except Exception as exc:
+            from drift.api_helpers import _error_response
+
+            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
+            error["tool"] = "drift_diff"
+            return json.dumps(error, default=str)
 
     payload: str = await asyncio.to_thread(_sync)
     return payload
@@ -320,7 +329,16 @@ async def drift_explain(
     def _sync() -> str:
         from drift.api import explain
 
-        return json.dumps(explain(topic), default=str)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = explain(topic)
+            return json.dumps(result, default=str)
+        except Exception as exc:
+            from drift.api_helpers import _error_response
+
+            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
+            error["tool"] = "drift_explain"
+            return json.dumps(error, default=str)
 
     payload: str = await asyncio.to_thread(_sync)
     return payload
@@ -372,15 +390,23 @@ async def drift_fix_plan(
     def _sync() -> str:
         from drift.api import fix_plan
 
-        result = fix_plan(
-            path,
-            signal=signal,
-            max_tasks=max_tasks,
-            automation_fit_min=automation_fit_min,
-            target_path=target_path,
-            include_non_operational=include_non_operational,
-        )
-        return json.dumps(result, default=str)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = fix_plan(
+                    path,
+                    signal=signal,
+                    max_tasks=max_tasks,
+                    automation_fit_min=automation_fit_min,
+                    target_path=target_path,
+                    include_non_operational=include_non_operational,
+                )
+            return json.dumps(result, default=str)
+        except Exception as exc:
+            from drift.api_helpers import _error_response
+
+            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
+            error["tool"] = "drift_fix_plan"
+            return json.dumps(error, default=str)
 
     payload: str = await asyncio.to_thread(_sync)
     return payload
@@ -407,15 +433,23 @@ async def drift_validate(
     def _sync() -> str:
         from drift.api import validate
 
-        result = validate(path, config_file=config_file)
-        return json.dumps(result, default=str)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = validate(path, config_file=config_file)
+            return json.dumps(result, default=str)
+        except Exception as exc:
+            from drift.api_helpers import _error_response
+
+            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
+            error["tool"] = "drift_validate"
+            return json.dumps(error, default=str)
 
     payload: str = await asyncio.to_thread(_sync)
     return payload
 
 
 @mcp.tool()
-def drift_nudge(
+async def drift_nudge(
     path: Annotated[str, Field(description="Repository path to analyze.")] = ".",
     changed_files: Annotated[
         str | None,
@@ -454,14 +488,27 @@ def drift_nudge(
         uncommitted: When auto-detecting, use uncommitted working-tree
             changes (default) vs. staged-only.
     """
-    from drift.api import nudge
 
-    file_list: list[str] | None = None
-    if changed_files is not None:
-        file_list = [f.strip() for f in changed_files.split(",") if f.strip()]
+    def _sync() -> str:
+        from drift.api import nudge
 
-    result = nudge(path, changed_files=file_list, uncommitted=uncommitted)
-    return json.dumps(result, default=str)
+        try:
+            file_list: list[str] | None = None
+            if changed_files is not None:
+                file_list = [f.strip() for f in changed_files.split(",") if f.strip()]
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = nudge(path, changed_files=file_list, uncommitted=uncommitted)
+            return json.dumps(result, default=str)
+        except Exception as exc:
+            from drift.api_helpers import _error_response
+
+            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
+            error["tool"] = "drift_nudge"
+            return json.dumps(error, default=str)
+
+    payload: str = await asyncio.to_thread(_sync)
+    return payload
 
 
 @mcp.tool()
@@ -519,12 +566,13 @@ async def drift_brief(
         from drift.api import brief
 
         try:
-            result = brief(
-                path,
-                task=task,
-                scope_override=scope,
-                max_guardrails=max_guardrails,
-            )
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = brief(
+                    path,
+                    task=task,
+                    scope_override=scope,
+                    max_guardrails=max_guardrails,
+                )
 
             if response_detail == "concise":
                 # Strip verbose landscape fields for token efficiency
@@ -810,9 +858,24 @@ def get_tool_catalog() -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
+def _eager_imports() -> None:
+    """Pre-import heavy modules before the event loop starts.
+
+    On Windows the IOCP proactor holds handles that conflict with the
+    OS DLL-loader lock.  If a worker thread triggers a first-time import
+    of C-extension modules (numpy, torch, faiss …) while the event loop
+    owns an IOCP handle, a deadlock occurs.  Importing everything that
+    the tool functions need *before* ``mcp.run()`` avoids this entirely.
+    """
+    import drift.analyzer  # noqa: F401 — pulls in signals, pipeline, scoring
+    import drift.api  # noqa: F401 — registers public surface
+    import drift.pipeline  # noqa: F401 — pulls in embeddings (numpy/torch)
+
+
 def main() -> None:
     """Run the drift MCP server on stdio transport."""
     if not _MCP_AVAILABLE:
         msg = "MCP server requires optional dependency 'mcp'."
         raise RuntimeError(msg)
+    _eager_imports()
     mcp.run(transport="stdio")

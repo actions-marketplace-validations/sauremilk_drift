@@ -1,5 +1,12 @@
 # FMEA Matrix
 
+## 2026-04-04 - MCP stdio deadlock hardening on Windows
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| ECD and git-backed analysis paths | MCP call hangs while invoking git subprocesses | `subprocess.run` inherits MCP stdin handle when `stdin` is not explicitly set | Stalled tool call, no actionable result returned | Regression test scans all `subprocess.run` calls in `src/drift` for `stdin`/`input` | Enforce `stdin=subprocess.DEVNULL` for affected subprocess calls | 8 | 3 | 3 | 72 |
+| MCP tool execution pipeline | Deadlock during first threaded import of heavy C-extension modules | Lazy first import happens inside worker thread after event loop starts | Session teardown risk and non-deterministic hangs on Windows | Regression test asserts `_eager_imports()` is called before `mcp.run()` | Eager-import heavy modules before event loop startup | 8 | 2 | 4 | 64 |
+
 ## 2026-04-03 - PFS/NBV copilot-context actionability (Issue #125)
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

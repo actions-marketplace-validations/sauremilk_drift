@@ -158,6 +158,7 @@ def is_git_repo(path: Path) -> bool:
             ["git", "-C", str(path), "rev-parse", "--git-dir"],
             capture_output=True,
             check=True,
+            stdin=subprocess.DEVNULL,
         )
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):

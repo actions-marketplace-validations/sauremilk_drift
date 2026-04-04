@@ -287,6 +287,7 @@ def analyze_diff(
             errors="replace",
             cwd=repo_path,
             check=True,
+            stdin=subprocess.DEVNULL,
         )
         changed_files = [line for line in result.stdout.strip().splitlines() if line]
     except Exception as exc:

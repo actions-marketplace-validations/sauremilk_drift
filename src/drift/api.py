@@ -1436,6 +1436,7 @@ def validate(
                 capture_output=True,
                 check=True,
                 timeout=5,
+                stdin=subprocess.DEVNULL,
             )
             git_available = True
         except (
@@ -1643,6 +1644,7 @@ def _get_changed_files_from_git(
             errors="replace",
             cwd=repo_path,
             check=True,
+            stdin=subprocess.DEVNULL,
         )
         return [line for line in proc.stdout.strip().splitlines() if line]
     except Exception:

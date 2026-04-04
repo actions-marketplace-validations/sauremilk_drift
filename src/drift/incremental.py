@@ -184,6 +184,7 @@ def _capture_git_state(repo_path: Path) -> _GitState | None:
                 errors="replace",
                 cwd=repo_path,
                 check=True,
+                stdin=subprocess.DEVNULL,
             )
             return proc.stdout.strip()
         except Exception:

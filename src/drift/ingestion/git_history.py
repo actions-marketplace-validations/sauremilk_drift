@@ -222,6 +222,7 @@ def _git_repo_prefix(repo_path: Path) -> str:
             errors="replace",
             cwd=str(repo_path),
             timeout=10,
+            stdin=subprocess.DEVNULL,
         )
         if result.returncode != 0:
             return ""
@@ -294,6 +295,7 @@ def parse_git_history(
             errors="replace",
             cwd=str(repo_path),
             timeout=60,
+            stdin=subprocess.DEVNULL,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return []

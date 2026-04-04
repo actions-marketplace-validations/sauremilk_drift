@@ -91,3 +91,133 @@ class TestValidateProgressMetrics:
         assert result["progress"]["resolved_count"] == 2
         assert result["progress"]["known_count"] == 1
         assert result["progress"]["new_count"] == 0
+
+
+class TestMcpToolAsyncInvariant:
+    """All MCP tool functions must be async to avoid blocking the event loop."""
+
+    def test_all_exported_mcp_tools_are_async(self) -> None:
+        from drift.mcp_server import _EXPORTED_MCP_TOOLS
+
+        for tool in _EXPORTED_MCP_TOOLS:
+            assert inspect.iscoroutinefunction(tool), (
+                f"{tool.__name__} must be async def — sync tool functions "
+                f"block the MCP event loop and cause session hangs"
+            )
+
+
+class TestMcpToolErrorEnvelopes:
+    """Every MCP tool must return a JSON error envelope on exception, never propagate."""
+
+    @pytest.mark.parametrize(
+        "tool_name",
+        ["drift_diff", "drift_explain", "drift_validate", "drift_nudge"],
+    )
+    def test_tool_wraps_exception_in_error_envelope(
+        self, monkeypatch: pytest.MonkeyPatch, tool_name: str
+    ) -> None:
+        from drift import mcp_server
+
+        api_func_map = {
+            "drift_diff": "drift.api.diff",
+            "drift_explain": "drift.api.explain",
+            "drift_validate": "drift.api.validate",
+            "drift_nudge": "drift.api.nudge",
+        }
+
+        def _boom(*_a: object, **_kw: object) -> None:
+            raise RuntimeError("injected failure")
+
+        monkeypatch.setattr(api_func_map[tool_name], _boom)
+
+        tool_fn = getattr(mcp_server, tool_name)
+        kwargs: dict[str, object] = (
+            {"path": "."} if tool_name != "drift_explain" else {"topic": "PFS"}
+        )
+        raw = _run_tool(tool_fn(**kwargs))
+        result = json.loads(raw)
+
+        assert result["type"] == "error", f"{tool_name} did not return error envelope"
+        assert result["error_code"] == "DRIFT-5001"
+        assert result["tool"] == tool_name
+
+
+class TestMcpStdioTransportSafety:
+    """Regression tests for MCP stdio transport deadlocks on Windows.
+
+    Root causes fixed:
+    1. subprocess.run() without stdin=DEVNULL inherits MCP stdin handle →
+       Windows IOCP deadlock.
+    2. First-time import of C-extension modules (numpy/torch/faiss) from a
+       worker thread while the IOCP proactor is active → DLL loader lock
+       deadlock.  Fixed by eager imports before the event loop starts.
+    """
+
+    def test_subprocess_calls_use_devnull_stdin(self) -> None:
+        """Every subprocess.run in src/drift must set stdin=DEVNULL.
+
+        When the MCP server runs on stdio transport, child processes must
+        not inherit the server's stdin handle.  Without stdin=DEVNULL,
+        Windows IOCP causes an unrecoverable deadlock.
+        """
+        import ast
+
+        src = Path(__file__).resolve().parent.parent / "src" / "drift"
+        violations: list[str] = []
+
+        for py_file in sorted(src.rglob("*.py")):
+            try:
+                tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
+            except SyntaxError:
+                continue
+
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                # Match subprocess.run(...)
+                func = node.func
+                is_subprocess_run = False
+                if (
+                    isinstance(func, ast.Attribute)
+                    and func.attr == "run"
+                    and isinstance(func.value, ast.Name)
+                    and func.value.id == "subprocess"
+                ):
+                    is_subprocess_run = True
+
+                if not is_subprocess_run:
+                    continue
+
+                # Check keywords for stdin= or input= (input= implies stdin=PIPE)
+                kw_names = {kw.arg for kw in node.keywords if kw.arg}
+                if "stdin" in kw_names or "input" in kw_names:
+                    continue
+
+                rel = py_file.relative_to(src.parent.parent)
+                violations.append(f"{rel}:{node.lineno}")
+
+        assert not violations, (
+            "subprocess.run() without stdin=DEVNULL or input= found "
+            "(would deadlock MCP stdio on Windows):\n"
+            + "\n".join(f"  - {v}" for v in violations)
+        )
+
+    def test_eager_imports_called_before_event_loop(self) -> None:
+        """main() must call _eager_imports() before mcp.run()."""
+        from drift.mcp_server import _eager_imports, main
+
+        # _eager_imports must exist and be callable
+        assert callable(_eager_imports)
+
+        # Verify main() source contains _eager_imports() call before mcp.run()
+        import inspect
+
+        source = inspect.getsource(main)
+        idx_eager = source.find("_eager_imports()")
+        idx_run = source.find("mcp.run(")
+        assert idx_eager != -1, "_eager_imports() call missing from main()"
+        assert idx_run != -1, "mcp.run() call missing from main()"
+        assert idx_eager < idx_run, (
+            "_eager_imports() must be called BEFORE mcp.run() to avoid "
+            "Windows DLL loader lock deadlock with IOCP"
+        )

@@ -11,6 +11,7 @@ Covers:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from pathlib import Path
@@ -449,7 +450,7 @@ class TestMcpDriftNudge:
         TestNudgeAPI._mock_nudge_deps(monkeypatch, tmp_path)
         from drift.mcp_server import drift_nudge
 
-        raw = drift_nudge(path=str(tmp_path), changed_files=None, uncommitted=True)
+        raw = asyncio.run(drift_nudge(path=str(tmp_path), changed_files=None, uncommitted=True))
         parsed = json.loads(raw)
         assert "direction" in parsed
         assert "safe_to_commit" in parsed
@@ -461,11 +462,11 @@ class TestMcpDriftNudge:
         TestNudgeAPI._mock_nudge_deps(monkeypatch, tmp_path)
         from drift.mcp_server import drift_nudge
 
-        raw = drift_nudge(
+        raw = asyncio.run(drift_nudge(
             path=str(tmp_path),
             changed_files="src/a.py, src/b.py",
             uncommitted=True,
-        )
+        ))
         parsed = json.loads(raw)
         assert "src/a.py" in parsed["changed_files"]
         assert "src/b.py" in parsed["changed_files"]
@@ -477,7 +478,7 @@ class TestMcpDriftNudge:
         TestNudgeAPI._mock_nudge_deps(monkeypatch, tmp_path)
         from drift.mcp_server import drift_nudge
 
-        drift_nudge(path=str(tmp_path), changed_files=None, uncommitted=True)
+        asyncio.run(drift_nudge(path=str(tmp_path), changed_files=None, uncommitted=True))
         captured = capsys.readouterr()
         assert captured.out == ""
 
