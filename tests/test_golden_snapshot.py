@@ -35,6 +35,7 @@ _VOLATILE_KEYS = frozenset({
     "analysis_duration_seconds",
     "repo",  # absolute workspace path differs between local and CI runners
     "trend",  # accumulates history across runs — non-deterministic
+    "repo",  # absolute checkout path differs across worktrees/CI
 })
 
 _VOLATILE_SARIF_KEYS = frozenset({
@@ -133,7 +134,10 @@ class TestJsonGoldenSnapshot:
                 "Run: pytest tests/test_golden_snapshot.py --update-golden"
             )
 
-        expected = self.GOLDEN.read_text(encoding="utf-8")
+        expected = _canonical_json(
+            self.GOLDEN.read_text(encoding="utf-8"),
+            _strip_volatile,
+        )
         if canonical != expected:
             # Provide actionable diff summary
             actual_data = json.loads(canonical)
@@ -171,7 +175,10 @@ class TestSarifGoldenSnapshot:
                 "Run: pytest tests/test_golden_snapshot.py --update-golden"
             )
 
-        expected = self.GOLDEN.read_text(encoding="utf-8")
+        expected = _canonical_json(
+            self.GOLDEN.read_text(encoding="utf-8"),
+            _strip_volatile_sarif,
+        )
         if canonical != expected:
             actual_data = json.loads(canonical)
             expected_data = json.loads(expected)
