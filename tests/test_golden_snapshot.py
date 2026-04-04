@@ -35,7 +35,6 @@ _VOLATILE_KEYS = frozenset({
     "analysis_duration_seconds",
     "repo",  # absolute workspace path differs between local and CI runners
     "trend",  # accumulates history across runs — non-deterministic
-    "repo",  # absolute checkout path differs across worktrees/CI
 })
 
 _VOLATILE_SARIF_KEYS = frozenset({
