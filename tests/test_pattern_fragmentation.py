@@ -132,6 +132,50 @@ def test_separate_modules_separate_findings():
     assert len(findings) == 2
 
 
+def test_framework_surface_error_handling_is_dampened():
+    fps = [
+        {"handler": "value_error"},
+        {"handler": "exception"},
+        {"handler": "os_error"},
+        {"handler": "type_error"},
+        {"handler": "runtime_error"},
+    ]
+    patterns = [
+        _make_pattern(PatternCategory.ERROR_HANDLING, "backend/api/routers", f"f{i}", fp)
+        for i, fp in enumerate(fps)
+    ]
+
+    findings = PatternFragmentationSignal().analyze(_wrap(patterns), {}, None)
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding.score < 0.7
+    assert finding.severity == Severity.MEDIUM
+    assert finding.metadata["framework_context_dampened"] is True
+    assert finding.metadata["framework_context_hints"]
+
+
+def test_core_error_handling_is_not_dampened():
+    fps = [
+        {"handler": "value_error"},
+        {"handler": "exception"},
+        {"handler": "os_error"},
+        {"handler": "type_error"},
+        {"handler": "runtime_error"},
+    ]
+    patterns = [
+        _make_pattern(PatternCategory.ERROR_HANDLING, "core/domain", f"f{i}", fp)
+        for i, fp in enumerate(fps)
+    ]
+
+    findings = PatternFragmentationSignal().analyze(_wrap(patterns), {}, None)
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding.score >= 0.7
+    assert finding.severity == Severity.HIGH
+    assert finding.metadata["framework_context_dampened"] is False
+    assert finding.metadata["framework_context_hints"] == []
+
+
 def test_identical_decorator_patterns_no_finding():
     # 5 FastAPI-style routes with identical fingerprints (same structure, different
     # paths/methods) must produce no PFS finding — structural similarity here comes

@@ -8,6 +8,7 @@ inconsistent approaches — often from different AI generation sessions.
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,30 @@ from drift.models import (
 )
 from drift.signals._utils import is_test_file
 from drift.signals.base import BaseSignal, register_signal
+
+_FRAMEWORK_SURFACE_TOKENS: frozenset[str] = frozenset(
+    {
+        "api",
+        "router",
+        "routers",
+        "route",
+        "routes",
+        "controller",
+        "controllers",
+        "endpoint",
+        "endpoints",
+        "handler",
+        "handlers",
+        "page",
+        "pages",
+        "view",
+        "views",
+        "server",
+        "mcp",
+        "orchestration",
+        "orchestrator",
+    },
+)
 
 
 def _normalize_fingerprint(fingerprint: dict[str, Any]) -> dict[str, Any]:
@@ -80,6 +105,35 @@ def _instance_ref(pattern: PatternInstance) -> str:
     return f"{pattern.file_path.as_posix()}:{pattern.start_line}"
 
 
+def _tokenize_path(value: str) -> set[str]:
+    """Tokenize a path-like string into lowercase alphanumeric chunks."""
+    return {tok for tok in re.split(r"[^a-z0-9]+", value.lower()) if tok}
+
+
+def _framework_surface_hints(
+    module_path: Path,
+    module_patterns: list[PatternInstance],
+    endpoint_modules: set[Path],
+) -> list[str]:
+    """Return heuristic hints that a module is framework-facing surface code."""
+    hints: list[str] = []
+
+    if module_path in endpoint_modules:
+        hints.append("api-endpoint-pattern")
+
+    module_tokens = _tokenize_path(module_path.as_posix())
+    if module_tokens & _FRAMEWORK_SURFACE_TOKENS:
+        hints.append("module-path-token")
+
+    file_tokens: set[str] = set()
+    for pattern in module_patterns:
+        file_tokens |= _tokenize_path(pattern.file_path.stem)
+    if file_tokens & _FRAMEWORK_SURFACE_TOKENS:
+        hints.append("filename-token")
+
+    return hints
+
+
 @register_signal
 class PatternFragmentationSignal(BaseSignal):
     """Detect multiple incompatible pattern variants within architectural modules."""
@@ -109,6 +163,10 @@ class PatternFragmentationSignal(BaseSignal):
                 all_patterns[pattern.category].append(pattern)
 
         findings: list[Finding] = []
+        endpoint_modules = {
+            p.file_path.parent
+            for p in all_patterns.get(PatternCategory.API_ENDPOINT, [])
+        }
 
         for category, patterns in all_patterns.items():
             # Analyze per-module fragmentation
@@ -140,11 +198,28 @@ class PatternFragmentationSignal(BaseSignal):
                     spread_factor = min(1.5, 1.0 + (non_canonical_count - 2) * 0.04)
                     frag_score = min(1.0, frag_score * spread_factor)
 
+                framework_hints: list[str] = []
+                if category is PatternCategory.ERROR_HANDLING:
+                    framework_hints = _framework_surface_hints(
+                        module_path=module_path,
+                        module_patterns=module_patterns,
+                        endpoint_modules=endpoint_modules,
+                    )
+                    if framework_hints:
+                        # Framework boundary layers often require heterogenous
+                        # error behavior and should not default to HIGH urgency.
+                        frag_score *= 0.65
+
                 # Build description
                 desc_parts = [
                     f"{num_variants} {category.value} variants in {module_path.as_posix()}/ "
                     f"({canonical_count}/{total} use canonical pattern).",
                 ]
+                if framework_hints:
+                    desc_parts.append(
+                        "  - Framework-facing module detected; severity was "
+                        "context-calibrated for endpoint/orchestration diversity."
+                    )
                 for p in non_canonical[:3]:
                     desc_parts.append(
                         f"  - {_instance_ref(p)} ({p.function_name})"
@@ -157,6 +232,9 @@ class PatternFragmentationSignal(BaseSignal):
                     severity = Severity.MEDIUM
                 elif frag_score >= 0.3:
                     severity = Severity.LOW
+
+                if framework_hints and severity is Severity.HIGH:
+                    severity = Severity.MEDIUM
 
                 nc_count = len(non_canonical)
                 canonical_examples = sorted(
@@ -203,6 +281,8 @@ class PatternFragmentationSignal(BaseSignal):
                             "canonical_exemplar": _instance_ref(canonical_exemplar),
                             "module": module_path.as_posix(),
                             "total_instances": total,
+                            "framework_context_dampened": bool(framework_hints),
+                            "framework_context_hints": framework_hints,
                             "deliberate_pattern_risk": (
                                 "May reflect architecture transition or deliberate variation. "
                                 "Review whether variants serve distinct purposes."

@@ -1,5 +1,36 @@
 # Risk Register
 
+## 2026-04-05 - PFS framework-surface error-handling severity calibration (Issue #142)
+
+- Risk ID: RISK-SIG-2026-04-05-142
+- Component: src/drift/signals/pattern_fragmentation.py
+- Type: Signal quality (false positives / severity calibration)
+- Description: pattern_fragmentation over-prioritized error-handling variance in framework-facing application layers (for example routers/pages/server orchestration), where heterogeneity is often intentional.
+- Trigger examples:
+  - mickg/Real-Time Fortnite Coach: backend/api/routers, src/ui/pages, mcp_server
+  - Similar monorepos with mixed framework boundaries and endpoint orchestration code
+- Impact: High-severity false-positive clustering, reduced trust in PFS ranking, and avoidable remediation churn.
+- Mitigation:
+  - Add framework-surface heuristic hints (API endpoint co-location + path/file tokens such as router/page/controller/server).
+  - Apply conservative score dampening for error_handling findings in framework-facing modules.
+  - Prevent default HIGH severity for this context while preserving finding emission and explainability metadata.
+  - Add targeted regressions for dampened framework modules and unchanged core-module behavior.
+- Verification: pytest tests/test_pattern_fragmentation.py -q --maxfail=1
+- Residual risk: Medium-low; heuristic hints may under-rank rare high-risk fragmentation at framework boundaries, but findings are still emitted with explicit context metadata.
+
+## 2026-04-05 - drift_score scope disambiguation in machine outputs (Issue #159)
+
+- Risk ID: RISK-OUT-2026-04-05-159
+- Components: src/drift/api_helpers.py, src/drift/api.py, src/drift/output/json_output.py, src/drift/commands/analyze.py, src/drift/commands/check.py, src/drift/commands/baseline.py, src/drift/baseline.py, src/drift/output/agent_tasks.py, src/drift/copilot_context.py, src/drift/negative_context_export.py
+- Type: Output contract clarity / agent decision safety
+- Description: `drift_score` appeared with one key name across different execution scopes (repo, diff, baseline-filtered, fix-plan context), enabling incorrect cross-context comparisons by agents and CI orchestrators.
+- Mitigation:
+  - Added sibling field `drift_score_scope` to affected machine-readable payloads.
+  - Introduced centralized scope builder (`build_drift_score_scope`) and signal-scope label helper (`signal_scope_label`) for deterministic descriptors.
+  - Wired scope descriptors into analyze/check JSON, scan API, baseline outputs, fix-plan API, brief/negative-context payloads, copilot context payload, and agent-tasks JSON.
+- Verification: `pytest tests/test_json_output.py tests/test_output_golden.py tests/test_scan_diversity.py tests/test_brief.py tests/test_mcp_copilot.py tests/test_baseline.py::TestBaselineIO tests/test_baseline.py::TestBaselineDiff -q --maxfail=1` (117 passed).
+- Residual risk: Low; legacy consumers that ignore unknown fields remain compatible, while consumers that compare scores now have explicit scope metadata.
+
 ## 2026-04-05 - MAZ, AVS, EDS signal quality improvements (Issues #148, #149, #150, #151)
 
 - Risk ID: RISK-SIG-2026-04-05-148-151

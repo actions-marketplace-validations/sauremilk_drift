@@ -1,5 +1,20 @@
 # Fault Tree Analysis
 
+## 2026-04-05 - PFS framework-surface error-handling calibration (Issue #142)
+
+### FT-1: False HIGH severity on framework-facing error-handling diversity
+- Top event: pattern_fragmentation emits HIGH urgency for router/page/server modules where error behavior differences are framework-idiomatic.
+- Branch A: PFS computes fragmentation from variant count and spread only.
+- Branch B: Framework boundary modules naturally encode heterogeneous error contracts.
+- Branch C: No context-aware dampening in previous logic.
+- Mitigation implemented: Add framework-surface hints (API endpoint co-location + path/file tokens) and apply conservative score/urgency dampening for error_handling context.
+
+### FT-2: Under-ranked true boundary fragmentation after dampening
+- Top event: A genuinely harmful framework-boundary fragmentation case is ranked below expected urgency.
+- Branch A: Heuristic hints classify module as framework-facing.
+- Branch B: Context dampening reduces score and suppresses default HIGH severity.
+- Mitigation implemented: Keep findings emitted (no suppression), limit dampening to hint-matched context only, and expose framework hint metadata for explicit reviewer escalation.
+
 ## 2026-04-05 - HSC OAuth endpoint URL false positives (Issue #161)
 
 ### FT-1: False positive on OAuth endpoint constants

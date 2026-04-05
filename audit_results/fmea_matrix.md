@@ -1,5 +1,12 @@
 # FMEA Matrix
 
+## 2026-04-05 - PFS framework-surface error-handling calibration (Issue #142)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| PFS | FP-severity: framework-facing modules reported as HIGH for expected error-handling variance | Context-agnostic fragmentation scoring treated endpoint/orchestration diversity as structural drift | Triage noise, lower trust, and over-prioritized low-actionability work | Field test report + targeted PFS regressions | Framework-surface heuristic hints + score dampening + HIGH-to-MEDIUM cap for error_handling in framework context | 6 | 6 | 4 | 144 |
+| PFS | FN-severity: truly harmful framework-boundary fragmentation may be under-ranked | Dampening heuristic can lower urgency in edge cases where variance is actually risky | Delayed remediation for rare high-impact boundary inconsistencies | Regression control test on non-framework core modules | Keep finding emission (no suppression), apply dampening only with explicit hints, expose metadata hints for reviewer override | 6 | 2 | 6 | 72 |
+
 ## 2026-04-05 - MAZ, AVS, EDS signal quality batch (Issues #148, #149, #150, #151)
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
