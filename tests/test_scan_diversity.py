@@ -336,6 +336,91 @@ class TestFixFirstDedup:
 
 
 class TestNonOperationalContextFiltering:
+    def test_scan_excludes_fixture_from_findings_by_default(self, monkeypatch):
+        import drift.analyzer as analyzer_module
+        import drift.api as api_module
+
+        findings = [
+            _make_finding(PFS, 0.95, 0.95, file="benchmarks/corpus/src/app.py", line=10),
+            _make_finding(AVS, 0.7, 0.7, file="src/core/service.py", line=20),
+        ]
+        analysis = SimpleNamespace(
+            findings=findings,
+            drift_score=0.6,
+            severity=Severity.HIGH,
+            total_files=20,
+            total_functions=100,
+            ai_attributed_ratio=0.1,
+            trend=None,
+            skipped_files=0,
+            skipped_languages={},
+        )
+
+        monkeypatch.setattr(
+            DriftConfig, "load",
+            staticmethod(lambda *a, **kw: DriftConfig()),
+        )
+        monkeypatch.setattr(analyzer_module, "analyze_repo", lambda *a, **kw: analysis)
+        monkeypatch.setattr(api_module, "_emit_api_telemetry", lambda **kw: None)
+        monkeypatch.setattr(
+            api_module,
+            "_finding_concise",
+            lambda f: {"file": f.file_path.as_posix() if f.file_path else None},
+        )
+
+        result = scan(
+            Path("."),
+            response_detail="concise",
+            strategy="top-severity",
+            max_findings=1,
+        )
+
+        assert result["findings"][0]["file"] == "src/core/service.py"
+        assert result["finding_context"]["excluded_from_prioritization"] == 1
+
+    def test_scan_includes_fixture_in_findings_with_opt_in(self, monkeypatch):
+        import drift.analyzer as analyzer_module
+        import drift.api as api_module
+
+        findings = [
+            _make_finding(PFS, 0.95, 0.95, file="benchmarks/corpus/src/app.py", line=10),
+            _make_finding(AVS, 0.7, 0.7, file="src/core/service.py", line=20),
+        ]
+        analysis = SimpleNamespace(
+            findings=findings,
+            drift_score=0.6,
+            severity=Severity.HIGH,
+            total_files=20,
+            total_functions=100,
+            ai_attributed_ratio=0.1,
+            trend=None,
+            skipped_files=0,
+            skipped_languages={},
+        )
+
+        monkeypatch.setattr(
+            DriftConfig, "load",
+            staticmethod(lambda *a, **kw: DriftConfig()),
+        )
+        monkeypatch.setattr(analyzer_module, "analyze_repo", lambda *a, **kw: analysis)
+        monkeypatch.setattr(api_module, "_emit_api_telemetry", lambda **kw: None)
+        monkeypatch.setattr(
+            api_module,
+            "_finding_concise",
+            lambda f: {"file": f.file_path.as_posix() if f.file_path else None},
+        )
+
+        result = scan(
+            Path("."),
+            response_detail="concise",
+            strategy="top-severity",
+            include_non_operational=True,
+            max_findings=1,
+        )
+
+        assert result["findings"][0]["file"] == "benchmarks/corpus/src/app.py"
+        assert result["finding_context"]["excluded_from_prioritization"] == 0
+
     def test_scan_detailed_excludes_fixture_from_fix_first_by_default(self, monkeypatch):
         import drift.analyzer as analyzer_module
         import drift.api as api_module

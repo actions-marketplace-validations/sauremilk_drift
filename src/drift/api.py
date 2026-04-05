@@ -309,8 +309,15 @@ def _format_scan_response(
             if signal_abbrev(f.signal_type) in signal_filter
         ]
 
-    ranked_selected = sorted(
+    prioritized_for_fix_first, excluded_for_fix_first, context_counts = split_findings_by_context(
         selected_findings,
+        config,
+        include_non_operational=include_non_operational,
+    )
+    findings_for_prioritization = prioritized_for_fix_first
+
+    ranked_selected = sorted(
+        findings_for_prioritization,
         key=lambda f: (
             -f.impact,
             f.signal_type.value,
@@ -320,12 +327,12 @@ def _format_scan_response(
     )
 
     if strategy == "diverse":
-        limited = _diverse_findings(selected_findings, max_findings)
+        limited = _diverse_findings(findings_for_prioritization, max_findings)
     else:
         limited = ranked_selected[:max_findings]
 
     selected_signal_counts: Counter[str] = Counter(
-        signal_abbrev(f.signal_type) for f in selected_findings
+        signal_abbrev(f.signal_type) for f in findings_for_prioritization
     )
     included_signal_counts: Counter[str] = Counter(
         signal_abbrev(f.signal_type) for f in limited
@@ -346,11 +353,6 @@ def _format_scan_response(
 
     omitted_signals.sort(key=lambda item: (-int(item["omitted"]), item["signal"]))
 
-    prioritized_for_fix_first, excluded_for_fix_first, context_counts = split_findings_by_context(
-        selected_findings,
-        config,
-        include_non_operational=include_non_operational,
-    )
     critical_count = sum(1 for f in selected_findings if f.severity.value == "critical")
     high_count = sum(1 for f in selected_findings if f.severity.value == "high")
     blocking_reasons: list[str] = []
@@ -403,12 +405,13 @@ def _format_scan_response(
                 set(config.finding_context.non_operational_contexts)
             ),
             "include_non_operational": include_non_operational,
+            "excluded_from_prioritization": len(excluded_for_fix_first),
             "excluded_from_fix_first": len(excluded_for_fix_first),
         },
     )
 
     selection_diagnostics: dict[str, Any] | None = None
-    if len(selected_findings) > max_findings:
+    if len(findings_for_prioritization) > max_findings:
         selection_diagnostics = {
             "strategy": strategy,
             "max_findings": max_findings,
