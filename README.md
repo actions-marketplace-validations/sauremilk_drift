@@ -188,7 +188,7 @@ The fastest way to add drift to your workflow:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/mick-gsk/drift
-    rev: v1.4.2
+    rev: vX.Y.Z                  # pin to the latest stable tag from GitHub Releases
     hooks:
       - id: drift-check          # blocks on high-severity findings
       # - id: drift-report        # report-only alternative (start here)
