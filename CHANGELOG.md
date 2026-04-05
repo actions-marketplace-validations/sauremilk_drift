@@ -117,6 +117,14 @@ Short version: Migrate release automation to python-semantic-release in CI.
 
 - Align README trust signals by reconciling development-status wording, removing hardcoded coverage percentage, softening single-rater badge framing, and updating stale pre-commit revision example.
 
+## [1.5.0] - 2026-04-02
+
+Short version: Add tests for issues #69-73 agent-ux improvements. (+7 more commits)
+
+### Changed
+
+- Add tests for issues #69-73 agent-ux improvements. (+7 more commits)
+
 ## [1.4.2] - 2026-04-02
 
 Short version: Harden release automation tag fallback logic.
@@ -134,15 +142,6 @@ Short version: Add explicit docstring for patterns target_path. (+1 more commits
 ### Changed
 
 - Add explicit docstring for patterns target_path. (+1 more commits)
-
-
-## [1.5.0] - 2026-04-02
-
-Short version: Add tests for issues #69-73 agent-ux improvements. (+7 more commits)
-
-### Changed
-
-- Add tests for issues #69-73 agent-ux improvements. (+7 more commits)
 
 ## [1.4.0] - 2026-04-02
 
