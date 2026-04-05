@@ -1,5 +1,40 @@
 # Risk Register
 
+## 2026-04-05 - AVS lazy-import policy violation detection (Issue #146)
+
+- Risk ID: RISK-SIG-2026-04-05-146
+- Component: src/drift/signals/architecture_violation.py, src/drift/config.py, src/drift/ingestion/ast_parser.py, src/drift/models.py
+- Type: Signal quality (false negatives / policy coverage)
+- Description: AVS did not surface explicit lazy-import policy violations for heavy runtime libraries imported at module level, even when repository policy mandated lazy imports.
+- Trigger examples:
+  - mickg/Real-Time Fortnite Coach: module-level heavy import in perception detector path.
+  - Similar ML/runtime-sensitive repositories with documented lazy-import conventions.
+- Impact: Missed policy-level architecture findings, lower trust in AVS for enforcement-oriented workflows.
+- Mitigation:
+  - Added configurable `policies.lazy_import_rules` (`from`, `modules`, `module_level_only`) in config model/schema.
+  - Added AVS check producing dedicated `avs_lazy_import_policy` findings.
+  - Added import scope metadata (`ImportInfo.is_module_level`) to distinguish module-level from local lazy imports.
+  - Added regressions for detection and local-import non-detection.
+- Verification: `pytest tests/test_architecture_violation.py tests/test_ast_parser.py tests/test_config.py -q --maxfail=1` (37 passed).
+- Residual risk: Medium-low; pattern-based module matching may require repo-specific tuning for unusual import aliasing conventions.
+
+## 2026-04-05 - MDS package-level lazy __getattr__ false-positive mitigation (Issue #144)
+
+- Risk ID: RISK-SIG-2026-04-05-144
+- Component: src/drift/signals/mutant_duplicates.py
+- Type: Signal quality (false positives / severity calibration)
+- Description: `mutant_duplicate` flagged identical package-level `__getattr__` implementations in `__init__.py` as high-severity duplicates, even when this pattern is an intentional lazy-submodule loading idiom (PEP 562).
+- Trigger examples:
+  - mickg/Real-Time Fortnite Coach: multiple package `__init__.py` files with deliberate lazy-loading `__getattr__` implementation.
+  - Similar Python package repos that expose lazy imports via package `__getattr__`.
+- Impact: False-positive duplicate findings, inflated high-severity noise, reduced trust in MDS prioritization.
+- Mitigation:
+  - Add explicit `__getattr__` + `__init__.py` heuristic (`_is_package_lazy_getattr`) and exclude these functions from MDS duplicate candidate collection.
+  - Keep duplicate detection active for non-package `__getattr__` implementations.
+  - Add dedicated regression tests for both suppression and non-suppression cases.
+- Verification: `pytest tests/test_mutant_duplicates_edge_cases.py -q --maxfail=1` (23 passed).
+- Residual risk: Medium-low; rare repositories may hide truly problematic package-level `__getattr__` duplication, but this is generally intentional API plumbing.
+
 ## 2026-04-05 - TPD negative assertion undercount calibration (Issue #143)
 
 - Risk ID: RISK-SIG-2026-04-05-143

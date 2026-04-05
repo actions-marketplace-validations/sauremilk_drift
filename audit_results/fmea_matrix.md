@@ -1,5 +1,19 @@
 # FMEA Matrix
 
+## 2026-04-05 - AVS lazy-import policy violation detection (Issue #146)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| AVS | FN: policy-relevant heavy module-level imports are not surfaced | AVS had boundary and inferred-layer checks, but no dedicated lazy-import policy rule for heavy runtime libraries | Documented architecture policy violations (for example `onnxruntime`/`torch` at module scope) are missed | Field report from Real-Time Fortnite Coach + targeted AVS/parser/config regressions | Add configurable `policies.lazy_import_rules` with module-level enforcement and explicit `avs_lazy_import_policy` findings | 7 | 5 | 4 | 140 |
+| AVS | FP: legitimate local lazy imports are flagged as violations | Import analysis lacks scope distinction between module-level and function-local imports | Noisy triage and reduced trust in policy findings | Regression case with local `import torch` in function scope | Extend `ImportInfo` with `is_module_level`, default rule `module_level_only=true`, and test coverage for scope-aware suppression | 5 | 3 | 4 | 60 |
+
+## 2026-04-05 - MDS package-level lazy __getattr__ false positives (Issue #144)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| MDS | FP: package `__init__.py` lazy-loading `__getattr__` functions reported as high-severity exact duplicates | Duplicate detector treated intentional PEP 562 package plumbing as copy-paste drift | High-priority triage noise and lower confidence in MDS findings | Field-test issue report + dedicated regression tests | Exclude package-level `__getattr__` in `__init__.py` from MDS candidate set; keep non-package `__getattr__` detection active | 5 | 6 | 4 | 120 |
+| MDS | FN: true architectural duplication in package-level `__getattr__` can be under-reported | New suppression heuristic intentionally skips this idiom by default | Rare real duplication problems may be surfaced later by reviewers instead of MDS | Regression guard for non-`__init__.py` `__getattr__` duplicates | Scope suppression strictly to `__init__.py` + `__getattr__` only | 4 | 2 | 6 | 48 |
+
 ## 2026-04-05 - TPD negative assertion undercount calibration (Issue #143)
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

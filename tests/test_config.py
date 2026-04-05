@@ -49,6 +49,27 @@ policies:
     assert config.policies.max_pattern_variants == {"error_handling": 2}
 
 
+def test_load_yaml_lazy_import_rules(tmp_path: Path):
+    yaml_content = """\
+policies:
+  lazy_import_rules:
+    - name: heavy_runtime_libs
+      from: src/perception/*.py
+      modules:
+        - onnxruntime
+        - torch
+      module_level_only: true
+"""
+    (tmp_path / "drift.yaml").write_text(yaml_content)
+    config = DriftConfig.load(tmp_path)
+
+    assert len(config.policies.lazy_import_rules) == 1
+    rule = config.policies.lazy_import_rules[0]
+    assert rule.from_pattern == "src/perception/*.py"
+    assert rule.modules == ["onnxruntime", "torch"]
+    assert rule.module_level_only is True
+
+
 def test_weight_sum_with_report_only_signals_remains_reasonable():
     w = DriftConfig().weights
     total = sum(w.as_dict().values())

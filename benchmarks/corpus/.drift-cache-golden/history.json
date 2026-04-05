@@ -1,10 +1,10 @@
 [
   {
-    "timestamp": "2026-04-04T10:33:09.253835+00:00",
-    "drift_score": 0.516,
+    "timestamp": "2026-04-05T12:23:33.075168+00:00",
+    "drift_score": 0.515,
     "signal_scores": {
       "mutant_duplicate": 0.8532,
-      "explainability_deficit": 0.4721,
+      "explainability_deficit": 0.4673,
       "doc_impl_drift": 0.2602,
       "test_polarity_deficit": 0.1734,
       "guard_clause_deficit": 0.4698,

@@ -37,6 +37,7 @@ demos
 docs
 docs-site
 drift.example.yaml
+drift.schema.json
 examples
 llms.txt
 master-backlog

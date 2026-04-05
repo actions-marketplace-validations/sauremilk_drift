@@ -161,6 +161,16 @@ def test_discover_files_terminates_on_empty_repo(
 )
 def test_discover_files_finds_all_python_files(file_names: list[str]) -> None:
     """discover_files must return at least the Python files placed in the repo root."""
+    # Deduplicate case-insensitively for case-insensitive filesystems (Windows/macOS)
+    seen: set[str] = set()
+    unique_names: list[str] = []
+    for name in file_names:
+        key = name.lower()
+        if key not in seen:
+            seen.add(key)
+            unique_names.append(name)
+    file_names = unique_names
+
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
         for name in file_names:

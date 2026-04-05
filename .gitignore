@@ -42,4 +42,7 @@ action_rate_test.txt
 diag_err.txt
 
 outreach/
+examples/agent-framework/
+tests/test_agent_framework*.py
+community_flywheel_output/
 reddit.com-Ist der vollständig agentenbasierte Workflow tatsächlich nur Unsinn oder übersehe ich etwas  rExperi-fpscreenshot.pdf

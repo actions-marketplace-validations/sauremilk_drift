@@ -320,6 +320,7 @@ class PythonFileParser(ast.NodeVisitor):
         self.imports: list[ImportInfo] = []
         self.patterns: list[PatternInstance] = []
         self._current_class: str | None = None
+        self._scope_depth = 0
 
     def parse(self) -> ParseResult:
         try:
@@ -453,53 +454,65 @@ class PythonFileParser(ast.NodeVisitor):
             )
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        self._process_function(node)
-        self.generic_visit(node)
+        self._scope_depth += 1
+        try:
+            self._process_function(node)
+            self.generic_visit(node)
+        finally:
+            self._scope_depth -= 1
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._process_function(node)
-        self.generic_visit(node)
+        self._scope_depth += 1
+        try:
+            self._process_function(node)
+            self.generic_visit(node)
+        finally:
+            self._scope_depth -= 1
 
     # -- Classes ------------------------------------------------------------
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        bases = []
-        for base in node.bases:
-            if isinstance(base, ast.Name):
-                bases.append(base.id)
-            elif isinstance(base, ast.Attribute):
-                try:
-                    bases.append(ast.unparse(base))
-                except Exception:
-                    bases.append("unknown")
+        self._scope_depth += 1
+        try:
+            bases = []
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    bases.append(base.id)
+                elif isinstance(base, ast.Attribute):
+                    try:
+                        bases.append(ast.unparse(base))
+                    except Exception:
+                        bases.append("unknown")
 
-        has_docstring = (
-            bool(node.body)
-            and isinstance(node.body[0], ast.Expr)
-            and isinstance(node.body[0].value, ast.Constant)
-            and isinstance(node.body[0].value.value, str)
-        )
+            has_docstring = (
+                bool(node.body)
+                and isinstance(node.body[0], ast.Expr)
+                and isinstance(node.body[0].value, ast.Constant)
+                and isinstance(node.body[0].value.value, str)
+            )
 
-        prev_class = self._current_class
-        self._current_class = node.name
+            prev_class = self._current_class
+            self._current_class = node.name
 
-        class_info = ClassInfo(
-            name=node.name,
-            file_path=self.file_path,
-            start_line=node.lineno,
-            end_line=node.end_lineno or node.lineno,
-            language="python",
-            bases=bases,
-            has_docstring=has_docstring,
-        )
+            class_info = ClassInfo(
+                name=node.name,
+                file_path=self.file_path,
+                start_line=node.lineno,
+                end_line=node.end_lineno or node.lineno,
+                language="python",
+                bases=bases,
+                has_docstring=has_docstring,
+            )
 
-        self.generic_visit(node)
+            self.generic_visit(node)
 
-        # Collect methods that were added while visiting this class
-        class_info.methods = [f for f in self.functions if f.name.startswith(f"{node.name}.")]
+            # Collect methods that were added while visiting this class
+            class_info.methods = [f for f in self.functions if f.name.startswith(f"{node.name}.")]
 
-        self.classes.append(class_info)
-        self._current_class = prev_class
+            self.classes.append(class_info)
+            self._current_class = prev_class
+        finally:
+            self._scope_depth -= 1
 
     # -- Imports ------------------------------------------------------------
 
@@ -512,6 +525,7 @@ class PythonFileParser(ast.NodeVisitor):
                     imported_names=[alias.asname or alias.name],
                     line_number=node.lineno,
                     is_relative=False,
+                    is_module_level=self._scope_depth == 0,
                 )
             )
 
@@ -525,6 +539,7 @@ class PythonFileParser(ast.NodeVisitor):
                 imported_names=names,
                 line_number=node.lineno,
                 is_relative=(node.level or 0) > 0,
+                is_module_level=self._scope_depth == 0,
             )
         )
 
@@ -603,6 +618,7 @@ def _parse_typescript_stub(
                     imported_names=names,
                     line_number=i,
                     is_relative=module.startswith("."),
+                    is_module_level=True,
                 )
             )
 

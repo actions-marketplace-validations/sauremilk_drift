@@ -82,6 +82,7 @@ class TestJsonOutputGolden:
             "finding_context_policy",
             "suppressed_count",
             "context_tagged_count",
+            "baseline",
             "negative_context",
         }
         assert set(data.keys()) == expected_keys

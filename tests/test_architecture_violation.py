@@ -3,6 +3,7 @@
 import datetime
 from pathlib import Path
 
+from drift.config import DriftConfig, LazyImportRule, PolicyConfig
 from drift.ingestion.git_history import build_co_change_pairs
 from drift.models import (
     ClassInfo,
@@ -126,6 +127,63 @@ def test_upward_import_detected():
     assert upward[0].fix is not None
     assert "Move routes.py logic behind a service layer" in upward[0].fix
     assert "Verschiebe" not in upward[0].fix
+
+
+def test_lazy_import_policy_violation_detected_for_module_level_heavy_import():
+    results = [
+        _pr("src/perception/detector.py", [_imp("src/perception/detector.py", "onnxruntime", 7)]),
+    ]
+    cfg = DriftConfig()
+    cfg.policies = PolicyConfig(
+        lazy_import_rules=[
+            LazyImportRule(
+                name="heavy_runtime_libs",
+                **{"from": "src/perception/*.py"},
+                modules=["onnxruntime", "torch", "cv2"],
+            )
+        ]
+    )
+
+    signal = ArchitectureViolationSignal()
+    findings = signal.analyze(results, {}, cfg)
+
+    lazy_findings = [f for f in findings if f.rule_id == "avs_lazy_import_policy"]
+    assert len(lazy_findings) == 1
+    assert lazy_findings[0].severity == Severity.HIGH
+    assert "module level" in lazy_findings[0].description
+
+
+def test_lazy_import_policy_ignores_local_import_when_module_level_only():
+    results = [
+        _pr(
+            "src/perception/detector.py",
+            [
+                ImportInfo(
+                    source_file=Path("src/perception/detector.py"),
+                    imported_module="torch",
+                    imported_names=["torch"],
+                    line_number=22,
+                    is_module_level=False,
+                )
+            ],
+        ),
+    ]
+    cfg = DriftConfig()
+    cfg.policies = PolicyConfig(
+        lazy_import_rules=[
+            LazyImportRule(
+                name="heavy_runtime_libs",
+                **{"from": "src/perception/*.py"},
+                modules=["torch"],
+                module_level_only=True,
+            )
+        ]
+    )
+
+    signal = ArchitectureViolationSignal()
+    findings = signal.analyze(results, {}, cfg)
+
+    assert [f for f in findings if f.rule_id == "avs_lazy_import_policy"] == []
 
 
 def test_circular_dependency_detected():

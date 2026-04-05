@@ -138,6 +138,7 @@ def _ser_import(i: ImportInfo) -> dict[str, Any]:
         "imported_names": i.imported_names,
         "line_number": i.line_number,
         "is_relative": i.is_relative,
+        "is_module_level": i.is_module_level,
     }
 
 
@@ -204,6 +205,7 @@ def _deser_import(d: dict[str, Any]) -> ImportInfo:
         imported_names=d.get("imported_names", []),
         line_number=d["line_number"],
         is_relative=d.get("is_relative", False),
+        is_module_level=d.get("is_module_level", True),
     )
 
 

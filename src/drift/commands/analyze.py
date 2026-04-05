@@ -248,8 +248,14 @@ def analyze(
     progress_console = Console(stderr=True) if output_format != "rich" else effective_console
 
     # Auto-detect: for non-TTY consumers, emit JSON progress on stderr (#155)
-    if progress_format == "auto" and not sys.stdout.isatty():
-        progress_format = "json"
+    if progress_format == "auto":
+        from drift.commands._io import _is_non_tty_stdout
+
+        if _is_non_tty_stdout():
+            from drift.commands._io import _is_non_tty_stdout
+
+        if _is_non_tty_stdout():
+            progress_format = "json"
 
     use_json_progress = progress_format == "json"
     # Auto-suppress Rich progress for machine-readable formats to avoid

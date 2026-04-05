@@ -44,6 +44,22 @@ def test_parse_imports(tmp_path: Path, sample_python_source: str):
     assert "typing" in modules
 
 
+def test_import_scope_marks_module_level_and_local_imports(tmp_path: Path):
+    source = '''\
+import os
+
+def load_model():
+    import torch
+    return torch
+'''
+    (tmp_path / "sample.py").write_text(source)
+    result = parse_python_file(Path("sample.py"), tmp_path)
+
+    imports = {i.imported_module: i for i in result.imports}
+    assert imports["os"].is_module_level is True
+    assert imports["torch"].is_module_level is False
+
+
 def test_parse_error_handling_patterns(tmp_path: Path, sample_python_source: str):
     (tmp_path / "sample.py").write_text(sample_python_source)
     result = parse_python_file(Path("sample.py"), tmp_path)

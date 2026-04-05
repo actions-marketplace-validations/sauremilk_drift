@@ -162,10 +162,7 @@ def _is_public_api_package_path(file_path: Path, package_roots: set[str]) -> boo
         return False
     if tokens[0] not in package_roots:
         return False
-    if any(token in _INTERNAL_LIBRARY_PATH_TOKENS for token in tokens):
-        return False
-
-    return True
+    return not any(token in _INTERNAL_LIBRARY_PATH_TOKENS for token in tokens)
 
 
 def _is_route_entrypoint_function(decorators: list[str]) -> bool:

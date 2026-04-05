@@ -2,15 +2,32 @@
 
 from __future__ import annotations
 
+import json
 import sys
+import time
 from pathlib import Path
 
 import click
 
 from drift.api import brief as api_brief
 from drift.api import to_json
-from drift.commands._io import _write_output_file
+from drift.commands._io import _is_non_tty_stdout, _write_output_file
 from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
+
+_progress_start: float = 0.0
+
+
+def _json_progress_callback(phase: str, current: int, total: int) -> None:
+    """Emit structured JSON-lines progress on stderr for agent consumption."""
+    msg = {
+        "type": "progress",
+        "step": current,
+        "total": total,
+        "signal": phase,
+        "elapsed_s": round(time.monotonic() - _progress_start, 1),
+    }
+    sys.stderr.write(json.dumps(msg) + "\n")
+    sys.stderr.flush()
 
 
 def _render_risk_bar(level: str) -> str:
@@ -88,6 +105,12 @@ def _render_risk_bar(level: str) -> str:
     default=False,
     help="Only print guardrails (no briefing header).",
 )
+@click.option(
+    "--progress",
+    type=click.Choice(["auto", "json", "none"]),
+    default="auto",
+    help="Progress reporting: auto (json for non-TTY), json, none.",
+)
 def brief(
     task: str,
     path: Path,
@@ -99,6 +122,7 @@ def brief(
     include_non_operational: bool,
     json_shortcut: bool,
     quiet: bool,
+    progress: str,
 ) -> None:
     """Generate a pre-task structural briefing before agent delegation.
 
@@ -114,6 +138,16 @@ def brief(
     """
     if json_shortcut:
         output_format = "json"
+
+    # Auto-detect: use JSON progress for non-TTY consumers (#155)
+    if progress == "auto" and _is_non_tty_stdout():
+        progress = "json"
+
+    progress_cb = None
+    if progress == "json":
+        global _progress_start
+        _progress_start = time.monotonic()
+        progress_cb = _json_progress_callback
 
     # Redirect console output when using machine-readable formats
     if output_format != "rich":
@@ -136,6 +170,7 @@ def brief(
         signals=signals,
         max_guardrails=max_guardrails,
         include_non_operational=include_non_operational,
+        on_progress=progress_cb,
     )
 
     if output_format == "json":

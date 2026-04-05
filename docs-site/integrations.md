@@ -98,6 +98,17 @@ Current documented public analysis entry points include:
 
 These are most useful when you want a custom orchestration layer without wrapping shell commands.
 
+## Microsoft Agent Framework
+
+If you want to run drift inside a Python agent loop, prefer wrapping the stable `drift.api` functions as local function tools instead of parsing CLI output.
+
+The repository now includes a minimal Microsoft Agent Framework example that composes a Drift specialist agent behind a coordinator agent:
+
+- `examples/agent-framework/drift_agent_framework.py`
+- `examples/agent-framework/README.md`
+
+This path is the best fit when drift and the agent run in the same Python process. Use MCP instead when your host already discovers tools via `.vscode/mcp.json` or another MCP client.
+
 ## MCP server
 
 Drift also exposes an MCP (Model Context Protocol) server for agent-native integration in tools like VS Code Copilot Chat.

@@ -368,6 +368,7 @@ def _extract_imports(
                 imported_names=names,
                 line_number=node.start_point[0] + 1,
                 is_relative=module.startswith("."),
+                is_module_level=True,
             )
         )
 

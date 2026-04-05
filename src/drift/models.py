@@ -109,6 +109,7 @@ class ImportInfo:
     imported_names: list[str]
     line_number: int
     is_relative: bool = False
+    is_module_level: bool = True
 
 
 @dataclass
@@ -274,6 +275,8 @@ class RepoAnalysis:
     file_histories: dict[str, FileHistory] = field(default_factory=dict)
     suppressed_count: int = 0
     context_tagged_count: int = 0
+    baseline_new_count: int | None = None
+    baseline_matched_count: int | None = None
     trend: TrendContext | None = None
     analysis_status: str = "complete"  # "complete" | "degraded"
     degradation_causes: list[str] = field(default_factory=list)

@@ -11,6 +11,7 @@ Enhancements over v0.1:
 - Embedding-based layer inference (optional): uses semantic similarity
   to layer-prototype descriptions when sentence-transformers is installed.
 - Policy ``allowed_cross_layer`` patterns suppress matching findings.
+- Configurable lazy-import policy rules detect module-level heavy imports.
 """
 
 from __future__ import annotations
@@ -49,6 +50,15 @@ def _module_for_path(path: Path) -> str:
 
 def _matches_pattern(path_str: str, pattern: str) -> bool:
     return fnmatch.fnmatch(path_str, pattern)
+
+
+def _matches_module_pattern(module: str, pattern: str) -> bool:
+    """Match module names against exact/prefix or glob-style patterns."""
+    if _matches_pattern(module, pattern):
+        return True
+    if any(ch in pattern for ch in "*?[]"):
+        return False
+    return module == pattern or module.startswith(f"{pattern}.")
 
 
 def build_import_graph(
@@ -280,11 +290,16 @@ class ArchitectureViolationSignal(BaseSignal):
         # Collect allowed_cross_layer patterns
         policies = getattr(config, "policies", None) if config else None
         allowed_patterns: list[str] = getattr(policies, "allowed_cross_layer", []) or []
+        lazy_import_rules = getattr(policies, "lazy_import_rules", []) or []
 
         # --- Check configured layer boundaries ---
         if policies and hasattr(policies, "layer_boundaries"):
             for boundary in policies.layer_boundaries:
                 findings.extend(self._check_boundary(boundary, all_imports, parse_results))
+
+        # --- Check configured lazy-import policy rules ---
+        if lazy_import_rules:
+            findings.extend(self._check_lazy_import_rules(lazy_import_rules, all_imports))
 
         # --- Check inferred layer violations (upward imports) ---
         findings.extend(
@@ -508,6 +523,61 @@ class ArchitectureViolationSignal(BaseSignal):
                             "hub_dampened": dst in hub_nodes,
                             "blast_radius": blast_radius.get(src, 0) if blast_radius else 0,
                             "import_target": dst,
+                        },
+                    )
+                )
+
+        return findings
+
+    def _check_lazy_import_rules(
+        self,
+        rules: list[Any],
+        all_imports: list[ImportInfo],
+    ) -> list[Finding]:
+        """Detect policy violations for heavy modules imported at module level."""
+        findings: list[Finding] = []
+
+        for rule in rules:
+            from_pattern = getattr(rule, "from_pattern", "**/*.py")
+            modules = getattr(rule, "modules", []) or []
+            module_level_only = bool(getattr(rule, "module_level_only", True))
+            if not modules:
+                continue
+
+            for imp in all_imports:
+                src = imp.source_file.as_posix()
+                if not _matches_pattern(src, from_pattern):
+                    continue
+                if module_level_only and not imp.is_module_level:
+                    continue
+                if not any(_matches_module_pattern(imp.imported_module, m) for m in modules):
+                    continue
+
+                findings.append(
+                    Finding(
+                        signal_type=self.signal_type,
+                        severity=Severity.HIGH,
+                        score=0.75,
+                        title=f"Lazy-import policy violation: {rule.name}",
+                        description=(
+                            f"{imp.source_file}:{imp.line_number} imports "
+                            f"'{imp.imported_module}' at module level, violating "
+                            f"lazy-import policy rule '{rule.name}'."
+                        ),
+                        file_path=imp.source_file,
+                        start_line=imp.line_number,
+                        fix=(
+                            f"Move import '{imp.imported_module}' in "
+                            f"{imp.source_file.name}:{imp.line_number} into a local "
+                            "function/class scope and initialize lazily at runtime."
+                        ),
+                        rule_id="avs_lazy_import_policy",
+                        metadata={
+                            "rule": rule.name,
+                            "import": imp.imported_module,
+                            "module_level_only": module_level_only,
+                            "is_module_level": imp.is_module_level,
+                            "lazy_import_target": imp.imported_module,
                         },
                     )
                 )

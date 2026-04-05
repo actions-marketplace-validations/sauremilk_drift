@@ -11,7 +11,7 @@ import click
 
 from drift.api import scan as api_scan
 from drift.api import to_json
-from drift.commands._io import _write_output_file
+from drift.commands._io import _is_non_tty_stdout, _write_output_file
 
 _progress_start: float = 0.0
 
@@ -97,6 +97,10 @@ def scan(
     output: Path | None,
 ) -> None:
     """Run the agent-native scan workflow and emit structured JSON."""
+
+    # Auto-detect: use JSON progress for non-TTY consumers (#155)
+    if progress == "auto" and _is_non_tty_stdout():
+        progress = "json"
 
     progress_cb = None
     if progress == "json":

@@ -416,3 +416,59 @@ class TestBaselineFlagOnAnalyze:
         payload = _json.loads(out_file.read_text(encoding="utf-8"))
         assert payload["suppressed_count"] == 1
         assert len(payload["findings_compact"]) == 1
+
+    def test_check_baseline_json_includes_baseline_counts(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """#156: JSON output must include new_findings_count and baseline_matched_count."""
+        from drift.cli import main
+
+        repo = tmp_path / "repo"
+        repo.mkdir(parents=True, exist_ok=True)
+        baseline_file = tmp_path / "baseline.json"
+
+        known_finding = _make_finding(
+            signal=SignalType.PATTERN_FRAGMENTATION,
+            severity=Severity.HIGH,
+            title="Known",
+        )
+        new_finding = _make_finding(
+            signal=SignalType.MUTANT_DUPLICATE,
+            severity=Severity.MEDIUM,
+            title="New",
+            file_path="src/bar.py",
+        )
+        save_baseline(_make_analysis([known_finding]), baseline_file)
+
+        def _fake_analyze_diff(*_args, **_kwargs) -> RepoAnalysis:
+            return RepoAnalysis(
+                repo_path=repo,
+                analyzed_at=datetime.datetime.now(datetime.UTC),
+                drift_score=0.7,
+                findings=[known_finding, new_finding],
+            )
+
+        monkeypatch.setattr("drift.analyzer.analyze_diff", _fake_analyze_diff)
+
+        out_file = tmp_path / "result.json"
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "check",
+                "--repo", str(repo),
+                "--baseline", str(baseline_file),
+                "--json", "--compact",
+                "-o", str(out_file),
+                "--exit-zero",
+            ],
+        )
+        assert result.exit_code == 0
+
+        import json as _json
+        payload = _json.loads(out_file.read_text(encoding="utf-8"))
+        assert payload["baseline"]["applied"] is True
+        assert payload["baseline"]["new_findings_count"] == 1
+        assert payload["baseline"]["baseline_matched_count"] == 1

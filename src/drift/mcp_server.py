@@ -362,8 +362,13 @@ async def drift_fix_plan(
         Field(description="Restrict tasks to findings inside this subdirectory."),
     ] = None,
     exclude_paths: Annotated[
-        list[str] | None,
-        Field(description="Exclude findings inside these subdirectories."),
+        str | None,
+        Field(
+            description=(
+                "Exclude findings inside these subdirectories "
+                "(comma-separated paths)."
+            ),
+        ),
     ] = None,
     include_deferred: Annotated[
         bool,
@@ -401,13 +406,18 @@ async def drift_fix_plan(
 
         try:
             with contextlib.redirect_stdout(io.StringIO()):
+                exclude_paths_list = (
+                    [p.strip() for p in exclude_paths.split(",") if p.strip()]
+                    if exclude_paths
+                    else None
+                )
                 result = fix_plan(
                     path,
                     signal=signal,
                     max_tasks=max_tasks,
                     automation_fit_min=automation_fit_min,
                     target_path=target_path,
-                    exclude_paths=exclude_paths,
+                    exclude_paths=exclude_paths_list,
                     include_deferred=include_deferred,
                     include_non_operational=include_non_operational,
                 )

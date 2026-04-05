@@ -256,3 +256,129 @@ class TestPreTaskSignals:
             signals=["PFS"],
         )
         assert result["type"] == "brief"
+
+
+# ---------------------------------------------------------------------------
+# Issue #157: brief must surface directory-level findings in scope
+# ---------------------------------------------------------------------------
+
+
+class TestBriefScopeFiltering:
+    """brief() must not miss findings whose file_path matches the resolved scope."""
+
+    def test_directory_finding_matches_scope(self, tmp_repo: Path) -> None:
+        """A finding with file_path = scope directory must be included (#157)."""
+        import datetime
+        from unittest.mock import patch
+
+        from drift.models import Finding, RepoAnalysis, Severity, SignalType
+        from drift.scope_resolver import ResolvedScope
+
+        pfs_finding = Finding(
+            signal_type=SignalType.PATTERN_FRAGMENTATION,
+            severity=Severity.HIGH,
+            score=0.85,
+            title="api_endpoint: 5 variants in api/routers/",
+            description="5 error handling variants.",
+            file_path=Path("api/routers"),
+        )
+
+        fake_analysis = RepoAnalysis(
+            repo_path=tmp_repo,
+            analyzed_at=datetime.datetime.now(datetime.UTC),
+            drift_score=0.7,
+            findings=[pfs_finding],
+            total_files=10,
+            total_functions=50,
+        )
+
+        fake_scope = ResolvedScope(
+            paths=["api/routers"],
+            confidence=0.9,
+            method="keyword_match",
+            matched_tokens=["api", "routers"],
+        )
+
+        with (
+            patch("drift.analyzer.analyze_repo", return_value=fake_analysis),
+            patch("drift.scope_resolver.resolve_scope", return_value=fake_scope),
+            patch("drift.scope_resolver.expand_scope_imports", return_value=[]),
+        ):
+            result = api_brief(
+                tmp_repo,
+                task="fix error handling in api routers",
+            )
+
+        assert result["landscape"]["finding_count"] >= 1
+
+    def test_file_finding_in_scope_directory(self, tmp_repo: Path) -> None:
+        """A finding with file_path under the scope directory must be included."""
+        import datetime
+        from unittest.mock import patch
+
+        from drift.models import Finding, RepoAnalysis, Severity, SignalType
+        from drift.scope_resolver import ResolvedScope
+
+        finding = Finding(
+            signal_type=SignalType.PATTERN_FRAGMENTATION,
+            severity=Severity.MEDIUM,
+            score=0.5,
+            title="error_handling: 3 variants in api/routers/",
+            description="Fragmentation detected.",
+            file_path=Path("api/routers/users.py"),
+        )
+
+        out_of_scope = Finding(
+            signal_type=SignalType.PATTERN_FRAGMENTATION,
+            severity=Severity.LOW,
+            score=0.3,
+            title="unrelated",
+            description="Outside scope.",
+            file_path=Path("models/base.py"),
+        )
+
+        fake_analysis = RepoAnalysis(
+            repo_path=tmp_repo,
+            analyzed_at=datetime.datetime.now(datetime.UTC),
+            drift_score=0.5,
+            findings=[finding, out_of_scope],
+            total_files=20,
+            total_functions=100,
+        )
+
+        fake_scope = ResolvedScope(
+            paths=["api/routers"],
+            confidence=0.9,
+            method="keyword_match",
+            matched_tokens=["api", "routers"],
+        )
+
+        with (
+            patch("drift.analyzer.analyze_repo", return_value=fake_analysis),
+            patch("drift.scope_resolver.resolve_scope", return_value=fake_scope),
+            patch("drift.scope_resolver.expand_scope_imports", return_value=[]),
+        ):
+            result = api_brief(tmp_repo, task="fix api routers")
+
+        # Only the in-scope finding should appear
+        assert result["landscape"]["finding_count"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Issue #155: --progress option on brief CLI
+# ---------------------------------------------------------------------------
+
+
+class TestBriefProgress:
+    @staticmethod
+    def _make_runner() -> CliRunner:
+        kwargs: dict = {}
+        if "mix_stderr" in CliRunner.__init__.__code__.co_varnames:
+            kwargs["mix_stderr"] = False
+        return CliRunner(**kwargs)
+
+    def test_brief_has_progress_option(self) -> None:
+        """brief CLI must accept --progress."""
+        runner = self._make_runner()
+        result = runner.invoke(brief_cmd, ["--help"])
+        assert "--progress" in result.output

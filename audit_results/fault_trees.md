@@ -1,5 +1,35 @@
 # Fault Tree Analysis
 
+## 2026-04-05 - AVS lazy-import policy violation detection (Issue #146)
+
+### FT-1: False negative chain for heavy module-level imports
+- Top event: Drift does not report a documented lazy-import policy violation for heavy libraries.
+- Branch A: Repository policy requires lazy import for runtime-heavy modules (`onnxruntime`, `torch`, `cv2`).
+- Branch B: Import exists at module scope in production path.
+- Branch C: AVS has no dedicated rule that maps this policy to a finding.
+- Mitigation implemented: Add configurable `policies.lazy_import_rules` in AVS with dedicated rule_id `avs_lazy_import_policy`.
+
+### FT-2: False positive chain after policy enforcement
+- Top event: Local in-function lazy imports are incorrectly flagged as policy violations.
+- Branch A: Import metadata does not distinguish module-level versus local scope.
+- Branch B: Rule matching triggers solely on module name/pattern.
+- Mitigation implemented: Add `ImportInfo.is_module_level` from AST parsing, enforce `module_level_only=true` by default, and add regression tests for local-import suppression.
+
+## 2026-04-05 - MDS package-level lazy __getattr__ false positives (Issue #144)
+
+### FT-1: False positive duplicate finding for intentional package lazy loading
+- Top event: MDS emits HIGH exact-duplicate finding for package `__init__.py` `__getattr__` implementations.
+- Branch A: Candidate collection includes package-level `__getattr__` functions.
+- Branch B: Multiple packages intentionally share the same lazy-loading export bridge code.
+- Branch C: Body-hash grouping escalates these to exact duplicate findings.
+- Mitigation implemented: Exclude package-level `__getattr__` in `__init__.py` from MDS candidate set.
+
+### FT-2: Under-reporting risk for rare problematic package __getattr__ duplication
+- Top event: A truly harmful package-level `__getattr__` duplication does not surface via MDS.
+- Branch A: New suppression heuristic intentionally skips package `__init__.py` `__getattr__`.
+- Branch B: Repository uses package-level `__getattr__` for non-standard heavy logic.
+- Mitigation implemented: Keep suppression narrowly scoped (`__getattr__` + `__init__.py`), retain detection for non-package `__getattr__`, and monitor field reports.
+
 ## 2026-04-05 - TPD negative assertion undercount (Issue #143)
 
 ### FT-1: False happy-path-only finding despite negative coverage

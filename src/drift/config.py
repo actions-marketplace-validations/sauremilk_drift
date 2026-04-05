@@ -19,6 +19,17 @@ class LayerBoundary(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
 
+class LazyImportRule(BaseModel):
+    """Policy rule for enforcing lazy imports of selected modules."""
+
+    name: str
+    from_pattern: str = Field(alias="from")
+    modules: list[str] = Field(default_factory=list)
+    module_level_only: bool = True
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+
 class PolicyConfig(BaseModel):
     """Policy configuration for enforcement rules."""
 
@@ -29,6 +40,7 @@ class PolicyConfig(BaseModel):
     max_pattern_variants: dict[str, int] = Field(default_factory=dict)
     ai_attribution: dict[str, Any] = Field(default_factory=dict)
     allowed_cross_layer: list[str] = Field(default_factory=list)
+    lazy_import_rules: list[LazyImportRule] = Field(default_factory=list)
 
 
 class ThresholdsConfig(BaseModel):

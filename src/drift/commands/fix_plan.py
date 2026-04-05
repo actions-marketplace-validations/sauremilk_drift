@@ -2,12 +2,31 @@
 
 from __future__ import annotations
 
+import json
+import sys
+import time
 from pathlib import Path
 
 import click
 
 from drift.api import fix_plan as api_fix_plan
 from drift.api import to_json
+from drift.commands._io import _is_non_tty_stdout
+
+_progress_start: float = 0.0
+
+
+def _json_progress_callback(phase: str, current: int, total: int) -> None:
+    """Emit structured JSON-lines progress on stderr for agent consumption."""
+    msg = {
+        "type": "progress",
+        "step": current,
+        "total": total,
+        "signal": phase,
+        "elapsed_s": round(time.monotonic() - _progress_start, 1),
+    }
+    sys.stderr.write(json.dumps(msg) + "\n")
+    sys.stderr.flush()
 
 
 @click.command("fix-plan")
@@ -60,6 +79,12 @@ from drift.api import to_json
     help="Include fixture/generated/migration/docs findings in prioritized tasks.",
 )
 @click.option(
+    "--progress",
+    type=click.Choice(["auto", "json", "none"]),
+    default="auto",
+    help="Progress reporting: auto (json for non-TTY), json, none.",
+)
+@click.option(
     "--output",
     "-o",
     type=click.Path(path_type=Path),
@@ -76,9 +101,20 @@ def fix_plan(
     include_deferred: bool,
     automation_fit_min: str | None,
     include_non_operational: bool,
+    progress: str,
     output: Path | None,
 ) -> None:
     """Generate a prioritized, agent-friendly repair plan as JSON."""
+    # Auto-detect: use JSON progress for non-TTY consumers (#155)
+    if progress == "auto" and _is_non_tty_stdout():
+        progress = "json"
+
+    progress_cb = None
+    if progress == "json":
+        global _progress_start
+        _progress_start = time.monotonic()
+        progress_cb = _json_progress_callback
+
     result = api_fix_plan(
         path,
         finding_id=finding_id,
@@ -89,6 +125,7 @@ def fix_plan(
         exclude_paths=list(exclude_paths) or None,
         include_deferred=include_deferred,
         include_non_operational=include_non_operational,
+        on_progress=progress_cb,
     )
     text = to_json(result)
     if output is not None:

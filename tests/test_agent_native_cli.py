@@ -31,6 +31,7 @@ def test_fix_plan_help() -> None:
     assert "--target-path" in result.output
     assert "--exclude" in result.output
     assert "--include-deferred" in result.output
+    assert "--progress" in result.output
 
 
 def test_validate_outputs_json(tmp_path: Path) -> None:
