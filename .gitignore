@@ -46,3 +46,6 @@ examples/agent-framework/
 tests/test_agent_framework*.py
 community_flywheel_output/
 reddit.com-Ist der vollständig agentenbasierte Workflow tatsächlich nur Unsinn oder übersehe ich etwas  rExperi-fpscreenshot.pdf
+agent-framework.pdf
+pdf_extract*.txt
+_fix_encoding.py
