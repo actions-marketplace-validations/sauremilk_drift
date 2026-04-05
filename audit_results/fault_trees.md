@@ -1,5 +1,20 @@
 # Fault Tree Analysis
 
+## 2026-04-05 - HSC ML tokenizer constant false positives (Issue #166)
+
+### FT-1: False positives on ML tokenizer constants
+- Top event: HSC emits hardcoded-secret findings for tokenizer metadata constants in ML code.
+- Branch A: Variable-name heuristic matches secret-shaped token terms (`token`, `*_token`, `*_token_id`).
+- Branch B: Literal is tokenizer metadata (`<|pad|>`, `[CLS]`, chat template, tokenizer class name).
+- Branch C: Generic fallback path treats non-trivial string literals as credential candidates.
+- Mitigation implemented: add tokenizer-context suppression for known tokenizer symbol names, special-token literal markers, and template syntax before generic fallback finding emission.
+
+### FT-2: Under-reporting risk after tokenizer suppression
+- Top event: Real credential assigned to tokenizer-shaped symbols is not reported.
+- Branch A: Tokenizer-context suppression applies to variable names such as `pad_token`.
+- Branch B: Credential-like literal appears in tokenizer symbol assignment.
+- Mitigation implemented: keep known-prefix detection (`ghp_`, `sk-`, `AKIA`, etc.) before tokenizer suppression and add regression coverage to ensure high-confidence secrets are still emitted.
+
 ## 2026-04-05 - NBV try_* attempt-semantics false positives (Issue #165)
 
 ### FT-1: False positive on comparison-style try_* helper

@@ -338,6 +338,60 @@ class TestHSCTrueNegatives:
         findings = signal.analyze([_make_pr("openai_tools.py")], {}, DriftConfig())
         assert len(findings) == 0
 
+    def test_ml_tokenizer_tokens_not_flagged(self, tmp_path: Path) -> None:
+        _write_source(
+            tmp_path,
+            "tokenizer_config.py",
+            '''\
+            pad_token = "<|pad|>"
+            cls_token = "[CLS]"
+            eos_token = "</s>"
+            bos_token = "<s>"
+            ''',
+        )
+        signal = HardcodedSecretSignal(repo_path=tmp_path)
+        findings = signal.analyze([_make_pr("tokenizer_config.py")], {}, DriftConfig())
+        assert len(findings) == 0
+
+    def test_ml_tokenizer_class_and_template_not_flagged(self, tmp_path: Path) -> None:
+        _write_source(
+            tmp_path,
+            "tokenization_llm.py",
+            '''\
+            tokenizer_class_name = "LlamaTokenizerFast"
+            chat_template = "{{ bos_token }}{% for m in messages %}{{ m['content'] }}{% endfor %}"
+            ''',
+        )
+        signal = HardcodedSecretSignal(repo_path=tmp_path)
+        findings = signal.analyze([_make_pr("tokenization_llm.py")], {}, DriftConfig())
+        assert len(findings) == 0
+
+    def test_ml_tokenizer_keyword_arg_not_flagged(self, tmp_path: Path) -> None:
+        _write_source(
+            tmp_path,
+            "build_tokenizer.py",
+            '''\
+            def build_tokenizer(factory):
+                return factory(pad_token="<|pad|>", sep_token="[SEP]")
+            ''',
+        )
+        signal = HardcodedSecretSignal(repo_path=tmp_path)
+        findings = signal.analyze([_make_pr("build_tokenizer.py")], {}, DriftConfig())
+        assert len(findings) == 0
+
+    def test_ml_tokenizer_name_does_not_suppress_real_prefix_secret(self, tmp_path: Path) -> None:
+        _write_source(
+            tmp_path,
+            "tokenizer_secrets.py",
+            '''\
+            pad_token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh"
+            ''',
+        )
+        signal = HardcodedSecretSignal(repo_path=tmp_path)
+        findings = signal.analyze([_make_pr("tokenizer_secrets.py")], {}, DriftConfig())
+        assert len(findings) == 1
+        assert findings[0].rule_id == "hardcoded_api_token"
+
 
 # ---------------------------------------------------------------------------
 # Edge cases

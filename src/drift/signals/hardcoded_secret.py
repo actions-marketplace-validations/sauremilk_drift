@@ -77,6 +77,29 @@ _PLACEHOLDER_RE = re.compile(
 
 _MESSAGE_SUFFIX_RE = re.compile(r"(?:_|^)(?:error|warning|message)$", re.IGNORECASE)
 
+_ML_TOKENIZER_BASE_NAMES: frozenset[str] = frozenset({
+    "pad",
+    "cls",
+    "sep",
+    "mask",
+    "eos",
+    "bos",
+    "unk",
+    "audio",
+    "video",
+    "message_start",
+    "message_end",
+    "image",
+    "vision",
+    "special",
+})
+
+_ML_TOKENIZER_SYMBOL_NAMES: frozenset[str] = frozenset({
+    "chat_template",
+    "tokenizer_class",
+    "tokenizer_class_name",
+})
+
 _SYMBOL_DECLARATION_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_:-]{2,}$")
 
 _ENUM_BASE_NAMES: frozenset[str] = frozenset({
@@ -223,6 +246,34 @@ def _looks_like_natural_language_message(value: str) -> bool:
 
     words = re.findall(r"[A-Za-z]{2,}", value)
     return len(words) >= 5 and (" " in value)
+
+
+def _is_ml_tokenizer_context_literal(var_name: str, string_val: str) -> bool:
+    """Return True for common ML tokenizer constants that are not secrets."""
+    lowered = var_name.lower()
+
+    if lowered in _ML_TOKENIZER_SYMBOL_NAMES:
+        return True
+
+    if lowered.endswith("_token"):
+        base = lowered[:-6]
+        if base in _ML_TOKENIZER_BASE_NAMES:
+            return True
+
+    if lowered.endswith("_token_id"):
+        base = lowered[:-9]
+        if base in _ML_TOKENIZER_BASE_NAMES:
+            return True
+
+    # Chat templates and special-token literals are expected tokenizer metadata.
+    if any(marker in string_val for marker in ("{{", "{%", "%}")):
+        return True
+    if re.match(r"^<\|?.+\|?>$", string_val):
+        return True
+    if re.match(r"^\[[^\]]+\]$", string_val):
+        return True
+
+    return False
 
 
 @register_signal
@@ -387,6 +438,11 @@ class HardcodedSecretSignal(BaseSignal):
         if _MESSAGE_SUFFIX_RE.search(var_name) and _looks_like_natural_language_message(
             string_val
         ):
+            return None
+
+        # ML tokenizer metadata (pad_token/chat_template/tokenizer_class_name)
+        # uses "token" as NLP terminology, not credential material.
+        if _is_ml_tokenizer_context_literal(var_name, string_val):
             return None
 
         # Check for placeholder values.

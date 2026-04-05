@@ -1,5 +1,12 @@
 # FMEA Matrix
 
+## 2026-04-05 - HSC ML tokenizer constant false positives (Issue #166)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| HSC | FP: ML tokenizer metadata constants are flagged as hardcoded secrets | Variable-name heuristic matches `token` in NLP tokenizer terms (`pad_token`, `cls_token`, `tokenizer_class_name`, `chat_template`) without domain context | High-severity noise, poor precision on ML repositories, reduced trust in HSC prioritization | Field report on `huggingface/transformers` + targeted HSC regressions | Suppress tokenizer-context literals for known tokenizer symbol names and token markers/templates while preserving high-confidence prefix detection | 7 | 7 | 4 | 196 |
+| HSC | FN: real credentials could be under-reported when assigned to tokenizer-shaped symbols | New tokenizer-context suppression can bypass generic fallback detection for misused tokenizer variable names | Rare secret leakage under tokenizer symbol names may be delayed | Regression keeps known-prefix detection active even on tokenizer symbols | Keep suppression narrow (known tokenizer symbols/patterns), run known-prefix checks before suppression, and monitor field precision/recall deltas | 5 | 2 | 6 | 60 |
+
 ## 2026-04-05 - NBV try_* attempt-semantics false positives (Issue #165)
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

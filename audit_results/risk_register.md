@@ -1,5 +1,22 @@
 # Risk Register
 
+## 2026-04-05 - HSC ML tokenizer constant false-positive mitigation (Issue #166)
+
+- Risk ID: RISK-SIG-2026-04-05-166
+- Component: src/drift/signals/hardcoded_secret.py
+- Type: Signal quality (false positives / precision calibration)
+- Description: HSC flagged ML tokenizer configuration constants as hardcoded secrets when symbol names contained `token` despite literals representing NLP metadata (for example `pad_token`, `cls_token`, `tokenizer_class_name`, `chat_template`).
+- Trigger examples:
+  - huggingface/transformers: tokenizer constants produced high FP volume in HSC findings.
+  - Similar NLP repositories with tokenizer config objects and chat-template literals.
+- Impact: Significant precision drop, high-severity triage noise, and reduced trust in HSC ranking.
+- Mitigation:
+  - Add tokenizer-context suppression for known tokenizer symbol names and token literal markers/template syntax.
+  - Preserve high-confidence secret detection ordering (known token prefixes are evaluated before suppression).
+  - Add targeted regressions for tokenizer constants, tokenizer keyword arguments, and guard test proving known-prefix secrets still fire.
+- Verification: `python -m pytest tests/test_hardcoded_secret.py -q --maxfail=1`
+- Residual risk: Medium-low; rare misuse of tokenizer-shaped symbols for real credentials may bypass generic detection, but known-prefix secret detection remains active.
+
 ## 2026-04-05 - NBV try_* attempt-semantics false-positive mitigation (Issue #165)
 
 - Risk ID: RISK-SIG-2026-04-05-165
