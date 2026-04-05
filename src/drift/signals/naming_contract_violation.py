@@ -12,6 +12,7 @@ the declared intention and the implementation have diverged.
 from __future__ import annotations
 
 import ast
+import re
 import textwrap
 from collections.abc import Callable
 from pathlib import Path
@@ -148,6 +149,29 @@ def _has_bool_return(tree: ast.Module, fn_info: FunctionInfo) -> bool:
 def _has_try_except(tree: ast.Module) -> bool:
     """Return True if the function body contains a try/except block."""
     return any(isinstance(node, ast.Try) for node in ast.walk(tree))
+
+
+def _is_utility_context(file_path: Path) -> bool:
+    """Return True when a file path suggests utility/helper intent."""
+    utility_tokens = {
+        "utils",
+        "util",
+        "helpers",
+        "helper",
+        "common",
+    }
+    parts = {p.lower() for p in file_path.parts}
+    stem = file_path.stem.lower()
+    return bool(parts.intersection(utility_tokens)) or stem in utility_tokens
+
+
+def _looks_like_comparison_semantics(tree: ast.Module, source: str) -> bool:
+    """Return True if source/body looks like comparison/checking utility code."""
+    if any(isinstance(node, ast.Compare) for node in ast.walk(tree)):
+        return True
+    return bool(
+        re.search(r"\bis\s+None\b|\bisinstance\s*\(", source)
+    )
 
 
 # Map checker names to functions (typed for mypy-safe dispatch)
@@ -374,6 +398,17 @@ class NamingContractViolationSignal(BaseSignal):
                     else:
                         checker_simple = _CHECKERS_SIMPLE[checker_name]
                         satisfied = checker_simple(tree)
+
+                    # NBV issue #165: treat try_* "attempt" helpers conservatively.
+                    if (
+                        not satisfied
+                        and matched_prefix == "try_"
+                        and (
+                            _looks_like_comparison_semantics(tree, source)
+                            or _is_utility_context(pr.file_path)
+                        )
+                    ):
+                        satisfied = True
 
                 if satisfied:
                     continue

@@ -1,5 +1,22 @@
 # Risk Register
 
+## 2026-04-05 - NBV try_* attempt-semantics false-positive mitigation (Issue #165)
+
+- Risk ID: RISK-SIG-2026-04-05-165
+- Component: src/drift/signals/naming_contract_violation.py
+- Type: Signal quality (false positives / precision calibration)
+- Description: NBV flagged `try_*` helper functions as naming-contract violations when `try_` was used in natural "attempt/check" semantics (for example `try_neq_default`) without exception handling intent.
+- Trigger examples:
+  - langchain-ai/langchain: `libs/core/langchain_core/utils/function_calling.py::try_neq_default`
+  - Similar utility/helper modules with comparison-oriented `try_*` functions.
+- Impact: Medium-severity false positives, reduced trust in NBV signal, avoidable triage churn.
+- Mitigation:
+  - Added targeted suppression for `try_*` when body suggests comparison/check semantics (`ast.Compare`, `is None`, `isinstance`).
+  - Added utility-context suppression via path tokens (`utils`, `helpers`, `common`).
+  - Added regression tests for comparison-semantic and utility-context `try_*` helpers.
+- Verification: `python -m pytest tests/test_naming_contract_violation.py -q --maxfail=1`
+- Residual risk: Medium-low; some true try/except contract mismatches in helper paths may be under-reported, but suppression is scoped to `try_*` only.
+
 ## 2026-04-05 - DIA bootstrap-repo README false-positive mitigation
 
 - Risk ID: RISK-SIG-2026-04-05-DIA-BOOTSTRAP

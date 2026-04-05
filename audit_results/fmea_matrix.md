@@ -1,5 +1,12 @@
 # FMEA Matrix
 
+## 2026-04-05 - NBV try_* attempt-semantics false positives (Issue #165)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| NBV | FP: `try_*` utility/comparison helpers are flagged as missing try/except | Prefix rule treated every `try_*` as exception-handling contract, ignoring common "attempt/check" semantics | Medium-severity noise and lower trust in NBV findings on helper-heavy repos | Field test on langchain (`try_neq_default`) + targeted regressions | Suppress `try_*` findings when function body shows comparison/checking semantics or when file path indicates utility/helper context | 6 | 6 | 4 | 144 |
+| NBV | FN: genuine missing try/except in utility paths may be under-reported | New suppression allows utility context and comparison-like helpers to bypass try/except contract | Some real error-handling contract mismatches can receive lower visibility | Existing regressions keep non-utility/non-comparison `try_*` violations detectable | Keep suppression scoped to `try_*` only; preserve other naming contracts and default checks for non-matching contexts | 5 | 3 | 6 | 90 |
+
 ## 2026-04-05 - DIA bootstrap-repo README false positives
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

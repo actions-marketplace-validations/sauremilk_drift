@@ -248,6 +248,44 @@ def try_parse(data: str) -> dict:
         assert len(findings) == 1
         assert "try_" in findings[0].metadata["prefix_rule"]
 
+    def test_try_comparison_semantics_no_finding(self, tmp_path: Path):
+        """Comparison-style try_* helpers should be treated as attempt semantics."""
+        pr = _write_and_parse(
+            tmp_path,
+            "src/contracts.py",
+            '''\
+def try_neq_default(value: object, default: object) -> bool:
+    """Attempt to decide whether value differs from default."""
+    if value is None and default is None:
+        return False
+    return value != default
+''',
+        )
+
+        findings = _run([pr], repo_path=tmp_path)
+        assert findings == []
+
+    def test_try_in_utility_context_no_finding(self, tmp_path: Path):
+        """Utility/helper module context should not force try/except semantics."""
+        pr = _write_and_parse(
+            tmp_path,
+            "src/utils/contracts.py",
+            '''\
+def try_parse_config(raw: str) -> dict[str, str]:
+    """Attempt a best-effort parse of key/value config."""
+    pairs = raw.split(",")
+    result: dict[str, str] = {}
+    for pair in pairs:
+        if "=" in pair:
+            key, value = pair.split("=", 1)
+            result[key.strip()] = value.strip()
+    return result
+''',
+        )
+
+        findings = _run([pr], repo_path=tmp_path)
+        assert findings == []
+
 
 # ===================================================================
 # get_or_create_* — expects conditional + create path

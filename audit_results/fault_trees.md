@@ -1,5 +1,21 @@
 # Fault Tree Analysis
 
+## 2026-04-05 - NBV try_* attempt-semantics false positives (Issue #165)
+
+### FT-1: False positive on comparison-style try_* helper
+- Top event: NBV emits "Naming contract violation" for `try_*` function that expresses "attempt/check" semantics rather than exception-handling intent.
+- Branch A: Function name starts with `try_`.
+- Branch B: Body has no explicit `try/except` block.
+- Branch C: Existing rule assumes `try_*` always implies exception contract.
+- Mitigation implemented: suppress `try_*` finding when body indicates comparison/check semantics (`ast.Compare`, `is None`, `isinstance`) or file path indicates utility/helper context.
+
+### FT-2: Under-reporting risk after suppression
+- Top event: A real exception-handling contract mismatch in a utility module is not emitted.
+- Branch A: Function path matches utility/helper tokens.
+- Branch B: Function name starts with `try_` and lacks `try/except`.
+- Branch C: Suppression triggers before finding emission.
+- Mitigation implemented: scope change strictly to `try_*`; keep existing behavior for all other naming contracts and preserve baseline regression for non-utility/non-comparison `try_*` violations.
+
 ## 2026-04-05 - DIA bootstrap-repo README false positives
 
 ### FT-1: False positive README drift on tiny bootstrap repositories
