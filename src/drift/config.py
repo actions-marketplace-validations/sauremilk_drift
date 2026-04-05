@@ -435,6 +435,13 @@ class DriftConfig(BaseModel):
         return self.fail_on
 
 
+def build_config_json_schema() -> dict[str, Any]:
+    """Return the authoritative JSON Schema for drift configuration files."""
+    schema = DriftConfig.model_json_schema(by_alias=True)
+    schema.setdefault("$schema", "https://json-schema.org/draft/2020-12/schema")
+    return schema
+
+
 # ---------------------------------------------------------------------------
 # Signal abbreviation map & CLI filter helpers
 # ---------------------------------------------------------------------------

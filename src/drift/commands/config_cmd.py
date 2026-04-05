@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import click
 from pydantic import ValidationError
 
 from drift.commands import console
-from drift.config import DriftConfig
+from drift.config import DriftConfig, build_config_json_schema
 from drift.errors import DriftError
 
 
@@ -105,3 +106,25 @@ def show(repo: str, config_path: str | None) -> None:
 
     data = cfg.model_dump(mode="json")
     console.print(yaml.dump(data, default_flow_style=False, sort_keys=False))
+
+
+@config.command()
+@click.option(
+    "--output",
+    "output_path",
+    default=None,
+    type=click.Path(),
+    help="Write schema JSON to a file instead of stdout.",
+)
+def schema(output_path: str | None) -> None:
+    """Print the JSON Schema for drift.yaml configuration files."""
+    schema_data = build_config_json_schema()
+    rendered = json.dumps(schema_data, indent=2, sort_keys=True)
+
+    if output_path:
+        target = Path(output_path)
+        target.write_text(f"{rendered}\n", encoding="utf-8")
+        console.print(f"[green]✓[/green] Wrote config schema to [bold]{target}[/bold]")
+        return
+
+    click.echo(rendered)

@@ -15,6 +15,37 @@ fail_on: none
 
 Start with `fail_on: none` so the first rollout teaches the team how to read findings before CI starts blocking merges.
 
+## JSON Schema for drift.yaml
+
+Drift publishes an authoritative JSON Schema at repository root:
+
+- `drift.schema.json`
+
+This schema is generated from the runtime `DriftConfig` model and can be refreshed with:
+
+```bash
+drift config schema --output drift.schema.json
+```
+
+### Editor autocomplete (YAML language server)
+
+Add this header comment to `drift.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mick-gsk/drift/main/drift.schema.json
+```
+
+This enables field autocomplete and static validation in editors that support the YAML language server (for example VS Code).
+
+### CI/static validation
+
+You can validate `drift.yaml` against the same schema in CI:
+
+```bash
+python -m pip install check-jsonschema
+check-jsonschema --schemafile drift.schema.json drift.yaml
+```
+
 ## Full Configuration Reference
 
 ```yaml

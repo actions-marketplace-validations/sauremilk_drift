@@ -2,6 +2,7 @@
 
 ### Added
 
+- Publish an authoritative `drift.schema.json` for `drift.yaml`, add `drift config schema` for regeneration, document editor/CI schema usage, and enforce schema-model alignment with regression tests (#41).
 - Add `--include-positive` flag to `drift export-context` that prepends positive architectural guidance (from copilot-context) to anti-pattern constraints, producing a single combined context document for agent consumption (#128).
 - Add mutation testing infrastructure with cross-platform runner (`scripts/signal_mutation_test.py`) and 20 threshold sensitivity tests; baseline kill rate **100%** (23/23) — all 5 core signals (PFS, AVS, MDS, EDS, GCD) at 100%.
 - Introduce configurable finding-context triage policy with precedence-based glob rules to keep non-operational findings out of default remediation queues unless explicitly requested.
