@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- Align `scan --strategy diverse` with `analyze` priorities by guaranteeing a minimum top-impact share and exposing explicit `selection_diagnostics.top_impact_window` data when high-impact findings are deprioritized by strategy (#154).
 - Wrap `drift_negative_context` MCP tool exceptions in structured error envelope (`DRIFT-5001`) instead of propagating raw Python exceptions to MCP clients (#138).
 - GitHub Action outputs `drift-score`, `finding-count`, `severity` are now populated unconditionally, not only when `comment: "true"` is set (#139).
 - Add `--path` / `--target-path` option to `drift check` for path-scoped CI analysis, consistent with all other analysis commands (#140).

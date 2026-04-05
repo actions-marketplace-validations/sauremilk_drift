@@ -5,7 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from drift.api import _diverse_findings, _format_scan_response, scan
+from drift.api import (
+    _DIVERSE_MIN_TOP_IMPACT_SHARE,
+    _diverse_findings,
+    _format_scan_response,
+    scan,
+)
 from drift.config import DriftConfig
 from drift.models import AgentTask, Severity, SignalType
 
@@ -64,6 +69,32 @@ class TestDiverseFindings:
         ]
         result = _diverse_findings(findings, 5)
         assert len(result) <= 5
+
+    def test_diverse_preserves_minimum_top_impact_share(self):
+        """diverse strategy keeps a minimum share of top-impact hotspots."""
+        findings = (
+            [_make_finding(PFS, 0.95, 0.95 - i * 0.01) for i in range(15)]
+            + [_make_finding(AVS, 0.8, 0.55)]
+            + [_make_finding(MDS, 0.75, 0.54)]
+            + [_make_finding(COD, 0.7, 0.53)]
+        )
+        max_findings = 10
+        result = _diverse_findings(findings, max_findings)
+
+        ranked = sorted(
+            findings,
+            key=lambda f: (
+                -f.impact,
+                f.signal_type.value,
+                f.file_path.as_posix() if f.file_path else "",
+                f.start_line or 0,
+            ),
+        )
+        top_window_ids = {id(f) for f in ranked[:max_findings]}
+        preserved = sum(1 for f in result if id(f) in top_window_ids)
+        preserved_share = preserved / max_findings
+
+        assert preserved_share >= _DIVERSE_MIN_TOP_IMPACT_SHARE
 
     def test_top_severity_preserves_old_behavior(self, monkeypatch):
         """top-severity returns pure score-sorted findings."""
@@ -197,6 +228,46 @@ class TestDiverseFindings:
         assert dia_entry["included"] == 0
         assert dia_entry["omitted"] == 3
         assert dia_entry["reason"] == "deprioritized_by_strategy"
+
+    def test_scan_reports_deprioritized_top_impact_window_for_diverse(self, monkeypatch):
+        """diverse diagnostics should report when top-impact findings were deprioritized."""
+        import drift.api as api_module
+
+        findings = (
+            [_make_finding(PFS, 0.95, 0.95 - i * 0.01) for i in range(6)]
+            + [_make_finding(AVS, 0.8, 0.6)]
+            + [_make_finding(MDS, 0.75, 0.59)]
+            + [_make_finding(COD, 0.7, 0.58)]
+        )
+        analysis = SimpleNamespace(
+            findings=findings,
+            drift_score=0.62,
+            severity=Severity.HIGH,
+            total_files=10,
+            total_functions=40,
+            ai_attributed_ratio=0.0,
+            trend=None,
+        )
+        monkeypatch.setattr(
+            api_module, "_finding_concise",
+            lambda f: {"signal": api_module.signal_abbrev(f.signal_type), "title": f.title},
+        )
+        monkeypatch.setattr(
+            api_module, "_fix_first_concise",
+            lambda analysis, max_items=5: [],
+        )
+
+        result = _format_scan_response(
+            analysis,
+            config=DriftConfig(),
+            max_findings=5,
+            strategy="diverse",
+        )
+
+        top_window = result["selection_diagnostics"]["top_impact_window"]
+        assert top_window["window_size"] == 5
+        assert top_window["preserved_share"] >= _DIVERSE_MIN_TOP_IMPACT_SHARE
+        assert top_window["deprioritized_count"] >= 1
 
     def test_scan_omission_diagnostics_absent_without_truncation(self, monkeypatch):
         """No omission diagnostics when all selected findings are returned."""

@@ -12,6 +12,7 @@ import json
 import logging as _logging
 from collections import Counter
 from collections.abc import Callable
+from math import ceil
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
@@ -67,6 +68,15 @@ def _emit_api_telemetry(
 # ---------------------------------------------------------------------------
 
 _log = _logging.getLogger("drift")
+
+_DIVERSE_MIN_TOP_IMPACT_SHARE = 0.4
+
+
+def _diverse_top_impact_quota(max_findings: int) -> int:
+    """Return guaranteed top-impact slots for the diverse strategy."""
+    if max_findings <= 0:
+        return 0
+    return max(1, min(max_findings, int(ceil(max_findings * _DIVERSE_MIN_TOP_IMPACT_SHARE))))
 
 
 def _warn_config_issues(cfg: Any) -> list[str]:
@@ -215,9 +225,14 @@ def _diverse_findings(findings: list, max_findings: int) -> list:
     """Select findings with signal diversity.
 
     Algorithm:
-    1. One top finding per signal with score >= 0.5 (sorted by score desc)
-    2. Fill remaining slots with highest-scored remaining findings
+    1. Reserve a minimum share of highest-impact findings
+       (preserves analyze/scan priority alignment).
+    2. Add one top finding per yet-unseen signal with score >= 0.5.
+    3. Fill remaining slots with highest-impact remaining findings.
     """
+    if max_findings <= 0:
+        return []
+
     by_score = sorted(
         findings,
         key=lambda f: (
@@ -228,21 +243,37 @@ def _diverse_findings(findings: list, max_findings: int) -> list:
         ),
     )
 
-    # Phase 1: one top finding per signal (score >= 0.5)
-    seen_signals: set[str] = set()
-    phase1: list = []
-    phase1_set: set[int] = set()
+    if len(by_score) <= max_findings:
+        return by_score
+
+    # Phase 1: guaranteed top-impact floor.
+    top_impact_quota = _diverse_top_impact_quota(max_findings)
+    result: list = by_score[:top_impact_quota]
+    selected_ids: set[int] = {id(f) for f in result}
+    seen_signals: set[str] = {f.signal_type.value for f in result}
+
+    # Phase 2: one representative per yet-unseen signal.
     for f in by_score:
+        if len(result) >= max_findings:
+            break
+        if id(f) in selected_ids:
+            continue
         sig = f.signal_type.value
         if sig not in seen_signals and f.score >= 0.5:
             seen_signals.add(sig)
-            phase1.append(f)
-            phase1_set.add(id(f))
+            result.append(f)
+            selected_ids.add(id(f))
 
-    # Phase 2: fill remaining slots from highest-scored remaining
-    remaining = [f for f in by_score if id(f) not in phase1_set]
-    budget = max_findings - len(phase1)
-    result = phase1 + remaining[:budget] if budget > 0 else phase1[:max_findings]
+    # Phase 3: fill remaining slots by impact ranking.
+    if len(result) < max_findings:
+        for f in by_score:
+            if len(result) >= max_findings:
+                break
+            if id(f) in selected_ids:
+                continue
+            result.append(f)
+            selected_ids.add(id(f))
+
     return result
 
 
@@ -269,19 +300,20 @@ def _format_scan_response(
             if signal_abbrev(f.signal_type) in signal_filter
         ]
 
+    ranked_selected = sorted(
+        selected_findings,
+        key=lambda f: (
+            -f.impact,
+            f.signal_type.value,
+            f.file_path.as_posix() if f.file_path else "",
+            f.start_line or 0,
+        ),
+    )
+
     if strategy == "diverse":
         limited = _diverse_findings(selected_findings, max_findings)
     else:
-        ranked = sorted(
-            selected_findings,
-            key=lambda f: (
-                -f.impact,
-                f.signal_type.value,
-                f.file_path.as_posix() if f.file_path else "",
-                f.start_line or 0,
-            ),
-        )
-        limited = ranked[:max_findings]
+        limited = ranked_selected[:max_findings]
 
     selected_signal_counts: Counter[str] = Counter(
         signal_abbrev(f.signal_type) for f in selected_findings
@@ -365,16 +397,48 @@ def _format_scan_response(
         },
     )
 
-    if omitted_signals:
-        result["selection_diagnostics"] = {
+    selection_diagnostics: dict[str, Any] | None = None
+    if len(selected_findings) > max_findings:
+        selection_diagnostics = {
             "strategy": strategy,
             "max_findings": max_findings,
-            "signals_with_omitted_findings": omitted_signals,
             "note": (
                 "Some findings are not returned due to max_findings truncation "
                 "and selection strategy."
             ),
         }
+
+        if omitted_signals:
+            selection_diagnostics["signals_with_omitted_findings"] = omitted_signals
+
+        if strategy == "diverse" and max_findings > 0:
+            top_window = ranked_selected[:max_findings]
+            included_ids = {id(f) for f in limited}
+            deprioritized_top_window = [f for f in top_window if id(f) not in included_ids]
+            preserved = len(top_window) - len(deprioritized_top_window)
+            top_window_size = len(top_window)
+            preserved_share = (
+                round(preserved / top_window_size, 3) if top_window_size else 1.0
+            )
+            top_window_diag: dict[str, Any] = {
+                "window_size": top_window_size,
+                "preserved": preserved,
+                "preserved_share": preserved_share,
+                "minimum_expected_share": _DIVERSE_MIN_TOP_IMPACT_SHARE,
+            }
+            if deprioritized_top_window:
+                signal_counter = Counter(
+                    signal_abbrev(f.signal_type) for f in deprioritized_top_window
+                )
+                top_window_diag["deprioritized_count"] = len(deprioritized_top_window)
+                top_window_diag["deprioritized_signals"] = [
+                    {"signal": signal, "count": count}
+                    for signal, count in sorted(signal_counter.items())
+                ]
+            selection_diagnostics["top_impact_window"] = top_window_diag
+
+    if selection_diagnostics:
+        result["selection_diagnostics"] = selection_diagnostics
 
     # detailed mode adds fix_first, recommended_next_actions, agent_instruction
     if detail == "detailed":
