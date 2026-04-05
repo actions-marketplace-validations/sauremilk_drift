@@ -354,7 +354,13 @@ class DocImplDriftSignal(BaseSignal):
 
         # Locate README
         readme_path = self._find_readme()
+        is_bootstrap_repo = len(parse_results) <= 1 or (
+            bool(parse_results)
+            and all(result.file_path.name == "__init__.py" for result in parse_results)
+        )
         if readme_path is None:
+            if is_bootstrap_repo:
+                return findings
             findings.append(
                 Finding(
                     signal_type=self.signal_type,

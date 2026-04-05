@@ -38,6 +38,8 @@ class TestEmptyRepo:
         result = scan(tmp_path)
         assert isinstance(result["finding_count"], int)
         assert isinstance(result["findings"], list)
+        assert result["finding_count"] == 0
+        assert result["findings"] == []
 
 
 class TestSingleFileProject:
@@ -66,6 +68,15 @@ class TestSingleFileProject:
     def test_single_file_total_files(self, single_file_repo: Path) -> None:
         result = scan(single_file_repo)
         assert result["total_files"] >= 1
+
+    def test_single_file_has_no_bootstrap_readme_finding(
+        self,
+        single_file_repo: Path,
+    ) -> None:
+        result = scan(single_file_repo)
+
+        assert result["finding_count"] == 0
+        assert result["findings"] == []
 
 
 class TestInitOnlyRepo:
@@ -98,3 +109,5 @@ class TestInitOnlyRepo:
         result = scan(init_only_repo)
         assert isinstance(result["finding_count"], int)
         assert isinstance(result["findings"], list)
+        assert result["finding_count"] == 0
+        assert result["findings"] == []

@@ -270,10 +270,7 @@ def _is_ml_tokenizer_context_literal(var_name: str, string_val: str) -> bool:
         return True
     if re.match(r"^<\|?.+\|?>$", string_val):
         return True
-    if re.match(r"^\[[^\]]+\]$", string_val):
-        return True
-
-    return False
+    return bool(re.match(r"^\[[^\]]+\]$", string_val))
 
 
 @register_signal
