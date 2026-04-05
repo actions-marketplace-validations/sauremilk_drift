@@ -638,7 +638,10 @@ class ArchitectureViolationSignal(BaseSignal):
 
             # Compute abstraction ratio from class info
             pr = pr_by_path.get(node)
+            line_count = pr.line_count if pr is not None else 0
             total_classes = len(pr.classes) if pr is not None else 0
+            function_count = len(pr.functions) if pr is not None else 0
+            entity_count = total_classes + function_count
             if pr is not None and total_classes > 0:
                 abstract_count = 0
                 for c in pr.classes:
@@ -662,10 +665,30 @@ class ArchitectureViolationSignal(BaseSignal):
                 continue
 
             score = min(1.0, round(distance * 0.7, 2))
+            # Tiny stable adapter/base modules can be legitimate foundations.
+            # Keep the finding but require stronger coupling evidence for HIGH.
+            tiny_foundational = (
+                line_count > 0
+                and line_count <= 20
+                and entity_count <= 2
+                and ce <= 1
+            )
+            has_high_risk_evidence = ca >= 6 or (ca >= 4 and ce >= 2)
+            dampened_for_tiny_foundation = tiny_foundational and not has_high_risk_evidence
+            if dampened_for_tiny_foundation:
+                score = min(score, 0.49)
+
+            severity = Severity.MEDIUM if score < 0.5 else Severity.HIGH
+            evidence_note = (
+                " Severity dampened for tiny foundational module; "
+                "require stronger coupling evidence for HIGH."
+                if dampened_for_tiny_foundation
+                else ""
+            )
             findings.append(
                 Finding(
                     signal_type=self.signal_type,
-                    severity=Severity.MEDIUM if score < 0.5 else Severity.HIGH,
+                    severity=severity,
                     score=score,
                     title=(
                         f"Zone of Pain: {Path(node).name} "
@@ -676,6 +699,7 @@ class ArchitectureViolationSignal(BaseSignal):
                         f"(I={instability:.2f}) with {ca} dependents. "
                         f"Distance from main sequence D={distance:.2f}. "
                         f"Changes here are costly and propagate widely."
+                        f"{evidence_note}"
                     ),
                     file_path=Path(node),
                     fix=(
@@ -688,6 +712,10 @@ class ArchitectureViolationSignal(BaseSignal):
                         "distance_main_seq": round(distance, 3),
                         "afferent_coupling": ca,
                         "efferent_coupling": ce,
+                        "line_count": line_count,
+                        "entity_count": entity_count,
+                        "has_high_risk_evidence": has_high_risk_evidence,
+                        "tiny_foundational_dampened": dampened_for_tiny_foundation,
                     },
                 )
             )

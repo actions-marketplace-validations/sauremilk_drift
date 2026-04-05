@@ -9,6 +9,7 @@ from drift.models import (
     CommitInfo,
     ImportInfo,
     ParseResult,
+    Severity,
     SignalType,
 )
 from drift.signals.architecture_violation import (
@@ -243,6 +244,64 @@ def test_no_zone_of_pain_for_abstract_module():
     zone = [f for f in findings if "Zone of Pain" in f.title and "base.py" in f.title]
     # A=1.0, I=0.0 → D=0.0 → NOT in zone of pain
     assert len(zone) == 0
+
+
+def test_zone_of_pain_tiny_foundation_is_dampened():
+    """Tiny foundational modules should not be emitted as HIGH without extra risk evidence."""
+    prs = [
+        ParseResult(
+            file_path=Path("core/logger.py"),
+            language="python",
+            imports=[_imp("core/logger.py", "core.base")],
+            line_count=4,
+        ),
+        _pr("core/base.py", []),
+        _pr("services/a.py", [_imp("services/a.py", "core.logger")]),
+        _pr("services/b.py", [_imp("services/b.py", "core.logger")]),
+        _pr("services/c.py", [_imp("services/c.py", "core.logger")]),
+        _pr("api/main.py", [_imp("api/main.py", "services.a")]),
+    ]
+
+    signal = ArchitectureViolationSignal()
+    findings = signal.analyze(prs, {}, None)
+
+    zone = [f for f in findings if "Zone of Pain" in f.title and "logger.py" in f.title]
+    assert len(zone) == 1
+    finding = zone[0]
+    assert finding.severity == Severity.MEDIUM
+    assert finding.score < 0.5
+    assert finding.metadata["tiny_foundational_dampened"] is True
+    assert finding.metadata["has_high_risk_evidence"] is False
+
+
+def test_zone_of_pain_tiny_foundation_can_still_be_high_with_strong_evidence():
+    """Tiny modules can remain HIGH when coupling evidence is strong enough."""
+    prs = [
+        ParseResult(
+            file_path=Path("core/kernel.py"),
+            language="python",
+            imports=[_imp("core/kernel.py", "core.base")],
+            line_count=8,
+        ),
+        _pr("core/base.py", []),
+        _pr("services/a.py", [_imp("services/a.py", "core.kernel")]),
+        _pr("services/b.py", [_imp("services/b.py", "core.kernel")]),
+        _pr("services/c.py", [_imp("services/c.py", "core.kernel")]),
+        _pr("services/d.py", [_imp("services/d.py", "core.kernel")]),
+        _pr("services/e.py", [_imp("services/e.py", "core.kernel")]),
+        _pr("services/f.py", [_imp("services/f.py", "core.kernel")]),
+        _pr("api/main.py", [_imp("api/main.py", "services.a")]),
+    ]
+
+    signal = ArchitectureViolationSignal()
+    findings = signal.analyze(prs, {}, None)
+
+    zone = [f for f in findings if "Zone of Pain" in f.title and "kernel.py" in f.title]
+    assert len(zone) == 1
+    finding = zone[0]
+    assert finding.severity == Severity.HIGH
+    assert finding.metadata["tiny_foundational_dampened"] is False
+    assert finding.metadata["has_high_risk_evidence"] is True
 
 
 # ── Co-change coupling ───────────────────────────────────────────────────

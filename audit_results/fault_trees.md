@@ -1,5 +1,35 @@
 # Fault Tree Analysis
 
+## 2026-04-05 - AVS tiny foundational module severity recalibration (Issue #153)
+
+### FT-1: False HIGH severity on tiny foundational modules
+- Top event: Zone-of-Pain finding is emitted as HIGH for a tiny, intentionally stable adapter/base module.
+- Branch A: Distance-from-main-sequence metric is high due to low abstraction and stability.
+- Branch B: Module structural footprint is tiny (few lines, few entities).
+- Branch C: Coupling evidence is present but not strong enough to justify HIGH action urgency.
+- Mitigation implemented: Tiny-foundational dampening plus explicit high-risk evidence requirement before HIGH severity.
+
+### FT-2: Over-dampening hides true tiny high-impact modules
+- Top event: Tiny foundational module with truly broad impact is under-ranked.
+- Branch A: Dampening logic applies based on module size and low efferent coupling.
+- Branch B: Strong blast-impact indicators are not considered.
+- Mitigation implemented: Keep HIGH when coupling evidence is strong (`ca >= 6` or `ca >= 4 and ce >= 2`) and expose metadata for auditability.
+
+## 2026-04-05 - DCA framework/library public API suppression (Issue #152)
+
+### FT-1: False Positive chain for package public APIs
+- Top event: Dead-code finding recommends removing symbols that are part of external framework/library API.
+- Branch A: DCA infers usage only from intra-repo imports.
+- Branch B: Public symbols are consumed by downstream users, not imported internally.
+- Branch C: Aggregate finding reports large unused-export clusters on API modules.
+- Mitigation implemented: Detect package-layout public API modules and suppress dead-export aggregation for those paths.
+
+### FT-2: False Negative chain after suppression
+- Top event: Real dead symbols in library repos are not reported.
+- Branch A: Suppression boundary too broad and includes internal implementation modules.
+- Branch B: Internal modules with no external API contract lose dead-export visibility.
+- Mitigation implemented: Keep internal/private path tokens out of suppression scope and validate with regression tests.
+
 ## 2026-04-04 - MCP stdio deadlock hardening on Windows
 
 ### FT-1: Tool call blocks on subprocess stdin inheritance

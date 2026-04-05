@@ -1,5 +1,19 @@
 # FMEA Matrix
 
+## 2026-04-05 - AVS tiny foundational module severity calibration (Issue #153)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| AVS (Zone of Pain) | FP-severity: tiny foundational modules are emitted as HIGH without sufficient evidence | Severity derived mainly from distance metric; tiny module structure and coupling evidence not considered | Triage noise, low-actionability work prioritized too high, trust erosion | Field test on fastapi/fastapi + targeted regressions | Tiny-foundational dampening and explicit high-risk evidence gate for HIGH severity | 6 | 6 | 4 | 144 |
+| AVS (Zone of Pain) | FN-severity: meaningful tiny modules may be under-ranked after dampening | Over-conservative tiny-module dampening thresholds | Real high-impact foundation risks may be delayed in remediation order | Regression test for tiny module with strong coupling evidence (HIGH retained) | High-risk evidence override (`ca >= 6` or `ca >= 4 and ce >= 2`) plus metadata for observability | 5 | 3 | 5 | 75 |
+
+## 2026-04-05 - DCA framework/library public API suppression (Issue #152)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| DCA | FP: Public framework/library exports are flagged as unused dead code | Internal-import-only heuristic cannot observe external consumers of package APIs | Trust erosion, noisy findings, misprioritized cleanup work | Field report on fastapi/fastapi + regression test on package-layout API modules | Suppress dead-export findings for package-layout public API modules in framework/library profile | 6 | 6 | 4 | 144 |
+| DCA | FN: Internal dead exports may be missed after public API suppression | Over-broad package-level suppression can hide true dead symbols | Reduced dead-code recall in library repositories | Added regression test for internal path token handling | Restrict suppression to package public API paths and keep internal/private path tokens reportable | 5 | 3 | 5 | 75 |
+
 ## 2026-04-04 - MCP stdio deadlock hardening on Windows
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

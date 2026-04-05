@@ -1,5 +1,40 @@
 # Risk Register
 
+## 2026-04-05 - AVS tiny foundational module over-severity recalibration (Issue #153)
+
+- Risk ID: RISK-SIG-2026-04-05-153
+- Component: src/drift/signals/architecture_violation.py
+- Type: Signal quality (severity calibration / false positives)
+- Description: AVS Zone-of-Pain scoring emitted HIGH findings for tiny, intentionally stable foundational modules (for example logger/base adapters) without sufficient coupling evidence.
+- Trigger examples:
+  - fastapi/fastapi: tiny foundation modules reported as "Zone of Pain" with HIGH severity.
+  - Typical profile: low instability, high distance, small file size, low structural footprint.
+- Impact: Over-prioritization of low-actionability findings, reduced trust in AVS severity guidance.
+- Mitigation:
+  - Add tiny-foundational dampening in Zone-of-Pain scoring (`line_count <= 20`, `entity_count <= 2`, `ce <= 1`).
+  - Require stronger coupling evidence for HIGH (`ca >= 6` or `ca >= 4 and ce >= 2`).
+  - Emit explainability metadata (`tiny_foundational_dampened`, `has_high_risk_evidence`, `line_count`, `entity_count`).
+  - Add regression tests covering dampened tiny modules and strong-evidence HIGH cases.
+- Verification: tests/test_architecture_violation.py (19 passed, includes new Issue #153 regressions).
+- Residual risk: Medium-low; heuristics may still need profile tuning for unusually dense tiny modules.
+
+## 2026-04-05 - DCA package public API false-positive mitigation (Issue #152)
+
+- Risk ID: RISK-SIG-2026-04-05-152
+- Component: src/drift/signals/dead_code_accumulation.py
+- Type: Signal quality (false positives / recall balance)
+- Description: DCA treated public exports in package-layout framework/library repositories as dead code when symbols are externally consumed but not internally imported.
+- Trigger examples:
+  - fastapi/applications.py and related package modules with externally used public symbols.
+  - Aggregate finding title: "N potentially unused exports" in framework API files.
+- Impact: High false-positive rate, reduced trust in DCA remediation guidance.
+- Mitigation:
+  - Add package-layout heuristic that suppresses dead-export reporting for likely public API modules.
+  - Keep internal/private path tokens in scope to preserve internal dead-code detection.
+  - Add dedicated regression tests for both suppression and internal-path coverage.
+- Verification: tests/test_dead_code_accumulation.py (7 passed, including new Issue #152 regressions).
+- Residual risk: Medium-low; path-based heuristics may still under-report edge-case internal modules in package roots.
+
 ## 2026-04-04 - MCP stdio deadlock hardening on Windows
 
 - Risk ID: RISK-MCP-2026-04-04-STDIO
