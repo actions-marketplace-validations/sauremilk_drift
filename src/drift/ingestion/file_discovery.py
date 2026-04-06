@@ -148,7 +148,7 @@ def discover_files(
     for pattern in include:
         try:
             matches = list(repo_path.glob(pattern))
-        except OSError as exc:
+        except (OSError, ValueError) as exc:
             logger.warning("glob(%s) failed: %s", pattern, exc)
             continue
         for match in matches:
