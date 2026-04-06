@@ -76,6 +76,10 @@ _TUTORIAL_STEP_MARKERS: tuple[str, ...] = (
 )
 
 _STEP_DIR_RE = re.compile(r"^step(?:[-_ ]?\d+)?(?:[-_][a-z0-9]+)*$", re.IGNORECASE)
+_NUMBERED_SAMPLE_DIR_RE = re.compile(
+    r"^\d{1,3}[-_][a-z0-9]+(?:[-_][a-z0-9]+)*$",
+    re.IGNORECASE,
+)
 
 
 def _is_package_lazy_getattr(fn: FunctionInfo) -> bool:
@@ -104,7 +108,15 @@ def _is_tutorial_step_standalone_sample(fn: FunctionInfo) -> bool:
     if not has_tutorial_marker:
         return False
 
-    has_step_dir = any(_STEP_DIR_RE.match(part) for part in parts)
+    dir_parts = parts[:-1]
+    # Step/progression folders are expected close to the sample file, while
+    # higher-level folders like "04-hosting" should not trigger suppression.
+    nearby_dirs = dir_parts[-2:]
+
+    has_step_dir = any(
+        _STEP_DIR_RE.match(part) or _NUMBERED_SAMPLE_DIR_RE.match(part)
+        for part in nearby_dirs
+    )
     return has_step_dir
 
 

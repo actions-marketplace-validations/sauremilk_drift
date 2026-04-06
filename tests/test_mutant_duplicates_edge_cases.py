@@ -334,6 +334,24 @@ def test_is_tutorial_step_standalone_sample_helper():
     assert _is_tutorial_step_standalone_sample(non_step_fn) is False
 
 
+def test_is_tutorial_step_standalone_sample_helper_numbered_dirs_issue_179():
+    numbered_step_fn = _make_fn(
+        name="get_worker",
+        file_path="python/samples/04-hosting/durabletask/01_single_agent/worker.py",
+        body_hash="h1",
+        ngrams=[["Name", "Load"], ["Call", "Return"]],
+    )
+    plain_sample_fn = _make_fn(
+        name="get_worker",
+        file_path="python/samples/04-hosting/durabletask/shared/worker.py",
+        body_hash="h2",
+        ngrams=[["Name", "Load"], ["Call", "Return"]],
+    )
+
+    assert _is_tutorial_step_standalone_sample(numbered_step_fn) is True
+    assert _is_tutorial_step_standalone_sample(plain_sample_fn) is False
+
+
 def test_analyze_skips_tutorial_step_exact_duplicates_issue_177():
     signal = MutantDuplicateSignal()
     config = DriftConfig()
@@ -401,3 +419,37 @@ def test_analyze_keeps_non_step_sample_duplicates_detectable_issue_177():
     findings = signal.analyze([pr_a, pr_b], {}, config)
     assert len(findings) == 1
     assert findings[0].metadata.get("group_size") == 2
+
+
+def test_analyze_skips_numbered_sample_step_exact_duplicates_issue_179():
+    signal = MutantDuplicateSignal()
+    config = DriftConfig()
+    ngrams = [["Name", "Load"], ["Call", "Return"], ["If", "Return"]]
+
+    pr_step_1 = ParseResult(
+        file_path=Path("python/samples/04-hosting/durabletask/01_single_agent/worker.py"),
+        language="python",
+        functions=[
+            _make_fn(
+                name="get_worker",
+                file_path="python/samples/04-hosting/durabletask/01_single_agent/worker.py",
+                body_hash="sample_worker_hash",
+                ngrams=ngrams,
+            )
+        ],
+    )
+    pr_step_2 = ParseResult(
+        file_path=Path("python/samples/04-hosting/durabletask/02_multi_agent/worker.py"),
+        language="python",
+        functions=[
+            _make_fn(
+                name="get_worker",
+                file_path="python/samples/04-hosting/durabletask/02_multi_agent/worker.py",
+                body_hash="sample_worker_hash",
+                ngrams=ngrams,
+            )
+        ],
+    )
+
+    findings = signal.analyze([pr_step_1, pr_step_2], {}, config)
+    assert findings == []

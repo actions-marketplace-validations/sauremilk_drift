@@ -23,6 +23,7 @@
 
 ### Fixed
 
+- Prevent `mutant_duplicate` from over-penalizing intentional duplication in numbered tutorial/sample progression directories (for example `01_single_agent`, `02_multi_agent`) by extending step-context suppression while keeping non-step sample duplicates detectable (#179).
 - Prevent DCA from reporting executable Python utility/CI scripts (for example `.github/workflows/python-check-coverage.py`) as dead exports by treating script-context paths separately from import-oriented library modules (#176).
 - Reduce HSC false positives for OpenTelemetry GenAI observability constants by excluding semantic-convention literals (for example `gen_ai.usage.input_tokens`) while still preserving known-prefix secret detection (#175).
 - Suppress DIA missing-README finding for bootstrap-sized repositories (≤1 parsed Python file or only `__init__.py` skeletons) to avoid false positives on newly scaffolded projects.
