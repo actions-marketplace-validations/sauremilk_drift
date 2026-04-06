@@ -73,3 +73,70 @@ See [Monorepo Configuration Examples](getting-started/configuration.md#monorepo-
 Drift complements those tools. Linters catch style violations, type checkers catch type errors, security scanners catch vulnerabilities. Drift catches cross-file architectural coherence problems that none of those tools model.
 
 See [Comparisons](comparisons/index.md).
+
+## How long does analysis take?
+
+Typical runtime is 2–5 seconds on Python projects with up to a few hundred files. The Django study corpus (1,800+ files over 10 years of history) completes in under 10 seconds. Drift uses Python's built-in `ast` module — no ML inference, no server, no network calls.
+
+For very large repositories (> 5,000 files), you can restrict analysis to a subdirectory with `--path src/` or cap file discovery via `thresholds.max_discovery_files` in `drift.yaml`.
+
+## How do I ignore generated code or vendor directories?
+
+Add `exclude` patterns to `drift.yaml`:
+
+```yaml
+exclude:
+  - "**/generated/**"
+  - "**/vendor/**"
+  - "**/migrations/**"
+```
+
+Or use the CLI flag: `drift analyze --repo . --exclude "**/generated/**"`.
+
+See [Configuration](getting-started/configuration.md).
+
+## What is the difference between scoring signals and report-only signals?
+
+**Scoring signals** (15) contribute to the composite drift score and severity. These are validated through the ground-truth study with known precision/recall.
+
+**Report-only signals** (8) detect real patterns but are not yet included in the composite score. They appear in findings output tagged as `report_only: true`. Report-only signals graduate to scoring-active once they pass validation thresholds.
+
+See [Signal Reference](algorithms/signals.md).
+
+## Does drift need git history?
+
+Git history is optional. Without it, temporal signals (TVS, ECM) are skipped automatically, and the remaining signals work normally. Shallow clones (`--depth 1`) also work — temporal signals are skipped with a warning.
+
+For full temporal analysis, use `fetch-depth: 0` in CI or a full clone locally.
+
+## Can I run drift on a single file or directory?
+
+Yes. Use `--path` to restrict analysis:
+
+```bash
+drift analyze --repo . --path src/api/
+```
+
+This analyzes only the specified subtree while still resolving cross-file dependencies within it.
+
+## What does a high drift score mean?
+
+A high score (closer to 1.0) indicates more structural entropy — inconsistent patterns, boundary violations, or accumulated duplicates. It does not mean the code is broken or buggy.
+
+Interpret score *changes* over time (`drift trend`), not isolated snapshots. A rising score after AI-assisted development often signals pattern fragmentation that should be reviewed.
+
+See [Interpreting the Score](trust-evidence.md).
+
+## How do I reduce false positives?
+
+1. **Configure `path_overrides`** to exclude known-noisy paths (tests, migrations, generated code)
+2. **Use `# drift:context deliberate-variant`** comments for intentional polymorphism
+3. **Report FPs** via the [FP/FN template](https://github.com/mick-gsk/drift/issues/new?template=false_positive.md) — they directly improve signal quality
+
+See [Troubleshooting](getting-started/troubleshooting.md).
+
+## Can drift work with Copilot, Cursor, or Claude?
+
+Yes. Drift has a built-in MCP server (`drift mcp --serve`) that integrates with MCP-capable editors. It also provides `drift export-context` and `drift copilot-context` commands that generate anti-pattern rules for AI assistants.
+
+See [Integrations](integrations.md) and [Vibe-Coding Guide](https://github.com/mick-gsk/drift/tree/main/examples/vibe-coding).

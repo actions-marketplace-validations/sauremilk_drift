@@ -16,17 +16,27 @@
 [![License](https://img.shields.io/github/license/mick-gsk/drift)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/mick-gsk/drift?style=social)](https://github.com/mick-gsk/drift)
 
-97.3% precision (single-rater) · 23 signals · deterministic · no LLM in pipeline · [full study](docs/STUDY.md) · [docs](https://mick-gsk.github.io/drift/)
+95% precision lenient / 77% strict (single-rater, 286 findings, 5 repos) · 23 signals · deterministic · no LLM in pipeline · [full study](docs/STUDY.md) · [docs](https://mick-gsk.github.io/drift/) · [FAQ](docs-site/faq.md)
 <br>
-1 645+ tests · 0 regressions · 100 % mutation kill rate · [validation data](docs-site/trust-evidence.md)
+2 139+ tests · 0 regressions · 88 % mutation recall (15/17 patterns) · [validation data](docs-site/trust-evidence.md)
 
 </div>
 
 AI coding tools write code that works — but doesn't fit. Error handling fragments across 4 patterns, layer boundaries erode, near-identical utilities accumulate silently. **Drift finds exactly that:** deterministic structural analysis in seconds, no LLM required.
 
 <div align="center">
+  <img src="docs-site/assets/readme-overview.svg" alt="Drift overview: one splintered behavior becomes one named repair path" width="960">
+</div>
+
+The overview above is the model. The analyzer turns that into concrete output like this:
+
+<div align="center">
   <img src="demos/demo.gif" alt="drift analyze demo" width="720">
 </div>
+
+<p align="center">
+<sub>Validated on <b>FastAPI</b> · <b>Pydantic</b> · <b>Django</b> · <b>httpx</b> · <b>pytest</b> · <b>requests</b> · <b>click</b> and <a href="docs/STUDY.md">more study repos</a></sub>
+</p>
 
 ---
 
@@ -68,10 +78,6 @@ drift explain PFS               # learn what a signal means
 drift fix-plan --repo .         # get actionable repair tasks
 ```
 
-<div align="center">
-  <img src="demos/onboarding.gif" alt="drift onboarding: explain, patterns, init" width="720">
-</div>
-
 ### Add to CI (start report-only)
 
 ```yaml
@@ -110,15 +116,14 @@ drift mcp --serve                      # MCP server for IDE integration
   <img src="demos/agent-workflow.gif" alt="drift agent workflow: scan → diff --staged-only → fix-plan" width="720">
 </div>
 
+Use this when you want drift inside an agent loop instead of as a standalone report.
+
 Full setup: [Integrations](docs-site/integrations.md) · [MCP](docs-site/integrations.md) · [Vibe-Coding Guide](examples/vibe-coding/README.md)
 
-### Vibe-Coding Remediation Walkthrough
+More walkthroughs: [demos/README.md](demos/README.md)
 
-Use this loop after your first scan to go from findings to verified improvement.
-
-<div align="center">
-  <img src="demos/trend.gif" alt="drift trend: score history and module timeline" width="720">
-</div>
+<details>
+<summary><b>Vibe-Coding Remediation Walkthrough</b> — from findings to verified improvement</summary>
 
 1. Run an initial scan and save the baseline snapshot.
 2. Triage only the top findings by impact and actionability.
@@ -153,6 +158,7 @@ Concrete before/after example (PFS):
 - After: a shared handler reduces fragmentation, lowering the PFS score and total high-severity findings.
 
 Related guides: [Quick Start](docs-site/getting-started/quickstart.md) · [Finding Triage](docs-site/getting-started/finding-triage.md) · [Team Rollout](docs-site/getting-started/team-rollout.md)
+</details>
 
 ## Why teams use drift
 
@@ -168,7 +174,8 @@ Current public evidence: 15 real-world repositories in the study corpus, 23 sign
 
 ## Use cases
 
-### Pattern fragmentation in a connector layer
+<details>
+<summary><b>Use case: Pattern fragmentation in a connector layer</b></summary>
 
 **Problem:** A FastAPI service has 4 connectors, each implementing error handling differently — bare `except`, custom exceptions, retry decorators, and silent fallbacks.
 
@@ -178,8 +185,10 @@ drift analyze --repo . --sort-by impact --max-findings 5
 ```
 
 **Output:** PFS finding with score 0.96 — "26 error_handling variants in connectors/" — shows exactly which files diverge and suggests consolidation.
+</details>
 
-### Architecture boundary violation in a monorepo
+<details>
+<summary><b>Use case: Architecture boundary violation in a monorepo</b></summary>
 
 **Problem:** A database model file imports directly from the API layer, creating a circular dependency that breaks test isolation.
 
@@ -189,8 +198,10 @@ drift check --fail-on high
 ```
 
 **Output:** AVS finding — "DB import in API layer at src/api/auth.py:18" — blocks the CI pipeline until the import direction is fixed.
+</details>
 
-### Duplicate utility code from AI-generated scaffolding
+<details>
+<summary><b>Use case: Duplicate utility code from AI-generated scaffolding</b></summary>
 
 **Problem:** AI code generation created 6 identical `_run_async()` helper functions across separate task files instead of finding the existing shared utility.
 
@@ -200,14 +211,20 @@ drift analyze --repo . --format json | jq '.findings[] | select(.signal=="MDS")'
 ```
 
 **Output:** MDS findings listing all 6 locations with similarity scores ≥ 0.95, enabling a single extract-to-shared-module refactoring.
+</details>
 
 ## Setup and rollout options
 
-### Full GitHub Action (recommended: start report-only)
+Three integration paths — pick the one that fits your team:
 
-<div align="center">
-  <img src="demos/ci-gate.gif" alt="drift CI gate: check --fail-on + SARIF export" width="720">
-</div>
+| Path | Command / Config | Best for |
+|---|---|---|
+| **PyPI** | `pip install drift-analyzer` | Local use, scripts |
+| **GitHub Action** | `uses: mick-gsk/drift@v1` | CI/CD pipelines |
+| **pre-commit** | `repo: https://github.com/mick-gsk/drift` | Pre-commit hooks |
+
+<details>
+<summary><b>Full GitHub Action example (recommended: start report-only)</b></summary>
 
 ```yaml
 name: Drift
@@ -240,17 +257,10 @@ Once the team has reviewed findings for a few sprints, tighten the gate:
           fail-on: high           # block only high-severity findings
           upload-sarif: "true"
 ```
+</details>
 
-### CI gate (local)
-
-```bash
-drift check --fail-on none    # report-only
-drift check --fail-on high    # block on high-severity findings
-```
-
-### pre-commit hook
-
-The fastest way to add drift to your workflow:
+<details>
+<summary><b>pre-commit hook configuration</b></summary>
 
 ```yaml
 # .pre-commit-config.yaml
@@ -275,6 +285,14 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+```
+</details>
+
+CI gate (local):
+
+```bash
+drift check --fail-on none    # report-only
+drift check --fail-on high    # block on high-severity findings
 ```
 
 More setup paths:
@@ -322,7 +340,8 @@ Drift is designed to **complement** linters and security scanners, not replace t
 
 Full comparison: [STUDY.md §9 — Tool Landscape Comparison](docs/STUDY.md)
 
-## Is drift a good fit?
+<details>
+<summary><b>Is drift a good fit?</b></summary>
 
 Drift is a strong fit for:
 
@@ -348,8 +367,10 @@ Recommended guides:
 - [Team Rollout](docs-site/getting-started/team-rollout.md)
 - [Finding Triage](docs-site/getting-started/finding-triage.md)
 - [Benchmarking and Trust](docs-site/benchmarking.md)
+</details>
 
-## Trust and limitations
+<details>
+<summary><b>Trust and limitations</b></summary>
 
 > **Public claims safe to repeat today:** Drift is deterministic, benchmarked on 15 real-world repositories in the current study corpus, and uses 23 signal families (15 scoring-active, 8 report-only) with auto-calibration for runtime weight rebalancing and small-repo noise suppression.
 >
@@ -384,15 +405,20 @@ Further reading:
 - [Benchmarking and Trust](docs-site/benchmarking.md)
 - [Full Study](docs/STUDY.md)
 - [Case Studies](docs-site/case-studies/index.md)
+</details>
 
-## Test quality
+<details>
+<summary><b>Test quality & release status</b></summary>
 
-- **1 645+ tests**, 0 regressions
-- **Mutation kill rate: 100 %** (23/23 mutants killed)
-  - All 5 core signals (PFS, AVS, MDS, EDS, GCD) at 100 %
+### Test quality
+
+- **2 139+ tests**, 0 regressions
+- **88 % mutation recall** (15/17 patterns detected across 10 signal types)
+  - 100 % recall: MDS, EDS, AVS, DIA, BEM, TPD, GCD
+  - Undetected: 1 PFS return-pattern variant, 1 SMS outlier-module below threshold
 - Baseline: [`benchmark_results/mutation_benchmark.json`](benchmark_results/mutation_benchmark.json)
 
-## Release status
+### Release status
 
 The PyPI classifier is `Development Status :: 4 - Beta`.
 
@@ -407,6 +433,7 @@ Current release posture:
 - benchmark methodology: evolving
 
 Full rationale and matrix: [Stability and Release Status](docs-site/stability.md)
+</details>
 
 ## Contributing
 

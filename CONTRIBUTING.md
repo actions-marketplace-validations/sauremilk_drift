@@ -18,8 +18,26 @@ This guide is structured so you can start small and grow into deeper work at you
 ```bash
 git clone https://github.com/mick-gsk/drift.git
 cd drift
-make install          # pip install -e ".[dev]" + git hooks
+make install          # pip install -e ".[dev]" + git hooks + pre-commit
 make check            # lint + typecheck + test + self-analysis
+```
+
+`make install` does three things: installs drift in editable mode with all dev dependencies, activates git hooks that enforce code quality before push, and sets up pre-commit checks. The whole setup takes about 1–2 minutes.
+
+**On Windows without Make** (or if you prefer manual setup):
+
+```bash
+pip install -e ".[dev]"
+git config core.hooksPath .githooks
+pre-commit install
+```
+
+Then validate with:
+
+```bash
+ruff check src/ tests/
+python -m mypy src/drift
+pytest -v --tb=short
 ```
 
 See [DEVELOPER.md](DEVELOPER.md) for the full developer guide (architecture, commands, conventions).
@@ -54,18 +72,6 @@ is a first-class contribution — you do not need to write code.
 
 Currently open studies are documented in [STUDY.md §15–§17](docs/STUDY.md).
 All studies follow the quality criteria in [POLICY.md §13](POLICY.md).
-
-<details>
-<summary>Without Make</summary>
-
-```bash
-pip install -e ".[dev]"
-git config core.hooksPath .githooks
-ruff check src/ tests/
-python -m mypy src/drift
-pytest -v --tb=short
-```
-</details>
 
 ## Where to ask what
 
