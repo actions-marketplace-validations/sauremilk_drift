@@ -15,6 +15,7 @@ v0.2 enhancements:
 from __future__ import annotations
 
 import logging
+import re
 from collections import defaultdict
 from itertools import combinations
 from pathlib import Path
@@ -65,6 +66,17 @@ _DUNDER_METHODS: frozenset[str] = frozenset({
     "__int__", "__float__", "__complex__", "__index__",
 })
 
+_TUTORIAL_STEP_MARKERS: tuple[str, ...] = (
+    "tutorial",
+    "tutorials",
+    "sample",
+    "samples",
+    "example",
+    "examples",
+)
+
+_STEP_DIR_RE = re.compile(r"^step(?:[-_ ]?\d+)?(?:[-_][a-z0-9]+)*$", re.IGNORECASE)
+
 
 def _is_package_lazy_getattr(fn: FunctionInfo) -> bool:
     """Return True for the common package lazy-loading __getattr__ idiom.
@@ -75,6 +87,25 @@ def _is_package_lazy_getattr(fn: FunctionInfo) -> bool:
     """
     bare_name = fn.name.rsplit(".", 1)[-1]
     return bare_name == "__getattr__" and fn.file_path.name == "__init__.py"
+
+
+def _is_tutorial_step_standalone_sample(fn: FunctionInfo) -> bool:
+    """Return True when function belongs to intentional tutorial step samples.
+
+    These repositories often duplicate small helpers across step directories
+    on purpose so each step remains independently runnable.
+    """
+    parts = [p.lower() for p in fn.file_path.parts]
+    has_tutorial_marker = any(
+        marker in part
+        for part in parts
+        for marker in _TUTORIAL_STEP_MARKERS
+    )
+    if not has_tutorial_marker:
+        return False
+
+    has_step_dir = any(_STEP_DIR_RE.match(part) for part in parts)
+    return has_step_dir
 
 
 def _get_precomputed_ngrams(func: FunctionInfo) -> list[tuple[str, ...]] | None:
@@ -191,6 +222,8 @@ class MutantDuplicateSignal(BaseSignal):
                 continue
             for fn in pr.functions:
                 if _is_package_lazy_getattr(fn):
+                    continue
+                if _is_tutorial_step_standalone_sample(fn):
                     continue
                 # Strip class qualifier to get bare method name for dunder check
                 bare_name = fn.name.rsplit(".", 1)[-1]

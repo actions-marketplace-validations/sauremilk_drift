@@ -23,6 +23,7 @@ from drift.signals.mutant_duplicates import (
     MutantDuplicateSignal,
     _get_precomputed_ngrams,
     _is_package_lazy_getattr,
+    _is_tutorial_step_standalone_sample,
     _jaccard,
     _structural_similarity,
 )
@@ -312,4 +313,91 @@ def test_analyze_keeps_non_init_getattr_duplicates_detectable():
     findings = signal.analyze([pr_a, pr_b], {}, config)
     assert len(findings) == 1
     assert findings[0].severity.value == "high"
+    assert findings[0].metadata.get("group_size") == 2
+
+
+def test_is_tutorial_step_standalone_sample_helper():
+    step_fn = _make_fn(
+        name="get_worker",
+        file_path="samples/tutorial/durabletask/step_02/worker.py",
+        body_hash="h1",
+        ngrams=[["Name", "Load"], ["Call", "Return"]],
+    )
+    non_step_fn = _make_fn(
+        name="get_worker",
+        file_path="samples/tutorial/durabletask/shared/worker.py",
+        body_hash="h2",
+        ngrams=[["Name", "Load"], ["Call", "Return"]],
+    )
+
+    assert _is_tutorial_step_standalone_sample(step_fn) is True
+    assert _is_tutorial_step_standalone_sample(non_step_fn) is False
+
+
+def test_analyze_skips_tutorial_step_exact_duplicates_issue_177():
+    signal = MutantDuplicateSignal()
+    config = DriftConfig()
+    ngrams = [["Name", "Load"], ["Call", "Return"], ["If", "Return"]]
+
+    pr_step_1 = ParseResult(
+        file_path=Path("samples/tutorial/durabletask/step_01/worker.py"),
+        language="python",
+        functions=[
+            _make_fn(
+                name="get_worker",
+                file_path="samples/tutorial/durabletask/step_01/worker.py",
+                body_hash="step_worker_hash",
+                ngrams=ngrams,
+            )
+        ],
+    )
+    pr_step_2 = ParseResult(
+        file_path=Path("samples/tutorial/durabletask/step_02/worker.py"),
+        language="python",
+        functions=[
+            _make_fn(
+                name="get_worker",
+                file_path="samples/tutorial/durabletask/step_02/worker.py",
+                body_hash="step_worker_hash",
+                ngrams=ngrams,
+            )
+        ],
+    )
+
+    findings = signal.analyze([pr_step_1, pr_step_2], {}, config)
+    assert findings == []
+
+
+def test_analyze_keeps_non_step_sample_duplicates_detectable_issue_177():
+    signal = MutantDuplicateSignal()
+    config = DriftConfig()
+    ngrams = [["Name", "Load"], ["Call", "Return"], ["If", "Return"]]
+
+    pr_a = ParseResult(
+        file_path=Path("samples/tutorial/durabletask/shared/worker_a.py"),
+        language="python",
+        functions=[
+            _make_fn(
+                name="get_worker",
+                file_path="samples/tutorial/durabletask/shared/worker_a.py",
+                body_hash="shared_worker_hash",
+                ngrams=ngrams,
+            )
+        ],
+    )
+    pr_b = ParseResult(
+        file_path=Path("samples/tutorial/durabletask/shared/worker_b.py"),
+        language="python",
+        functions=[
+            _make_fn(
+                name="get_worker",
+                file_path="samples/tutorial/durabletask/shared/worker_b.py",
+                body_hash="shared_worker_hash",
+                ngrams=ngrams,
+            )
+        ],
+    )
+
+    findings = signal.analyze([pr_a, pr_b], {}, config)
+    assert len(findings) == 1
     assert findings[0].metadata.get("group_size") == 2

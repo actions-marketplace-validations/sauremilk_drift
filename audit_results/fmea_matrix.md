@@ -1,5 +1,12 @@
 # FMEA Matrix
 
+## 2026-04-06 - MDS tutorial-step sample duplicate calibration (Issue #177)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| MDS | FP: tutorial step samples are flagged as high-severity exact duplicates | Candidate collection treats intentional standalone tutorial-step helper copies as architectural drift | High-severity noise on pedagogical repositories and reduced trust in MDS precision | Field test on microsoft/agent-framework + targeted MDS regressions | Suppress MDS candidates in conservative tutorial-step sample path context (`tutorial/sample/example` + `step*`) | 6 | 6 | 4 | 144 |
+| MDS | FN: harmful duplication in tutorial-step contexts can be under-reported | New path heuristic skips duplicate analysis for functions in tutorial step sample trees | Rare true refactoring opportunities in tutorial steps may not be surfaced | Regression keeps non-step sample duplicates detectable | Keep heuristic narrow to explicit step-marker directories and tutorial/sample/example path context | 4 | 3 | 6 | 72 |
+
 ## 2026-04-06 - DCA script-context false positives (Issue #176)
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

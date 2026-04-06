@@ -1,5 +1,20 @@
 # Fault Tree Analysis
 
+## 2026-04-06 - MDS tutorial-step sample duplicate calibration (Issue #177)
+
+### FT-1: False positives on intentional tutorial step duplicates
+- Top event: MDS emits exact-duplicate findings for pedagogical step directories where code is intentionally repeated.
+- Branch A: Repository contains tutorial/sample/example paths with step-specific standalone modules.
+- Branch B: Helper implementation is intentionally copied across `step*` directories to keep each step runnable.
+- Branch C: Hash-based exact duplicate grouping escalates these to high-severity findings.
+- Mitigation implemented: Exclude functions in conservative tutorial-step sample path context from MDS candidate collection.
+
+### FT-2: Under-reporting risk after tutorial-step suppression
+- Top event: True architectural duplication in tutorial-step paths is not emitted by MDS.
+- Branch A: Suppression triggers for `tutorial/sample/example` + `step*` path context.
+- Branch B: Repository uses step-style directory names for production code.
+- Mitigation implemented: Keep suppression narrowly scoped to explicit tutorial/sample/example contexts and preserve detection for non-step duplicates.
+
 ## 2026-04-06 - DCA script-context false positives (Issue #176)
 
 ### FT-1: False positives on executable Python script modules

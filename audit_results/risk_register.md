@@ -1,5 +1,21 @@
 # Risk Register
 
+## 2026-04-06 - MDS tutorial-step sample duplicate false-positive mitigation (Issue #177)
+
+- Risk ID: RISK-SIG-2026-04-06-177
+- Component: src/drift/signals/mutant_duplicates.py
+- Type: Signal quality (false positives / precision calibration)
+- Description: `mutant_duplicate` over-penalized intentional helper duplication across tutorial step sample directories (for example repeated `get_worker` across `step_*` folders) as high-severity exact duplicates.
+- Trigger examples:
+  - microsoft/agent-framework: durabletask tutorial steps with standalone helper copies.
+  - Similar repositories with pedagogical step-by-step sample trees.
+- Impact: High-severity triage noise in MDS and reduced confidence in duplicate findings.
+- Mitigation:
+  - Added conservative path-context suppression for MDS candidate collection when file path indicates tutorial/sample/example plus explicit `step*` directory markers.
+  - Added regressions in `tests/test_mutant_duplicates_edge_cases.py` for suppression and control-case detection outside step directories.
+- Verification: `python -m pytest tests/test_mutant_duplicates_edge_cases.py -q --maxfail=1`
+- Residual risk: Medium-low; true duplication in tutorial-step paths may be under-reported, but heuristic scope is intentionally narrow and non-step sample duplicates remain detectable.
+
 ## 2026-04-06 - DCA script-context false-positive mitigation (Issue #176)
 
 - Risk ID: RISK-SIG-2026-04-06-176
