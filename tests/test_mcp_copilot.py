@@ -641,6 +641,35 @@ class TestCLICommands:
         assert isinstance(result.exception, DriftSystemError)
         assert result.exception.code == "DRIFT-2010"
 
+    def test_mcp_allow_tty_emits_startup_handshake(self, monkeypatch) -> None:
+        import json as _json
+
+        from click.testing import CliRunner
+
+        from drift.cli import main
+
+        class _TTY:
+            @staticmethod
+            def isatty() -> bool:
+                return True
+
+        monkeypatch.setattr("sys.stdin", _TTY())
+        monkeypatch.setattr("drift.mcp_server.get_tool_catalog", lambda: [{"name": "drift_scan"}])
+        monkeypatch.setattr("drift.mcp_server.main", lambda: None)
+
+        runner_kwargs: dict[str, object] = {}
+        if "mix_stderr" in CliRunner.__init__.__code__.co_varnames:
+            runner_kwargs["mix_stderr"] = False
+        runner = CliRunner(**runner_kwargs)
+        result = runner.invoke(main, ["mcp", "--serve", "--allow-tty"])
+
+        assert result.exit_code == 0
+        event = _json.loads(result.stderr.strip())
+        assert event["event"] == "drift.mcp.startup"
+        assert event["ready"] is True
+        assert event["tools_count"] == 1
+        assert "version" in event
+
     def test_copilot_context_help(self) -> None:
         from click.testing import CliRunner
 

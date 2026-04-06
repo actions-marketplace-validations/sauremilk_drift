@@ -8,6 +8,7 @@ from typing import NoReturn
 
 import click
 
+from drift import __version__
 from drift.commands import console
 from drift.errors import DriftSystemError
 
@@ -19,6 +20,17 @@ def _raise_missing_mcp_extra(exc: Exception) -> NoReturn:
         package="mcp",
         extra="mcp",
     ) from exc
+
+
+def _emit_tty_startup_handshake(*, tools_count: int) -> None:
+    """Emit a one-time startup event for manual TTY debug sessions."""
+    payload = {
+        "event": "drift.mcp.startup",
+        "version": __version__,
+        "tools_count": tools_count,
+        "ready": True,
+    }
+    click.echo(json.dumps(payload), err=True)
 
 
 @click.command("mcp")
@@ -104,9 +116,13 @@ def mcp(serve: bool, list_tools: bool, show_schema: bool, allow_tty: bool) -> No
         )
 
     try:
+        from drift.mcp_server import get_tool_catalog
         from drift.mcp_server import main as mcp_main
     except ImportError as exc:
         _raise_missing_mcp_extra(exc)
+
+    if allow_tty:
+        _emit_tty_startup_handshake(tools_count=len(get_tool_catalog()))
 
     try:
         mcp_main()
