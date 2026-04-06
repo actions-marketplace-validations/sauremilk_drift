@@ -12,6 +12,7 @@ Checks the current release metadata against the documented rule:
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -35,6 +36,46 @@ def _ok(message: str) -> None:
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
+
+
+def _git(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=_repo_root(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def _tag_exists(tag: str) -> bool:
+    result = _git("rev-parse", "--verify", "--quiet", f"refs/tags/{tag}")
+    return result.returncode == 0
+
+
+def _is_ancestor(ancestor_ref: str, descendant_ref: str = "HEAD") -> bool:
+    result = _git("merge-base", "--is-ancestor", ancestor_ref, descendant_ref)
+    return result.returncode == 0
+
+
+def _validate_version_tag_lineage(version: str) -> None:
+    tag = f"v{version}"
+
+    if not _tag_exists(tag):
+        _fail(
+            "Release tag lineage check failed. "
+            f"Expected release tag '{tag}' for version '{version}', but the tag does not exist."
+        )
+
+    if not _is_ancestor(tag, "HEAD"):
+        _fail(
+            "Release tag lineage check failed. "
+            f"Tag '{tag}' is not an ancestor of HEAD. "
+            "This indicates a detached/rewritten release tag and can block "
+            "python-semantic-release. "
+            f"Repair by retagging '{tag}' to the correct release commit on main "
+            "and pushing the tag with force."
+        )
 
 
 def _read_pyproject_version() -> str:
@@ -130,6 +171,7 @@ def validate_release_discipline() -> None:
 
     _validate_summary(changelog_body)
     _validate_curated_bullets(changelog_body)
+    _validate_version_tag_lineage(pyproject_version)
     _ok(f"Release discipline checks passed for version '{pyproject_version}'")
 
 

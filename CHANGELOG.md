@@ -23,6 +23,7 @@
 
 ### Fixed
 
+- Prevent silent no-release deadlocks in python-semantic-release by enforcing that `v<project.version>` exists and is an ancestor of `HEAD` in `scripts/check_release_discipline.py`; detached/mispointed release tags now fail fast with explicit remediation instructions.
 - Security Hygiene detect-secrets gate no longer flags intentional secret-like test fixtures in `tests/test_negative_context_export.py` by marking those literals with inline allowlist pragmas.
 - Stabilize `tests/test_incremental.py::TestIncrementalSignalRunner::test_delta_and_direction` by asserting the delta/direction invariant instead of assuming a fixed negative delta on repository-dependent analysis output.
 - Emit an explicit MCP startup handshake for `drift mcp --serve --allow-tty` on both stdout and stderr, including `type: server_started`, `version`, and `tools_count` so agent workflows can reliably detect readiness (#193).

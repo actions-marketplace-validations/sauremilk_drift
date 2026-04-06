@@ -83,3 +83,39 @@ Short version: summary.
         assert exc.code == 1
     else:
         raise AssertionError("Expected SystemExit for too many bullets")
+
+
+def test_validate_version_tag_lineage_fails_when_tag_missing(monkeypatch):
+    module = _load_module()
+
+    monkeypatch.setattr(module, "_tag_exists", lambda _tag: False)
+
+    try:
+        module._validate_version_tag_lineage("2.5.0")
+    except SystemExit as exc:
+        assert exc.code == 1
+    else:
+        raise AssertionError("Expected SystemExit for missing version tag")
+
+
+def test_validate_version_tag_lineage_fails_when_tag_not_ancestor(monkeypatch):
+    module = _load_module()
+
+    monkeypatch.setattr(module, "_tag_exists", lambda _tag: True)
+    monkeypatch.setattr(module, "_is_ancestor", lambda _a, _d="HEAD": False)
+
+    try:
+        module._validate_version_tag_lineage("2.5.0")
+    except SystemExit as exc:
+        assert exc.code == 1
+    else:
+        raise AssertionError("Expected SystemExit for detached version tag")
+
+
+def test_validate_version_tag_lineage_passes_for_ancestor_tag(monkeypatch):
+    module = _load_module()
+
+    monkeypatch.setattr(module, "_tag_exists", lambda _tag: True)
+    monkeypatch.setattr(module, "_is_ancestor", lambda _a, _d="HEAD": True)
+
+    module._validate_version_tag_lineage("2.5.0")
