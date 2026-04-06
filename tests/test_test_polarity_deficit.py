@@ -135,6 +135,54 @@ def test_tpd_ignores_out_of_range_assert_position_metadata() -> None:
     assert counter.positive == 0
 
 
+def test_tpd_ignores_unexpected_source_segment_exception(tmp_path: Path, monkeypatch) -> None:
+    """Issue #184: unexpected source-segment errors must not abort TPD analysis."""
+    source = textwrap.dedent("""\
+        def test_ok_1():
+            assert service_ready()
+            assert compute_value() == 1
+
+        def test_ok_2():
+            assert check_state()
+            assert status() == "ok"
+
+        def test_ok_3():
+            assert feature_flag()
+            assert payload_count() > 0
+
+        def test_ok_4():
+            assert validator_enabled()
+            assert threshold() >= 0
+
+        def test_ok_5():
+            assert ping()
+            assert owner() is not None
+    """)
+    f = tmp_path / "tests" / "test_runtime_guard.py"
+    f.parent.mkdir(parents=True)
+    f.write_text(source, encoding="utf-8")
+
+    pr = ParseResult(file_path=Path("tests/test_runtime_guard.py"), language="python")
+    signal = TestPolarityDeficitSignal()
+    signal._repo_path = tmp_path
+
+    def _raise_runtime_error(_source: str, _node: ast.AST) -> str:
+        raise RuntimeError("synthetic source-segment failure")
+
+    monkeypatch.setattr(
+        "drift.signals.test_polarity_deficit.ast.get_source_segment",
+        _raise_runtime_error,
+    )
+
+    findings = signal.analyze([pr], {}, DriftConfig())
+
+    assert any(
+        f.signal_type == SignalType.TEST_POLARITY_DEFICIT
+        and "Happy-path-only" in f.title
+        for f in findings
+    )
+
+
 def test_tpd_fallback_discovers_tests_when_parse_results_are_empty(tmp_path: Path) -> None:
     source = textwrap.dedent("""\
         def test_a():

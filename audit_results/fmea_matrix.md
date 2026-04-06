@@ -1,5 +1,12 @@
 # FMEA Matrix
 
+## 2026-04-06 - TPD unexpected source-segment exception hardening (Issue #184)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| TPD | FN: signal execution aborts and gets skipped | `ast.get_source_segment` can raise unexpected exception types in edge AST/source-position scenarios, and the previous guard covered only selected exception classes | Missing TPD findings in export-context/cross-signal analysis and reduced trust in context completeness | Field-test report + targeted runtime-exception regression | Broaden source-segment exception guard to fail-safe behavior and add per-file analyze guards for parse/AST visit | 8 | 3 | 4 | 96 |
+| TPD | FN: single malformed file can suppress module-level coverage | Unexpected AST parse/visit errors may occur on isolated files | Reduced per-module signal coverage (partial under-reporting) | New regression plus debug logging path for skipped files | Skip only failing file, continue analysis for remaining module files, keep deterministic thresholds | 5 | 3 | 5 | 75 |
+
 ## 2026-04-06 - HSC YAML env-template variable-name false positives (Issue #181)
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

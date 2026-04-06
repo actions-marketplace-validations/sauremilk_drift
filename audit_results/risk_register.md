@@ -1,5 +1,22 @@
 # Risk Register
 
+## 2026-04-06 - TPD unexpected source-segment exception hardening (Issue #184)
+
+- Risk ID: RISK-SIG-2026-04-06-184
+- Component: src/drift/signals/test_polarity_deficit.py
+- Type: Signal quality (runtime robustness / false negatives)
+- Description: `test_polarity_deficit` could still abort signal execution when `ast.get_source_segment` raised unexpected exception types beyond the previously guarded metadata errors.
+- Trigger examples:
+  - Field-test runs against microsoft/agent-framework showed TPD skip with `IndexError` and degraded context export quality.
+  - Similar repositories with edge-case AST/source position behavior.
+- Impact: Full TPD signal dropout for affected runs, causing incomplete context export and under-reporting.
+- Mitigation:
+  - Broadened source-segment guard in `_AssertionCounter.visit_Assert` to handle unexpected exceptions safely.
+  - Added defensive per-file guards around parse/AST visit in TPD analyze path to prevent whole-signal abort.
+  - Added regression `test_tpd_ignores_unexpected_source_segment_exception` in `tests/test_test_polarity_deficit.py`.
+- Verification: `python -m pytest tests/test_test_polarity_deficit.py -q --maxfail=1`
+- Residual risk: Low-medium; malformed files can be skipped for TPD counting, but signal execution remains stable and explicit logging supports diagnosis.
+
 ## 2026-04-06 - Stable signal abbreviation mapping in scan/analyze JSON (Issue #183)
 
 - Risk ID: RISK-OUT-2026-04-06-183

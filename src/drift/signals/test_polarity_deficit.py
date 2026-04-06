@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import ast
 import fnmatch
+import logging
 import re
 from pathlib import Path, PurePosixPath
 
@@ -153,8 +154,10 @@ class _AssertionCounter(ast.NodeVisitor):
         if not is_negative and self._source:
             try:
                 segment = ast.get_source_segment(self._source, node)
-            except (IndexError, ValueError):
+            except Exception:
                 # Guard against malformed position metadata in AST nodes.
+                # Some Python versions can surface unexpected internal errors
+                # for edge-case node positions; treat as missing segment.
                 segment = None
             if segment and _NEGATIVE_ASSERT_PATTERN.search(segment):
                 is_negative = True
@@ -361,7 +364,9 @@ class TestPolarityDeficitSignal(BaseSignal):
         file_histories: dict[str, FileHistory],
         config: DriftConfig,
     ) -> list[Finding]:
+        del file_histories
         min_test_functions = config.thresholds.tpd_min_test_functions
+        logger = logging.getLogger("drift")
 
         # Group test files by module directory
         module_counters: dict[str, _AssertionCounter] = {}
@@ -394,8 +399,23 @@ class TestPolarityDeficitSignal(BaseSignal):
                 tree = ast.parse(source)
             except SyntaxError:
                 return
+            except Exception:
+                logger.debug(
+                    "TPD skipped file '%s' due to unexpected parse error.",
+                    pr.file_path,
+                    exc_info=True,
+                )
+                return
             counter = module_counters.setdefault(module_key, _AssertionCounter(source))
-            counter.visit(tree)
+            try:
+                counter.visit(tree)
+            except Exception:
+                logger.debug(
+                    "TPD skipped file '%s' due to unexpected AST visit error.",
+                    pr.file_path,
+                    exc_info=True,
+                )
+                return
 
         for pr in parse_results:
             _consume_parse_result(pr)

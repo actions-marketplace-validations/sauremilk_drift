@@ -1,5 +1,20 @@
 # Fault Tree Analysis
 
+## 2026-04-06 - TPD unexpected source-segment exception hardening (Issue #184)
+
+### FT-1: TPD signal skip due to unexpected source-segment exception
+- Top event: TPD is skipped during context export because exception escapes assert polarity classification.
+- Branch A: Repository contains assert/source combinations that trigger an internal exception in source-segment extraction.
+- Branch B: Exception type is outside previously handled cases.
+- Branch C: Exception propagates to signal execution boundary, causing skip.
+- Mitigation implemented: Broaden source-segment guard to treat any extraction exception as missing segment and continue.
+
+### FT-2: Partial under-reporting risk on malformed per-file AST paths
+- Top event: A malformed file reduces local TPD coverage.
+- Branch A: `ast.parse` or AST visitor path fails unexpectedly for one file.
+- Branch B: Signal-level execution would otherwise abort.
+- Mitigation implemented: Per-file parse/visit guards skip only the failing file and preserve analysis continuity for remaining files.
+
 ## 2026-04-06 - HSC YAML env-template variable-name false positives (Issue #181)
 
 ### FT-1: False positives on YAML templates that reference environment placeholders
