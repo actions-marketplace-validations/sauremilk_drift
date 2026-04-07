@@ -63,6 +63,9 @@
   border-radius: 4px;
   padding: 0.55rem 1.15rem;
   color: var(--md-default-fg-color);
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 .drift-dollar {
@@ -70,4 +73,31 @@
   margin-right: 0.5rem;
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* ─── Mobile: shared components ─── */
+@media (max-width: 480px) {
+  .drift-install-box {
+    font-size: 0.78rem;
+    padding: 0.5rem 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .drift-section-label {
+    font-size: 0.62rem;
+    margin-bottom: 1rem;
+  }
+  .drift-text-link {
+    font-size: 0.85rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .drift-install-box {
+    font-size: 0.72rem;
+    padding: 0.45rem 0.75rem;
+  }
 }

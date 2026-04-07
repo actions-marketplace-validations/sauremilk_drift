@@ -22,7 +22,11 @@
     max-width: 720px;
   }
   .drift-hero h1 .drift-h1-accent {
-    color: var(--drift-accent);
+    color: var(--drift-accent); /* fallback */
+    background: linear-gradient(135deg, #009688 0%, #26a69a 60%, #4db6ac 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .drift-hero-desc {
     font-size: 1.08rem;
@@ -52,15 +56,22 @@
     font-size: 0.73rem;
     color: var(--md-default-fg-color--light);
   }
+  .drift-trust-line span {
+    background: var(--drift-accent-muted);
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+  }
   .drift-trust-line strong {
-    color: var(--md-default-fg-color);
+    color: var(--drift-accent);
     font-weight: 700;
+    font-size: 0.82rem;
   }
 
   /* ───── Terminal output ───── */
   .drift-output {
     background: var(--drift-dark);
     padding: 2.5rem 0;
+    box-shadow: 0 4px 40px rgba(0, 150, 136, 0.06), 0 1px 0 rgba(0, 150, 136, 0.15) inset;
   }
   [data-md-color-scheme="default"] .drift-output {
     background: #0d1117;
@@ -144,13 +155,22 @@
     grid-template-columns: 48px 1fr;
     gap: 0 0.75rem;
     align-items: baseline;
+    transition: border-color 0.15s ease;
+  }
+  .drift-signal-row:hover {
+    border-bottom-color: var(--drift-accent);
   }
   .drift-signal-id {
     font-family: var(--drift-mono);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--drift-accent);
-    padding-top: 0.1rem;
+    background: var(--drift-accent-muted);
+    border-radius: 4px;
+    text-align: center;
+    padding: 0.25rem 0;
+    width: 44px;
+    letter-spacing: 0.02em;
   }
   .drift-signal-name {
     font-size: 0.92rem;
@@ -181,6 +201,12 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 2.5rem;
+  }
+  .drift-step {
+    background: var(--md-default-bg-color);
+    border-top: 2px solid var(--drift-accent);
+    border-radius: 0 0 6px 6px;
+    padding: 1.25rem 1.15rem 1rem;
   }
   .drift-step-num {
     font-family: var(--drift-mono);
@@ -225,6 +251,10 @@
   .drift-diff-item {
     padding-left: 1rem;
     border-left: 2px solid var(--md-default-fg-color--lightest);
+    transition: border-color 0.2s ease;
+  }
+  .drift-diff-item:hover {
+    border-left-color: var(--drift-accent);
   }
   .drift-diff-item h3 {
     font-size: 0.9rem;
@@ -241,10 +271,11 @@
 
   /* ───── Bottom CTA ───── */
   .drift-cta {
-    padding: 4rem 2rem 5rem;
+    padding: 3rem 2.5rem 3.5rem;
     max-width: 940px;
-    margin: 0 auto;
-    border-top: 1px solid var(--md-default-fg-color--lightest);
+    margin: 0 auto 2rem;
+    background: var(--drift-accent-muted);
+    border-radius: 8px;
   }
   .drift-cta h2 {
     font-size: 1.5rem;
@@ -286,6 +317,225 @@
   .drift-cta-link.primary { color: var(--drift-accent); }
   .drift-cta-link.muted { color: var(--md-default-fg-color--light); }
 
+  /* ───── Hero badge ───── */
+  .drift-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--drift-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--drift-accent);
+    border: 1px solid var(--drift-accent);
+    background: var(--drift-accent-muted);
+    border-radius: 20px;
+    padding: 0.35rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .drift-badge-sep {
+    color: var(--md-default-fg-color--lightest);
+  }
+
+  /* ───── Dual install group ───── */
+  .drift-install-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0.25rem;
+  }
+  .drift-install-group .drift-install-box {
+    position: relative;
+  }
+  .drift-install-label {
+    font-family: var(--drift-mono);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--md-default-fg-color--light);
+    margin-bottom: 0.3rem;
+  }
+  .drift-install-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .drift-install-box.outline {
+    background: transparent;
+    border: 1px solid var(--drift-accent);
+    color: var(--drift-accent);
+  }
+  .drift-hero-actions.no-gap-top {
+    margin-top: 0;
+  }
+
+  /* ───── Agent-native section ───── */
+  .drift-agent {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 3.5rem 2rem 3rem;
+  }
+  .drift-agent-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .drift-agent-card {
+    background: var(--md-code-bg-color);
+    border-left: 2px solid var(--drift-accent);
+    border-radius: 0 6px 6px 0;
+    padding: 1.15rem 1.25rem;
+    transition: border-color 0.15s ease;
+  }
+  .drift-agent-card:hover {
+    border-left-color: #4db6ac;
+  }
+  .drift-agent-card h3 {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--md-default-fg-color);
+    margin-bottom: 0.25rem;
+  }
+  .drift-agent-card code {
+    font-family: var(--drift-mono);
+    font-size: 0.76rem;
+    background: var(--md-default-bg-color);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    border: 1px solid var(--md-default-fg-color--lightest);
+  }
+  .drift-agent-card p {
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--md-default-fg-color--light);
+    margin: 0.4rem 0 0;
+  }
+  .drift-compat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .drift-compat-badge {
+    font-family: var(--drift-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--md-default-fg-color);
+    background: var(--md-code-bg-color);
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 20px;
+    padding: 0.3rem 0.85rem;
+    letter-spacing: 0.02em;
+  }
+  .drift-trust-statement {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+  .drift-trust-statement span {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--md-default-fg-color);
+  }
+  .drift-trust-statement .accent {
+    color: var(--drift-accent);
+    font-family: var(--drift-mono);
+    font-size: 0.7rem;
+    background: var(--drift-accent-muted);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+  }
+
+  /* ───── Scenarios (Why AI workflow) ───── */
+  .drift-scenarios {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 2rem 2rem 3rem;
+  }
+  .drift-scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .drift-scenario-card {
+    background: var(--md-default-bg-color);
+    border-top: 2px solid var(--drift-accent);
+    border-radius: 0 0 6px 6px;
+    padding: 1.25rem 1.15rem 1rem;
+  }
+  .drift-scenario-card .label {
+    font-family: var(--drift-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--drift-accent);
+    margin-bottom: 0.5rem;
+  }
+  .drift-scenario-card h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--md-default-fg-color);
+    margin-bottom: 0.35rem;
+    line-height: 1.35;
+  }
+  .drift-scenario-card p {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--md-default-fg-color--light);
+    margin: 0;
+  }
+  .drift-scenario-card code {
+    font-family: var(--drift-mono);
+    font-size: 0.76rem;
+    background: var(--md-code-bg-color);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    border: 1px solid var(--md-default-fg-color--lightest);
+  }
+  .drift-scenario-full {
+    background: var(--md-code-bg-color);
+    border-left: 2px solid var(--drift-accent);
+    border-radius: 0 6px 6px 0;
+    padding: 1rem 1.25rem;
+  }
+  .drift-scenario-full p {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--md-default-fg-color--light);
+    margin: 0;
+  }
+  .drift-scenario-full strong {
+    color: var(--md-default-fg-color);
+    font-weight: 600;
+  }
+
+  /* ───── CTA dual commands ───── */
+  .drift-cta-cmds {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .drift-cta-cmd-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .drift-cta-cmd-label {
+    font-family: var(--drift-mono);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--md-default-fg-color--light);
+    margin-bottom: 0.3rem;
+  }
+
   /* ───── Responsive ───── */
   @media (max-width: 720px) {
     .drift-hero { padding: 3.5rem 1.5rem 2rem; }
@@ -293,11 +543,108 @@
     .drift-signals-grid { grid-template-columns: 1fr; }
     .drift-how-inner { grid-template-columns: 1fr; gap: 2rem; }
     .drift-diff-grid { grid-template-columns: 1fr; }
+    .drift-output pre { font-size: 0.72rem; line-height: 1.65; }
+    .drift-output-inner { padding: 0 1.5rem; }
+    .drift-thesis { padding: 3rem 1.5rem 2rem; }
+    .drift-signals { padding: 2rem 1.5rem 3rem; }
+    .drift-diff { padding: 2.5rem 1.5rem; }
+    .drift-cta { padding: 3rem 1.5rem 4rem; }
+    .drift-agent { padding: 2.5rem 1.5rem 2rem; }
+    .drift-agent-grid { grid-template-columns: 1fr; }
+    .drift-scenario-grid { grid-template-columns: 1fr; }
+    .drift-scenarios { padding: 2rem 1.5rem 2.5rem; }
   }
+
   @media (max-width: 480px) {
     .drift-hero { padding: 2.5rem 1.25rem 1.5rem; }
-    .drift-thesis { gap: 0 1rem; }
-    .drift-trust-line { gap: 1rem; }
+    .drift-hero h1 {
+      font-size: 1.65rem;
+      letter-spacing: -0.025em;
+    }
+    .drift-hero h1 br { display: none; }
+    .drift-hero-desc {
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+    .drift-hero-actions {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .drift-trust-line {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .drift-trust-line span {
+      align-self: flex-start;
+    }
+    .drift-output { padding: 1.5rem 0; }
+    .drift-output-inner { padding: 0 1rem; }
+    .drift-output pre {
+      font-size: 0.62rem;
+      line-height: 1.55;
+    }
+    .drift-output .sc { font-size: 0.82rem; }
+    .drift-thesis {
+      gap: 0 1rem;
+      padding: 2.5rem 1.25rem 1.5rem;
+    }
+    .drift-thesis h2 { font-size: 1.25rem; }
+    .drift-thesis p { font-size: 0.9rem; }
+    .drift-signal-row {
+      grid-template-columns: 40px 1fr;
+      gap: 0 0.5rem;
+    }
+    .drift-signal-id { font-size: 0.72rem; width: 38px; }
+    .drift-signal-name { font-size: 0.85rem; }
+    .drift-signal-detail { font-size: 0.76rem; }
+    .drift-step {
+      padding: 1rem 0.9rem 0.75rem;
+    }
+    .drift-how { padding: 2.5rem 1.25rem; }
+    .drift-step p { font-size: 0.82rem; }
+    .drift-diff { padding: 2rem 1.25rem; }
+    .drift-diff-item h3 { font-size: 0.85rem; }
+    .drift-diff-item p { font-size: 0.78rem; }
+    .drift-cta { padding: 2.5rem 1.25rem 3rem; border-radius: 6px; margin: 0 0.5rem 1.5rem; }
+    .drift-cta h2 { font-size: 1.25rem; }
+    .drift-cta-cmd { font-size: 0.76rem; padding: 0.5rem 0.9rem; }
+    .drift-cta-links { gap: 1rem; }
+    .drift-cta-link { font-size: 0.85rem; min-height: 44px; align-items: center; }
+    .drift-agent { padding: 2rem 1.25rem 1.5rem; }
+    .drift-agent-card { padding: 0.9rem 1rem; }
+    .drift-agent-card h3 { font-size: 0.82rem; }
+    .drift-agent-card p { font-size: 0.76rem; }
+    .drift-compat-row { gap: 0.5rem; }
+    .drift-compat-badge { font-size: 0.62rem; padding: 0.25rem 0.65rem; }
+    .drift-scenarios { padding: 1.5rem 1.25rem 2rem; }
+    .drift-scenario-card { padding: 1rem 0.9rem 0.75rem; }
+    .drift-scenario-card h3 { font-size: 0.85rem; }
+    .drift-scenario-card p { font-size: 0.78rem; }
+    .drift-scenario-full { padding: 0.85rem 1rem; }
+    .drift-install-group { flex-direction: column; align-items: flex-start; }
+    .drift-cta-cmds { flex-direction: column; }
+  }
+
+  @media (max-width: 360px) {
+    .drift-hero { padding: 2rem 1rem 1.25rem; }
+    .drift-hero h1 { font-size: 1.45rem; }
+    .drift-output pre { font-size: 0.55rem; }
+    .drift-thesis { padding: 2rem 1rem 1.25rem; }
+    .drift-signals { padding: 1.5rem 1rem 2.5rem; }
+    .drift-agent { padding: 1.5rem 1rem 1.25rem; }
+    .drift-scenarios { padding: 1.25rem 1rem 2rem; }
+  }
+
+  /* ───── Touch target minimum ───── */
+  @media (pointer: coarse) {
+    .drift-text-link,
+    .drift-cta-link,
+    .drift-signal-detail a {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
   }
 </style>
 
@@ -305,16 +652,29 @@
 
 <!-- ══════ HERO ══════ -->
 <section class="drift-hero">
-  <div class="drift-section-label">Static architecture analysis for Python</div>
-  <h1>Cross-file coherence problems<br><span class="drift-h1-accent">your tests don't catch.</span></h1>
+  <div class="drift-badge">Agent-Native <span class="drift-badge-sep">·</span> Built for Vibe-Coding</div>
+  <div class="drift-section-label">The coherence layer for AI-assisted Python development</div>
+  <h1>AI generates code fast.<br><span class="drift-h1-accent">Drift catches what it breaks.</span></h1>
   <p class="drift-hero-desc">
-    Drift detects when <strong>error handling fragments across four styles</strong>,
-    database imports leak into your API layer, or three near-identical parsers
-    accumulate across modules. Deterministic, no LLM — AST analysis and git history.
+    AI code generation creates structural drift — <strong>identical helpers across files</strong>,
+    broken layer boundaries, inconsistent error handling.
+    Drift detects it deterministically. No LLM — AST analysis and git history.
   </p>
   <div class="drift-hero-actions">
-    <div class="drift-install-box"><span class="drift-dollar">$</span> pip install drift-analyzer</div>
+    <div class="drift-install-group">
+      <div class="drift-install-col">
+        <div class="drift-install-label">Human dev</div>
+        <div class="drift-install-box"><span class="drift-dollar">$</span> pip install drift-analyzer</div>
+      </div>
+      <div class="drift-install-col">
+        <div class="drift-install-label">Agent setup (MCP)</div>
+        <div class="drift-install-box outline"><span class="drift-dollar">$</span> pip install drift-analyzer[mcp]</div>
+      </div>
+    </div>
+  </div>
+  <div class="drift-hero-actions no-gap-top">
     <a href="getting-started/quickstart/" class="drift-text-link">Quick Start →</a>
+    <a href="integrations/#mcp-server" class="drift-text-link">Agent Integration →</a>
     <a href="start-here/" class="drift-text-link">Evidence &amp; Benchmarks →</a>
   </div>
   <div class="drift-trust-line">
@@ -348,18 +708,75 @@
   </div>
 </section>
 
+<!-- ══════ AGENT-NATIVE FEATURES ══════ -->
+<section class="drift-agent">
+  <div class="drift-section-label">Agent-native by design</div>
+  <div class="drift-agent-grid">
+    <div class="drift-agent-card">
+      <h3>MCP Server</h3>
+      <code>drift mcp --serve</code>
+      <p>First-class Model Context Protocol integration. Configure once, use from any MCP-capable editor or agent.</p>
+    </div>
+    <div class="drift-agent-card">
+      <h3>Session Baseline</h3>
+      <code>drift scan --max-findings 5</code>
+      <p>Top 5 critical findings as agent context. Focused, not overwhelming — fits any context window.</p>
+    </div>
+    <div class="drift-agent-card">
+      <h3>Structured Fix Plan</h3>
+      <code>drift fix-plan --repo .</code>
+      <p>Prioritized repair tasks as structured output. Your agent can parse and execute them directly.</p>
+    </div>
+    <div class="drift-agent-card">
+      <h3>Pre-Commit Gate</h3>
+      <code>drift diff --staged-only</code>
+      <p>Checks only staged changes. Blocks structural regression before the commit lands.</p>
+    </div>
+  </div>
+  <div class="drift-compat-row">
+    <span class="drift-compat-badge">GitHub Copilot</span>
+    <span class="drift-compat-badge">Cursor</span>
+    <span class="drift-compat-badge">Claude Code</span>
+    <span class="drift-compat-badge">Windsurf</span>
+  </div>
+  <div class="drift-trust-statement">
+    <span>Deterministic — no LLM in the pipeline</span>
+    <span class="accent">llms.txt supported</span>
+  </div>
+</section>
+
 <!-- ══════ THESIS ══════ -->
 <section class="drift-thesis">
   <div class="drift-thesis-accent"></div>
   <div>
-    <h2>Your tests pass. Your architecture erodes anyway.</h2>
+    <h2>AI tools ship code fast. Architecture erodes faster.</h2>
     <p>
-      AI tools generate code fast. But every week, patterns silently fragment,
-      layers leak through imports, and helpers get copied across modules.
-      Linters check style. Type checkers check types. Nothing checks
-      whether the codebase still makes structural sense across files.
+      Every Copilot session, every Cursor tab-complete, every Claude fix:
+      code gets added. But nobody checks whether the codebase still makes
+      structural sense across files. Patterns fragment. Layers leak.
+      Helpers multiply. Linters check style. Type checkers check types.
     </p>
     <p>Drift fills that gap — deterministically, on every commit.</p>
+  </div>
+</section>
+
+<!-- ══════ WHY DRIFT IN AN AI WORKFLOW ══════ -->
+<section class="drift-scenarios">
+  <div class="drift-section-label">Why drift in an AI workflow?</div>
+  <div class="drift-scenario-grid">
+    <div class="drift-scenario-card">
+      <div class="label">MDS detects</div>
+      <h3>Your agent generates 6 identical <code>_run_async()</code> helpers in 6 files</h3>
+      <p>Mutant Duplicates finds AST-level near-clones instantly. Fix-plan prioritizes consolidation into one shared utility.</p>
+    </div>
+    <div class="drift-scenario-card">
+      <div class="label">AVS blocks</div>
+      <h3>Your agent bypasses layer boundaries with a direct DB import in the API</h3>
+      <p>Architecture Violation Signal catches forbidden imports. <code>drift diff --staged-only</code> blocks the commit before it lands.</p>
+    </div>
+  </div>
+  <div class="drift-scenario-full">
+    <p><strong>Duplicate utility code from AI-generated scaffolding</strong> — the #1 pattern in AI-assisted codebases. Agents generate per-file solutions instead of refactoring. Drift surfaces them across module boundaries, with location, cause, and a concrete fix path.</p>
   </div>
 </section>
 
@@ -371,7 +788,7 @@
       <div class="drift-signal-id">PFS</div>
       <div>
         <div class="drift-signal-name">Pattern Fragmentation</div>
-        <div class="drift-signal-detail">Same concern solved 4 different ways across modules.</div>
+        <div class="drift-signal-detail">Same concern solved 4 different ways — common when agents generate per-file solutions.</div>
       </div>
     </div>
     <div class="drift-signal-row">
@@ -385,7 +802,7 @@
       <div class="drift-signal-id">MDS</div>
       <div>
         <div class="drift-signal-name">Mutant Duplicates</div>
-        <div class="drift-signal-detail">AST-level near-clones that diverged across files.</div>
+        <div class="drift-signal-detail">AST-level near-clones that diverged across files — the #1 artifact of AI-assisted development.</div>
       </div>
     </div>
     <div class="drift-signal-row">
@@ -453,6 +870,10 @@
       <h3>Scored, not binary</h3>
       <p>Every finding has a severity score and trend. Track architecture health across commits, not just pass/fail.</p>
     </div>
+    <div class="drift-diff-item">
+      <h3>Agent-compatible output</h3>
+      <p>JSON, SARIF, and MCP — structured output that coding agents can consume and act on directly.</p>
+    </div>
   </div>
 </section>
 
@@ -460,10 +881,19 @@
 <section class="drift-cta">
   <h2>Run it. Judge for yourself.</h2>
   <p>One command, your repo, instant findings. No signup, no cloud, no config.</p>
-  <div class="drift-cta-cmd"><span class="drift-dollar">$ </span>pip install drift-analyzer &amp;&amp; drift analyze --repo .</div>
-  <br>
+  <div class="drift-cta-cmds">
+    <div class="drift-cta-cmd-col">
+      <div class="drift-cta-cmd-label">Human dev</div>
+      <div class="drift-cta-cmd"><span class="drift-dollar">$ </span>pip install drift-analyzer &amp;&amp; drift analyze --repo .</div>
+    </div>
+    <div class="drift-cta-cmd-col">
+      <div class="drift-cta-cmd-label">Agent setup</div>
+      <div class="drift-cta-cmd"><span class="drift-dollar">$ </span>pip install drift-analyzer[mcp] &amp;&amp; drift init --mcp</div>
+    </div>
+  </div>
   <div class="drift-cta-links">
     <a href="getting-started/quickstart/" class="drift-cta-link primary">Quick Start →</a>
+    <a href="integrations/#mcp-server" class="drift-cta-link primary">Agent Integration →</a>
     <a href="product/example-findings/" class="drift-cta-link muted">Example Findings →</a>
     <a href="start-here/" class="drift-cta-link muted">Benchmark Evidence →</a>
     <a href="case-studies/" class="drift-cta-link muted">Case Studies →</a>
