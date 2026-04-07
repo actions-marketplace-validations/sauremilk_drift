@@ -4,6 +4,9 @@
 **Stats:** 1,118 files, 4,554 functions
 **Drift Score:** 0.690 (HIGH) | **Time:** 2.3s
 
+!!! note "Scope note"
+    These numbers reflect a full-clone analysis (all branches and test files included). The [Comparisons](../comparisons/index.md) page uses a `src/`-only shallow-clone scope, which reports 664 files, score 0.624, and 13.1 s for the same repository.
+
 ## Key Findings
 
 ### 499 Near-Duplicate Test Functions (MDS 0.85)

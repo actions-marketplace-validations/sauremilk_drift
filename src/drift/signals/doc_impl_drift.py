@@ -160,6 +160,9 @@ _DIRECTORY_CONTEXT_KEYWORDS: tuple[str, ...] = (
     "modules",
     "package",
     "packages",
+    "architecture",
+    "component",
+    "components",
 )
 
 
@@ -227,12 +230,20 @@ def _extract_contextual_dir_refs(
     return refs
 
 
-def _extract_dir_refs_from_ast(markdown_text: str) -> set[str]:
+def _extract_dir_refs_from_ast(
+    markdown_text: str,
+    *,
+    trust_codespans: bool = False,
+) -> set[str]:
     """Parse Markdown via mistune AST and extract directory-like references.
 
     Only prose nodes are inspected; link URLs, code spans, and fenced
     code blocks are skipped entirely (they are the main sources of false
     positives from badge/CI links and code examples).
+
+    When *trust_codespans* is True, inline code spans are always extracted
+    regardless of surrounding keyword context (useful for ADR files where
+    codespans are architectural references by definition).
 
     Falls back to a simple regex when mistune is not installed.
     """
@@ -253,15 +264,35 @@ def _extract_dir_refs_from_ast(markdown_text: str) -> set[str]:
         return set()
 
     refs: set[str] = set()
-    _walk_tokens(tokens, refs)
+    _walk_tokens(tokens, refs, trust_codespans=trust_codespans)
     return refs
 
 
 _PROSE_DIR_RE = re.compile(r"(?P<tick>`)?(?P<ref>\w[\w\-]*)/(?P=tick)?")
 
 
-def _walk_tokens(tokens: list[dict[str, Any]], refs: set[str]) -> None:
+def _collect_sibling_text(children: list[dict[str, Any]]) -> str:
+    """Concatenate raw text from text-type children for context checks."""
+    parts: list[str] = []
+    for child in children:
+        if child.get("type") in ("text", "softbreak"):
+            raw = child.get("raw", child.get("text", ""))
+            if raw:
+                parts.append(raw)
+    return " ".join(parts)
+
+
+def _walk_tokens(
+    tokens: list[dict[str, Any]],
+    refs: set[str],
+    *,
+    sibling_context: str = "",
+    trust_codespans: bool = False,
+) -> None:
     """Recursively walk mistune AST tokens collecting directory references."""
+    # Track context across sequential sibling tokens so that e.g.
+    # a paragraph "Project structure:" propagates to its following list.
+    running_ctx = sibling_context
     for tok in tokens:
         tok_type = tok.get("type", "")
 
@@ -270,29 +301,35 @@ def _walk_tokens(tokens: list[dict[str, Any]], refs: set[str]) -> None:
             # Still walk the link *text children* (they may mention real dirs)
             children = tok.get("children")
             if children:
-                _walk_tokens(children, refs)
+                _walk_tokens(
+                    children, refs, sibling_context=running_ctx, trust_codespans=trust_codespans
+                )
             continue
 
         # Skip images
         if tok_type == "image":
             continue
 
-        # Skip code spans and code blocks — directory references inside
-        # code examples are not claims about project structure and are the
-        # #2 source of false positives after link URLs.
-        # Inline code spans (``codespan``) are kept — they typically reference
-        # real project paths in prose context (e.g. "the `src/` directory").
+        # Skip fenced code blocks — code examples are not structure claims.
         if tok_type == "block_code":
             continue
 
-        # For inline code spans — extract directory-like patterns
+        # For inline code spans — extract directory-like patterns only when
+        # the surrounding paragraph/heading text contains a directory keyword.
         if tok_type == "codespan":
             raw = tok.get("raw", tok.get("text", ""))
             if raw:
+                if trust_codespans:
+                    has_ctx = True
+                else:
+                    ctx_lower = running_ctx.lower()
+                    has_ctx = any(
+                        kw in ctx_lower for kw in _DIRECTORY_CONTEXT_KEYWORDS
+                    )
                 refs.update(
                     _extract_contextual_dir_refs(
                         raw,
-                        allow_without_context=True,
+                        allow_without_context=has_ctx,
                     )
                 )
             continue
@@ -303,15 +340,80 @@ def _walk_tokens(tokens: list[dict[str, Any]], refs: set[str]) -> None:
         if raw and tok_type in ("text", "paragraph", "heading"):
             refs.update(_extract_contextual_dir_refs(raw))
 
-        # Recurse into children
+        # Recurse into children — for paragraphs/headings, build sibling
+        # context from text children so codespans can use it.
+        # Context is accumulated across siblings: a paragraph "Project
+        # structure:" propagates through a subsequent list to its items.
         children = tok.get("children")
         if children and isinstance(children, list):
-            _walk_tokens(children, refs)
+            if tok_type in ("paragraph", "heading"):
+                local = _collect_sibling_text(children)
+                ctx = (running_ctx + " " + local).strip() if local else running_ctx
+                running_ctx = ctx  # Propagate to following siblings
+            elif tok_type == "list_item":
+                # list_item children are paragraphs (not text nodes),
+                # pass through inherited context without overwriting.
+                ctx = running_ctx
+            else:
+                ctx = running_ctx
+            _walk_tokens(children, refs, sibling_context=ctx, trust_codespans=trust_codespans)
 
 
 def _is_url_segment(name: str) -> bool:
     """Return True if *name* looks like a URL path component, not a directory."""
     return name.lower() in _URL_PATH_SEGMENTS
+
+
+# ---------------------------------------------------------------------------
+# Container-prefix existence check (Phase B: CS-2 fix)
+# ---------------------------------------------------------------------------
+
+_CONTAINER_PREFIXES: frozenset[str] = frozenset(
+    {"src", "lib", "app", "pkg", "packages", "libs", "internal"}
+)
+
+
+def _ref_exists_in_repo(
+    repo_path: Path, ref: str, source_dirs: set[str]
+) -> bool:
+    """Check whether *ref* exists as a directory anywhere plausible in the repo."""
+    if (repo_path / ref).exists():
+        return True
+    if ref.lower() in {d.lower() for d in source_dirs}:
+        return True
+    # Check under known container prefixes (e.g. src/services/ for ref=services)
+    for prefix in _CONTAINER_PREFIXES:
+        container = repo_path / prefix
+        if container.is_dir() and (container / ref).is_dir():
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# ADR status parsing (Phase C: CS-3 fix)
+# ---------------------------------------------------------------------------
+
+_SKIP_ADR_STATUSES: frozenset[str] = frozenset(
+    {"superseded", "deprecated", "rejected"}
+)
+
+_ADR_FRONTMATTER_STATUS_RE = re.compile(
+    r"^---\s*\n.*?^status:\s*(\S+)", re.MULTILINE | re.DOTALL
+)
+_ADR_MADR_STATUS_RE = re.compile(
+    r"^##\s+Status\s*\n+\s*(\w+)", re.MULTILINE
+)
+
+
+def _extract_adr_status(text: str) -> str | None:
+    """Extract ADR status from YAML frontmatter or MADR heading format."""
+    m = _ADR_FRONTMATTER_STATUS_RE.search(text)
+    if m:
+        return m.group(1).lower().strip()
+    m = _ADR_MADR_STATUS_RE.search(text)
+    if m:
+        return m.group(1).lower().strip()
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -395,10 +497,7 @@ class DocImplDriftSignal(BaseSignal):
             if _is_noise_dir_reference(ref):
                 continue
 
-            candidate = repo_path / ref
-            if not candidate.exists() and ref.lower() not in {
-                d.lower() for d in source_dirs
-            }:
+            if not _ref_exists_in_repo(repo_path, ref, source_dirs):
                 findings.append(
                     Finding(
                         signal_type=self.signal_type,
@@ -488,14 +587,14 @@ class DocImplDriftSignal(BaseSignal):
                     text = md_file.read_text(encoding="utf-8", errors="replace")
                 except OSError:
                     continue
-                refs = _extract_dir_refs_from_ast(text)
+                status = _extract_adr_status(text)
+                if status in _SKIP_ADR_STATUSES:
+                    continue
+                refs = _extract_dir_refs_from_ast(text, trust_codespans=True)
                 for ref in sorted(refs):
                     if _is_noise_dir_reference(ref):
                         continue
-                    candidate = repo_path / ref
-                    if not candidate.exists() and ref.lower() not in {
-                        d.lower() for d in source_dirs
-                    }:
+                    if not _ref_exists_in_repo(repo_path, ref, source_dirs):
                         try:
                             rel_path = md_file.relative_to(repo_path)
                         except ValueError:

@@ -19,15 +19,15 @@ These are cross-file coherence problems. They are not the same as syntax errors,
 
 ## What drift detects
 
-Drift currently scores six signal families and reports DIA separately with weight 0.00 until its precision improves:
+Drift currently uses 14 scoring signals in the composite model and keeps 9 additional signals report-only while validation and re-validation continue. The most visible categories for architecture-drift work are:
 
 - pattern fragmentation
 - architecture violations
 - mutant duplicates
 - explainability deficit
-- temporal volatility
 - system misalignment
-- doc-implementation drift as report-only
+- doc-implementation drift
+- temporal volatility as report-only until re-validation
 
 See [Signal Reference](../algorithms/signals.md) for the signal model.
 

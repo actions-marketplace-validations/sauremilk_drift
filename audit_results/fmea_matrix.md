@@ -1,5 +1,16 @@
 # FMEA Matrix
 
+## 2026-04-07 - DIA false-positive reduction (3 cut sets from FTA)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |
+|---|---|---|---|---|---|---:|---:|---:|---:|
+| DIA | FP: codespan directory refs extracted without structure context | `_walk_tokens()` set `allow_without_context=True` for all `codespan` tokens regardless of surrounding prose | REST paths, inline code examples, foreign-repo refs emitted as phantom-dir findings | New CS-1 regression tests (no-keyword codespan → no finding, keyword present → finding kept) | Sibling-context keyword gate: collect text-children from parent paragraph/heading, only trust codespans when structure keywords present; `trust_codespans=True` for ADR files | 5 | 7 | 3 | 105 |
+| DIA | FN: codespan context gate may suppress legit structure refs in keyword-free prose | Paragraphs without structure keywords (e.g. "use `services/` for the logic") are no longer extracted | Potential under-reporting of phantom dirs in informal prose | Ground-truth regression for `dia_adr_mismatch_tp` + keyword set includes "architecture", "component" | Conservative keyword list covering common README section headings; running context propagation across siblings (heading → list) | 4 | 3 | 5 | 60 |
+| DIA | FP: phantom dir finding when directory exists under src/ or lib/ prefix | `_source_directories()` only records `parts[0]`; `src/services/` yields `src` not `services` | README ref `services/` flagged as missing despite `src/services/` existing | New CS-2 regression tests (src/services/ exists → no finding; tests/services/ → finding stays) | Container-prefix existence check: `_ref_exists_in_repo()` checks direct path + curated prefix set (`src`, `lib`, `app`, `pkg`, `packages`, `libs`, `internal`) | 5 | 4 | 3 | 60 |
+| DIA | FN: container-prefix check may mask phantom dirs existing only under src/ | If README claims top-level `services/` but only `src/services/` exists (unrelated context) | Phantom dir not reported | Regression test verifies `tests/services/` (non-container) still triggers finding | Curated prefix set excludes `tests`, `benchmarks`, `docs` etc.; only production-code containers | 4 | 2 | 5 | 40 |
+| DIA | FP: superseded/deprecated ADR references flagged as phantom dirs | `_scan_adr_files()` treated all ADRs identically regardless of lifecycle status | Pre-refactoring or rejected ADRs produce stale-reference findings | New CS-3 regression tests (superseded → skip, accepted → finding, no status → finding) | Parse YAML frontmatter + MADR freetext status; skip `superseded`/`deprecated`/`rejected` | 5 | 4 | 3 | 60 |
+| DIA | FN: skipped ADR may still reference a real phantom dir | Superseded ADR with coincidentally valid phantom-dir ref is not scanned | Under-reporting for edge case | N/A (superseded ADRs are not authoritative per policy) | Only skip 3 statuses; `proposed`/`accepted`/no-status continue to be scanned | 3 | 2 | 6 | 36 |
+
 ## 2026-04-07 - MAZ/ISD/HSC wave-2 calibration
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN |

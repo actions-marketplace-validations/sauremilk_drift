@@ -1,8 +1,8 @@
 {
   "name": "drift_self",
-  "drift_score": 0.538,
+  "drift_score": 0.522,
   "severity": "medium",
-  "files": 197,
-  "functions": 1676,
-  "findings": 188
+  "files": 129,
+  "functions": 864,
+  "findings": 345
 }

@@ -7,5 +7,6 @@
   "terminal.integrated.shellIntegration.enabled": true,
   "terminal.integrated.env.windows": {
     "PYTHONUNBUFFERED": "1"
-  }
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }

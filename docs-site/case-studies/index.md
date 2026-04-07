@@ -4,6 +4,9 @@ Drift has been benchmarked on real-world open-source repositories to validate it
 
 ## Repositories Analyzed
 
+!!! info "Benchmark context"
+    Full-clone analysis (all branches and tests included), default configuration, Drift v2.5.x, April 2026. The [Comparisons](../comparisons/index.md) page uses a narrower `src/`-only scope and shows different file counts and scores for the same repositories.
+
 | Repository | Files | Functions | Drift Score | Time |
 |---|---|---|---|---|
 | [FastAPI](fastapi.md) | 1,118 | 4,554 | 0.690 HIGH | 2.3s |

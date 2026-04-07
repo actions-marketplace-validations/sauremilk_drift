@@ -84,6 +84,9 @@ Why `high` first:
 - it forces attention on the most structural issues
 - it gives space to calibrate lower-severity findings later
 
+!!! note "Severity vs. finding score"
+    `--fail-on high` filters by **severity level** (critical / high / medium / low), not by the numeric finding score. Severity is derived from the finding score and signal type but represents a coarser classification. The numeric score is useful for manual triage; the severity level is what CI gates operate on.
+
 ### Phase 4: Tune by repo shape
 
 Only after reviewing real findings should you adjust policies or weights.

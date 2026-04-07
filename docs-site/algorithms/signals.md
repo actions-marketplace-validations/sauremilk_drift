@@ -1,6 +1,6 @@
 # Signal Reference
 
-Drift tracks 23 total signals across architectural erosion and security-by-default patterns. 15 signals are currently scoring-active and 8 are report-only until precision/recall validation is complete. Signals are grouped by origin: 6 core signals (ablation-validated since v0.5), 4 consistency proxy signals (promoted from report-only in v0.7.0 via [ADR-007](https://github.com/mick-gsk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md)), 3 contract signals (added in v0.7.0/v0.7.1 via [ADR-008](https://github.com/mick-gsk/drift/blob/main/docs/adr/008-adr-008-signal-promotion.md)), 1 cohesion signal (COD), 1 co-change coupling signal (CCC), 1 TypeScript architecture signal (TSA), 4 structural report-only signals, and 3 security report-only signals.
+Drift tracks 23 total signals across architectural erosion and security-by-default patterns. 14 signals are currently scoring-active and 9 are report-only until precision/recall validation is complete or re-validation is finished. Signals are grouped by origin: 6 core signals from the historical v0.5 baseline (with TVS currently held report-only in the composite score), 4 consistency proxy signals (promoted from report-only in v0.7.0 via [ADR-007](https://github.com/mick-gsk/drift/blob/main/docs/adr/007-consistency-proxy-signals.md)), 3 contract signals (added in v0.7.0/v0.7.1 via [ADR-008](https://github.com/mick-gsk/drift/blob/main/docs/adr/008-adr-008-signal-promotion.md)), 1 cohesion signal (COD), 1 co-change coupling signal (CCC), 1 TypeScript architecture signal (TSA), 4 structural report-only signals, and 3 security report-only signals.
 
 ## Signal Table (All 23)
 
@@ -10,7 +10,7 @@ Drift tracks 23 total signals across architectural erosion and security-by-defau
 | AVS | Architecture Violations | Scoring | Imports crossing intended layer boundaries or structural boundaries. |
 | MDS | Mutant Duplicates | Scoring | Near-duplicate functions/classes diverging in subtle ways. |
 | EDS | Explainability Deficit | Scoring | Complex code lacking tests, docs, or type/context signals. |
-| TVS | Temporal Volatility | Scoring | Files with anomalous churn and instability over git history. |
+| TVS | Temporal Volatility | Report-only | Files with anomalous churn and instability over git history. |
 | SMS | System Misalignment | Scoring | Imports or patterns that are foreign to the target module context. |
 | DIA | Doc-Implementation Drift | Scoring | Documented architecture that no longer matches actual code. |
 | BEM | Broad Exception Monoculture | Scoring | Overuse of broad exception handling and swallowed failures. |

@@ -39,6 +39,13 @@ drift analyze --repo .
 └──┴────────┴───────┴──────────────────────────────────────┴──────────────────────┘
 ```
 
+!!! info "Three numbers, three meanings"
+    **Drift Score (header):** Overall repository coherence — higher means more structural erosion. This is an orientation metric, not a pass/fail threshold.
+
+    **Finding Score (table column):** Confidence that this specific finding is a real structural issue. ≥ 0.7 = strong signal, 0.4–0.7 = moderate, < 0.4 = weak.
+
+    **Precision claim (site-wide):** Historical accuracy of drift findings across the benchmark corpus. Currently 77% strict / 95% lenient on the v0.5 baseline. This describes methodology accuracy, not a per-repo promise.
+
 ## 4. How to read your first findings
 
 - **Score ≥ 0.7** → strong signal, likely a real structural issue worth investigating

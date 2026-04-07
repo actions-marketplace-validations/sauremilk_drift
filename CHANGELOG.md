@@ -3,6 +3,10 @@
 ### Added
 
 - Add `--exclude-signals` / `--exclude` option to `drift scan` CLI, `exclude_signals` parameter to the API, and MCP `drift_scan` tool to let callers explicitly exclude dominant or noisy signals (e.g. `MDS`) from returned findings (#173).
+
+### Fixed
+
+- Reduce DIA false positives via FTA-driven precision hardening: (1) codespan tokens now require sibling-text structure-keyword context instead of unconditional extraction, (2) directory existence checks resolve paths under common container prefixes (`src/`, `lib/`, `app/`), (3) ADR files with `status: superseded`/`deprecated`/`rejected` are skipped during scanning.
 - Add `--max-per-signal` option to `drift scan` CLI and matching `max_per_signal` API/MCP parameter to cap the number of returned findings per signal, preventing any one signal from flooding the result list; `selection_diagnostics` exposes the cap and uses `reason: max_per_signal_cap` for capped signals (#173).
 - Harmonize scan finding fields across `concise`, `detailed`, and `fix_first` formats: all findings now include `signal_abbrev`, `signal_id`, `signal_type`, `severity_rank` (numeric 1–5 scale), and a deterministic `fingerprint` for stable cross-command correlation without post-processing (#171).
 - Add top-level `cross_validation` block to `scan` responses mapping canonical field names, severity ranking scale (critical=5 … info=1), and numeric score range (0.0–1.0) for machines and agents consuming the API (#171).

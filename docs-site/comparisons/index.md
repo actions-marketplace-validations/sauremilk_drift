@@ -72,7 +72,8 @@ coherence signals. See [Drift vs Architecture Conformance Tools](drift-vs-archit
 
 ## Benchmark Scores on Real Repositories
 
-All scores produced with default configuration (`drift analyze --since 90 --format json`).
+!!! info "Benchmark context"
+    All scores produced with default configuration (`drift analyze --since 90 --format json`), `src/`-scope shallow clone, Drift v2.5.x, April 2026. [Case Studies](../case-studies/index.md) use full-clone analysis with different file counts and scores.
 
 | Repository | Files | Functions | Drift Score | Severity | Findings | Analysis Time |
 |---|---:|---:|---:|---|---:|---:|

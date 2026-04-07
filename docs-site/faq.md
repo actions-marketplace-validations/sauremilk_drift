@@ -1,15 +1,5 @@
 # FAQ
 
-## What is drift?
-
-Drift is a deterministic static analyzer for architectural erosion and cross-file coherence problems in Python repositories.
-
-## What does drift detect?
-
-Drift detects 23 signal families across structural, architectural, temporal, and security-by-default dimensions. 15 signals are currently scoring-active in the composite score: pattern fragmentation (PFS), architecture violations (AVS), mutant duplicates (MDS), explainability deficit (EDS), temporal volatility (TVS), system misalignment (SMS), DIA, BEM, TPD, GCD, NBV, BAT, ECM, COD, and CCC. 8 additional signals run in report-only mode pending validation: TSA, CXS, FOE, CIR, DCA, MAZ, ISD, and HSC.
-
-See [Signal Reference](algorithms/signals.md).
-
 ## Is drift a bug finder or security scanner?
 
 No. Drift is not positioned as a bug finder, a security scanner, or a type checker.
@@ -26,19 +16,35 @@ See [Drift vs Ruff](comparisons/drift-vs-ruff.md) and [Drift vs Semgrep and Code
 
 Avoid using drift as a first-day hard gate on tiny repositories or when the real need is bug detection, security review, or type-safety enforcement.
 
+## How precise are drift's findings?
+
+The conservative public benchmark claim on this site is 77% strict precision / 95% lenient on the historical v0.5 six-signal baseline (286 findings, 5 repositories, score-weighted sample, single-rater classification with 51 disputed cases).
+
+Precision has not yet been revalidated for the current 14-signal composite model, so treat that number as a historical reference point, not as a blanket claim for every signal or every repository.
+
+See [Trust and Evidence](trust-evidence.md), [Benchmarking and Trust](benchmarking.md), and [STUDY.md](https://github.com/mick-gsk/drift/blob/main/docs/STUDY.md).
+
 ## How should a team introduce drift?
 
 Start locally, then move to report-only CI, then gate only on `high` findings after reviewing real output.
 
 See [Team Rollout](getting-started/team-rollout.md).
 
-## Why does PyPI still classify drift as Alpha?
+## Why does PyPI classify drift as Beta if some product areas are still experimental?
 
-Because the project uses a conservative release signal.
+Because the current package metadata reflects the maturity of the primary Python path, not a claim that every optional surface is equally mature.
 
 The core Python analysis and the CI/SARIF rollout path are the most stable parts of drift today, but TypeScript support remains experimental, embeddings-based parts are optional and experimental, and the benchmark methodology is still evolving.
 
 See [Stability and Release Status](stability.md).
+
+## How do I reduce false positives?
+
+1. **Configure `path_overrides`** to exclude known-noisy paths (tests, migrations, generated code)
+2. **Use `# drift:context deliberate-variant`** comments for intentional polymorphism
+3. **Report FPs** via the [FP/FN template](https://github.com/mick-gsk/drift/issues/new?template=false_positive.md) — they directly improve signal quality
+
+See [Troubleshooting](getting-started/troubleshooting.md).
 
 ## Does drift use an LLM in the detector pipeline?
 
@@ -46,17 +52,31 @@ No. The detector path is deterministic.
 
 See [Trust and Evidence](trust-evidence.md) and [Benchmarking and Trust](benchmarking.md).
 
+## What does a high drift score mean?
+
+A high score (closer to 1.0) indicates more structural entropy — inconsistent patterns, boundary violations, or accumulated duplicates. It does not mean the code is broken or buggy.
+
+Interpret score *changes* over time (`drift trend`), not isolated snapshots. A rising score after AI-assisted development often signals pattern fragmentation that should be reviewed.
+
+See [Interpreting the Score](trust-evidence.md).
+
 ## What is the drift composite score?
 
-A weighted aggregate of all 23 signal scores that produces a single number between 0 and 1. Higher values indicate more structural erosion. Auto-calibration rebalances weights at runtime based on finding distribution.
+A weighted aggregate of the 14 currently scoring-active signal scores that produces a single number between 0 and 1. Higher values indicate more structural erosion. Auto-calibration rebalances weights at runtime based on finding distribution.
 
 See [Scoring Model](algorithms/scoring.md).
 
-## How precise are drift's findings?
+## What is drift?
 
-97.3% strict precision across 263 ground-truth-labeled findings on 15 repositories (v0.3). All false positives came from a single signal (DIA) that carries zero scoring weight.
+Drift is a deterministic static analyzer for architectural erosion and cross-file coherence problems in Python repositories.
 
-See [Benchmarking and Trust](benchmarking.md) and [STUDY.md](https://github.com/mick-gsk/drift/blob/main/docs/STUDY.md).
+## What does drift detect?
+
+Drift detects 23 signal families across structural, architectural, temporal, and security-by-default dimensions. 14 signals are currently scoring-active in the composite score: pattern fragmentation (PFS), architecture violations (AVS), mutant duplicates (MDS), explainability deficit (EDS), system misalignment (SMS), DIA, BEM, TPD, GCD, NBV, BAT, ECM, COD, and CCC.
+
+9 additional signals currently run in report-only mode pending validation or re-validation: TVS, TSA, CXS, FOE, CIR, DCA, MAZ, ISD, and HSC.
+
+See [Signal Reference](algorithms/signals.md).
 
 ## Can drift detect dependency cycles in Python?
 
@@ -76,7 +96,7 @@ See [Comparisons](comparisons/index.md).
 
 ## How long does analysis take?
 
-Typical runtime is 2–5 seconds on Python projects with up to a few hundred files. The Django study corpus (1,800+ files over 10 years of history) completes in under 10 seconds. Drift uses Python's built-in `ast` module — no ML inference, no server, no network calls.
+Typical runtime is 2–5 seconds on Python projects with up to a few hundred files. The Django study corpus (2,890 files, 31 k functions, full-clone default config) completes in about 36 seconds; a `src/`-scoped shallow-clone analysis of smaller repositories like FastAPI (664 files) finishes in about 13 seconds. Drift uses Python’s built-in `ast` module — no ML inference, no server, no network calls. See [Performance](reference/performance.md) for the full timing matrix.
 
 For very large repositories (> 5,000 files), you can restrict analysis to a subdirectory with `--path src/` or cap file discovery via `thresholds.max_discovery_files` in `drift.yaml`.
 
@@ -97,9 +117,9 @@ See [Configuration](getting-started/configuration.md).
 
 ## What is the difference between scoring signals and report-only signals?
 
-**Scoring signals** (15) contribute to the composite drift score and severity. These are validated through the ground-truth study with known precision/recall.
+**Scoring signals** (14) contribute to the composite drift score and severity.
 
-**Report-only signals** (8) detect real patterns but are not yet included in the composite score. They appear in findings output tagged as `report_only: true`. Report-only signals graduate to scoring-active once they pass validation thresholds.
+**Report-only signals** (9) detect real patterns but are not yet included in the composite score. They appear in findings output tagged as `report_only: true`. Report-only signals graduate to scoring-active once they pass validation thresholds.
 
 See [Signal Reference](algorithms/signals.md).
 
@@ -118,22 +138,6 @@ drift analyze --repo . --path src/api/
 ```
 
 This analyzes only the specified subtree while still resolving cross-file dependencies within it.
-
-## What does a high drift score mean?
-
-A high score (closer to 1.0) indicates more structural entropy — inconsistent patterns, boundary violations, or accumulated duplicates. It does not mean the code is broken or buggy.
-
-Interpret score *changes* over time (`drift trend`), not isolated snapshots. A rising score after AI-assisted development often signals pattern fragmentation that should be reviewed.
-
-See [Interpreting the Score](trust-evidence.md).
-
-## How do I reduce false positives?
-
-1. **Configure `path_overrides`** to exclude known-noisy paths (tests, migrations, generated code)
-2. **Use `# drift:context deliberate-variant`** comments for intentional polymorphism
-3. **Report FPs** via the [FP/FN template](https://github.com/mick-gsk/drift/issues/new?template=false_positive.md) — they directly improve signal quality
-
-See [Troubleshooting](getting-started/troubleshooting.md).
 
 ## Can drift work with Copilot, Cursor, or Claude?
 

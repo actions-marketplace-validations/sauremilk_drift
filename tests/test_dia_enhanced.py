@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from drift.signals.doc_impl_drift import (
+    _extract_adr_status,
     _extract_dir_refs_from_ast,
     _is_likely_proper_noun,
     _is_noise_dir_reference,
     _is_url_segment,
     _is_version_or_numeric_segment,
+    _ref_exists_in_repo,
 )
 
 
@@ -169,10 +171,16 @@ The `frontend/` directory has the UI.
         refs = _extract_dir_refs_from_ast(md)
         assert "connectors" in refs
 
-    def test_backticked_path_without_context_is_kept(self):
-        md = "Run checks in `scripts/` before packaging."
+    def test_backticked_path_with_context_is_kept(self):
+        md = "The `scripts/` directory contains CI helpers."
         refs = _extract_dir_refs_from_ast(md)
         assert "scripts" in refs
+
+    def test_backticked_path_without_context_is_filtered(self):
+        """Inline code without structure keywords should NOT be extracted (CS-1 fix)."""
+        md = "Run checks in `scripts/` before packaging."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "scripts" not in refs
 
 
 class TestAdrScanning:
@@ -319,3 +327,283 @@ class TestDiaLibraryContext:
         src_findings = [f for f in findings if f.metadata.get("undocumented_dir") == "src"]
         assert src_findings
         assert src_findings[0].metadata.get("library_context_candidate") is True
+
+
+# ---------------------------------------------------------------------------
+# CS-1 regression: codespan sibling-context gating
+# ---------------------------------------------------------------------------
+
+
+class TestCodespanSiblingContext:
+    """Phase A: codespans should only be extracted when sibling text has keywords."""
+
+    def test_codespan_with_directory_keyword(self):
+        md = "The `services/` directory contains business logic."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "services" in refs
+
+    def test_codespan_with_folder_keyword(self):
+        md = "Place modules in the `core/` folder."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "core" in refs
+
+    def test_codespan_with_structure_keyword(self):
+        md = "Project structure: `services/` and `models/` hold the code."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "services" in refs
+        assert "models" in refs
+
+    def test_codespan_without_keyword_is_filtered(self):
+        """Inline code in prose without structure keywords -> no extraction (CS-1)."""
+        md = "Send a request to `auth/callback` for login."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "auth" not in refs
+
+    def test_codespan_rest_path_without_context(self):
+        md = "The endpoint is `users/profile` in production."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "users" not in refs
+
+    def test_codespan_see_for_more_without_context(self):
+        md = "See `src/` for more information."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "src" not in refs
+
+    def test_codespan_with_package_keyword(self):
+        md = "The package `utils/` provides helpers."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "utils" in refs
+
+    def test_heading_with_codespan_and_keyword(self):
+        md = "## The `lib/` module\n\nCode goes here."
+        refs = _extract_dir_refs_from_ast(md)
+        assert "lib" in refs
+
+
+# ---------------------------------------------------------------------------
+# CS-2 regression: container-prefix existence check
+# ---------------------------------------------------------------------------
+
+
+class TestContainerPrefixExistence:
+    """Phase B: directories under known container prefixes should be found."""
+
+    def test_direct_path_exists(self, tmp_path):
+        repo = tmp_path / "repo"
+        (repo / "services").mkdir(parents=True)
+        assert _ref_exists_in_repo(repo, "services", set()) is True
+
+    def test_under_src_prefix(self, tmp_path):
+        repo = tmp_path / "repo"
+        (repo / "src" / "services").mkdir(parents=True)
+        assert _ref_exists_in_repo(repo, "services", set()) is True
+
+    def test_under_app_prefix(self, tmp_path):
+        repo = tmp_path / "repo"
+        (repo / "app" / "controllers").mkdir(parents=True)
+        assert _ref_exists_in_repo(repo, "controllers", set()) is True
+
+    def test_under_lib_prefix(self, tmp_path):
+        repo = tmp_path / "repo"
+        (repo / "lib" / "utils").mkdir(parents=True)
+        assert _ref_exists_in_repo(repo, "utils", set()) is True
+
+    def test_under_tests_not_container(self, tmp_path):
+        """tests/ is NOT a container prefix -- should still report missing."""
+        repo = tmp_path / "repo"
+        (repo / "tests" / "services").mkdir(parents=True)
+        assert _ref_exists_in_repo(repo, "services", set()) is False
+
+    def test_in_source_dirs_case_insensitive(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        assert _ref_exists_in_repo(repo, "Services", {"services"}) is True
+
+    def test_nonexistent_anywhere(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        assert _ref_exists_in_repo(repo, "phantom", set()) is False
+
+    def test_e2e_src_prefix_no_finding(self, tmp_path):
+        """Full signal: README refs services/, src/services/ exists -> no finding."""
+        from drift.config import DriftConfig
+        from drift.ingestion.ast_parser import parse_file
+        from drift.ingestion.file_discovery import discover_files
+        from drift.signals.doc_impl_drift import DocImplDriftSignal
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "README.md").write_text(
+            "# Project\n\nThe `services/` directory handles API logic.\n"
+        )
+        (repo / "src" / "services").mkdir(parents=True)
+        (repo / "src" / "services" / "__init__.py").write_text("")
+        (repo / "src" / "services" / "api.py").write_text("def handler(): pass\n")
+
+        cfg = DriftConfig(include=["**/*.py"], exclude=["**/__pycache__/**"])
+        files = discover_files(repo, cfg.include, cfg.exclude)
+        parse_results = [parse_file(f.path, repo, f.language) for f in files]
+
+        signal = DocImplDriftSignal(repo_path=repo)
+        findings = signal.analyze(parse_results, {}, cfg)
+
+        phantom_findings = [
+            f for f in findings if f.metadata.get("referenced_dir") == "services"
+        ]
+        assert len(phantom_findings) == 0
+
+
+# ---------------------------------------------------------------------------
+# CS-3 regression: ADR status parsing
+# ---------------------------------------------------------------------------
+
+
+class TestAdrStatusParsing:
+    """Phase C: ADR status extraction and skip logic."""
+
+    def test_yaml_frontmatter_accepted(self):
+        text = "---\nid: ADR-001\nstatus: accepted\ndate: 2025-01-01\n---\n# ADR\n"
+        assert _extract_adr_status(text) == "accepted"
+
+    def test_yaml_frontmatter_superseded(self):
+        text = "---\nstatus: superseded\n---\n# Old ADR\n"
+        assert _extract_adr_status(text) == "superseded"
+
+    def test_yaml_frontmatter_proposed(self):
+        text = "---\nstatus: proposed\n---\n# ADR\n"
+        assert _extract_adr_status(text) == "proposed"
+
+    def test_yaml_frontmatter_case_insensitive(self):
+        text = "---\nstatus: Superseded\n---\n# ADR\n"
+        assert _extract_adr_status(text) == "superseded"
+
+    def test_madr_heading_format(self):
+        text = "# ADR 001\n\n## Status\n\nAccepted\n\n## Context\n"
+        assert _extract_adr_status(text) == "accepted"
+
+    def test_madr_heading_superseded(self):
+        text = "# ADR 005\n\n## Status\n\nSuperseded by ADR-010\n\n## Context\n"
+        assert _extract_adr_status(text) == "superseded"
+
+    def test_no_status_returns_none(self):
+        text = "# ADR 001\n\nSome description without a status.\n"
+        assert _extract_adr_status(text) is None
+
+    def test_superseded_adr_skipped_in_scan(self, tmp_path):
+        """ADR with status: superseded should NOT produce findings."""
+        from drift.config import DriftConfig
+        from drift.ingestion.ast_parser import parse_file
+        from drift.ingestion.file_discovery import discover_files
+        from drift.signals.doc_impl_drift import DocImplDriftSignal
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "README.md").write_text("# Project\n\n`src/` directory has code.\n")
+        (repo / "src").mkdir()
+        (repo / "src" / "__init__.py").write_text("")
+
+        adr_dir = repo / "docs" / "adr"
+        adr_dir.mkdir(parents=True)
+        (adr_dir / "001.md").write_text(
+            "---\nstatus: superseded\n---\n"
+            "# ADR 001\n\n- `controllers/` — old HTTP layer\n"
+        )
+
+        cfg = DriftConfig(include=["**/*.py"], exclude=["**/__pycache__/**"])
+        files = discover_files(repo, cfg.include, cfg.exclude)
+        parse_results = [parse_file(f.path, repo, f.language) for f in files]
+
+        signal = DocImplDriftSignal(repo_path=repo)
+        findings = signal.analyze(parse_results, {}, cfg)
+
+        adr_findings = [f for f in findings if "ADR" in f.title]
+        assert len(adr_findings) == 0
+
+    def test_accepted_adr_still_produces_findings(self, tmp_path):
+        """ADR with status: accepted should still produce findings for phantom dirs."""
+        from drift.config import DriftConfig
+        from drift.ingestion.ast_parser import parse_file
+        from drift.ingestion.file_discovery import discover_files
+        from drift.signals.doc_impl_drift import DocImplDriftSignal
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "README.md").write_text("# Project\n\n`src/` directory has code.\n")
+        (repo / "src").mkdir()
+        (repo / "src" / "__init__.py").write_text("")
+
+        adr_dir = repo / "docs" / "adr"
+        adr_dir.mkdir(parents=True)
+        (adr_dir / "001.md").write_text(
+            "---\nstatus: accepted\n---\n"
+            "# ADR 001\n\n- `controllers/` — HTTP layer\n"
+        )
+
+        cfg = DriftConfig(include=["**/*.py"], exclude=["**/__pycache__/**"])
+        files = discover_files(repo, cfg.include, cfg.exclude)
+        parse_results = [parse_file(f.path, repo, f.language) for f in files]
+
+        signal = DocImplDriftSignal(repo_path=repo)
+        findings = signal.analyze(parse_results, {}, cfg)
+
+        adr_findings = [f for f in findings if "ADR" in f.title]
+        assert any(f.metadata.get("referenced_dir") == "controllers" for f in adr_findings)
+
+    def test_no_status_adr_still_produces_findings(self, tmp_path):
+        """ADR without status field should still produce findings (conservative)."""
+        from drift.config import DriftConfig
+        from drift.ingestion.ast_parser import parse_file
+        from drift.ingestion.file_discovery import discover_files
+        from drift.signals.doc_impl_drift import DocImplDriftSignal
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "README.md").write_text("# Project\n\n`src/` directory has code.\n")
+        (repo / "src").mkdir()
+        (repo / "src" / "__init__.py").write_text("")
+
+        adr_dir = repo / "docs" / "adr"
+        adr_dir.mkdir(parents=True)
+        (adr_dir / "001.md").write_text(
+            "# ADR 001\n\n- `controllers/` — HTTP layer\n"
+        )
+
+        cfg = DriftConfig(include=["**/*.py"], exclude=["**/__pycache__/**"])
+        files = discover_files(repo, cfg.include, cfg.exclude)
+        parse_results = [parse_file(f.path, repo, f.language) for f in files]
+
+        signal = DocImplDriftSignal(repo_path=repo)
+        findings = signal.analyze(parse_results, {}, cfg)
+
+        adr_findings = [f for f in findings if "ADR" in f.title]
+        assert any(f.metadata.get("referenced_dir") == "controllers" for f in adr_findings)
+
+    def test_madr_superseded_format_skipped(self, tmp_path):
+        """ADR with MADR heading Status: Superseded should be skipped."""
+        from drift.config import DriftConfig
+        from drift.ingestion.ast_parser import parse_file
+        from drift.ingestion.file_discovery import discover_files
+        from drift.signals.doc_impl_drift import DocImplDriftSignal
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "README.md").write_text("# Project\n\n`src/` directory has code.\n")
+        (repo / "src").mkdir()
+        (repo / "src" / "__init__.py").write_text("")
+
+        adr_dir = repo / "docs" / "adr"
+        adr_dir.mkdir(parents=True)
+        (adr_dir / "001.md").write_text(
+            "# ADR 001\n\n## Status\n\nSuperseded by ADR-005\n\n"
+            "## Context\n\n- `controllers/` — old layer\n"
+        )
+
+        cfg = DriftConfig(include=["**/*.py"], exclude=["**/__pycache__/**"])
+        files = discover_files(repo, cfg.include, cfg.exclude)
+        parse_results = [parse_file(f.path, repo, f.language) for f in files]
+
+        signal = DocImplDriftSignal(repo_path=repo)
+        findings = signal.analyze(parse_results, {}, cfg)
+
+        adr_findings = [f for f in findings if "ADR" in f.title]
+        assert len(adr_findings) == 0

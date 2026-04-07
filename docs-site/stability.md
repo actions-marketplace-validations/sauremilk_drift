@@ -1,18 +1,18 @@
 # Stability and Release Status
 
-This page explains why drift still presents itself as Alpha in package metadata even though parts of the product are already stable enough for real use.
+This page explains why drift currently presents itself as Beta in package metadata while still recommending a conservative rollout posture.
 
-The short version: the core Python path is stronger than the broadest product surface. The release label should reflect that difference instead of hiding it.
+The short version: the core Python path is stronger than the broadest product surface. The release label should reflect that difference without implying that every optional feature is equally mature.
 
 ## Current release posture
 
-Drift currently keeps the PyPI classifier:
+Drift currently publishes the PyPI classifier:
 
-`Development Status :: 3 - Alpha`
+`Development Status :: 4 - Beta`
 
 This is intentional.
 
-It signals that users should expect mixed maturity across the total surface area, even though the primary path is already much more stable than the label alone might suggest.
+It signals that the primary Python workflow is mature enough for serious adoption, while some optional surfaces still need more validation and narrower expectations.
 
 ## Stability matrix
 
@@ -24,16 +24,17 @@ It signals that users should expect mixed maturity across the total surface area
 | Embeddings-based parts | Optional / experimental | These are outside the deterministic core path and should not be treated as baseline functionality. |
 | Benchmark methodology | Evolving | Public, reproducible, and good enough to support conservative claims, but still improving in replication depth, sampling, and interpretation rigor. |
 
-## Why Alpha is still the honest label
+## Why Beta is the honest label
 
-Alpha does not mean "nothing works." In drift's case it means:
+Beta does not mean "everything is equally production-ready." In drift's case it means:
 
 - the core workflow is ahead of the broadest feature envelope
+- the primary Python CLI and CI path are stable enough for real use
 - some optional or secondary surfaces are still experimental
 - benchmark interpretation should remain conservative and signal-specific
-- the project would rather under-claim than over-claim
+- the project still wants teams to validate fit locally before turning drift into a hard gate
 
-That is a credibility choice, not an apology.
+That is a credibility choice, not marketing inflation.
 
 ## What users can rely on today
 
@@ -51,16 +52,25 @@ Users should treat these areas more cautiously:
 - embeddings-based or optional advanced paths
 - broad benchmark conclusions applied unchanged to every repository shape
 
-## What would justify a move toward Beta
+## What Beta does not mean
 
-Moving toward Beta should follow evidence, not tone. A Beta classifier becomes justified when the project can defend these claims simultaneously:
+Beta should not be read as:
+
+1. blanket evidence that every signal is equally mature
+2. a recommendation to hard-gate every repository on day one
+3. proof that benchmark conclusions transfer unchanged to every codebase shape
+4. a claim that experimental surfaces should be evaluated like the core Python path
+
+## What would justify stronger-than-Beta claims
+
+Moving beyond the current posture should follow evidence, not tone. Stronger maturity claims become justified when the project can defend these claims simultaneously:
 
 1. the primary Python path remains consistently reliable across more repositories and over time
 2. the user-facing workflow is stable enough that rollout guidance changes little between releases
 3. optional and experimental areas are clearly separated from the baseline experience
 4. benchmark methodology has stronger replication and clearer confidence communication
 
-Until then, Alpha with an explicit stability matrix is the more credible posture.
+Until then, Beta with an explicit stability matrix is the more credible posture.
 
 ## Related pages
 

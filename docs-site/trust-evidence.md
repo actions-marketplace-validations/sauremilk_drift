@@ -7,10 +7,10 @@ It is designed for teams that need to answer a practical question before rollout
 ## Public claims safe to repeat
 
 - drift uses 14 scoring signals in the composite score (TVS currently report-only until re-validation)
-- the v0.5 benchmark baseline used 6 core signals; quantitative precision claims below apply to that historical model
+- the conservative public benchmark claim is 77% strict precision / 95% lenient on the historical v0.5 six-signal baseline
 - the current study corpus covers 15 real-world repositories
 - all analysis is deterministic and does not use an LLM in the detector pipeline
-- the PyPI Alpha classifier is intentional and reflects mixed maturity across the full product surface, not weakness in the core Python path alone
+- package metadata currently uses the PyPI Beta classifier, while rollout guidance remains conservative because maturity still varies across the broader product surface
 
 ## Security boundary evidence
 
@@ -29,10 +29,8 @@ Supporting regression tests include:
 
 ## Benchmark evidence
 
-- **v0.5 baseline (6-signal model):** 77% strict precision / 95% lenient on a score-weighted sample of 286 findings across 5 repositories (non-circular heuristic classification; 51 Disputed findings where only score evidence available — independent multi-rater validation pending)
-- **v0.5 baseline:** 6 active scoring signals: 78% strict / 98% lenient precision (n=259, 6 FP: 4 AVS config-imports, 2 MDS async/sync pairs)
-- **v0.5 baseline:** DIA (then weight 0.00): 63% strict precision (n=27, 9 FP from URL/directory-name heuristics)
-- precision has not been revalidated for the current 15-signal model; treat v0.5 numbers as a historical reference point
+- **Conservative public benchmark claim:** 77% strict precision / 95% lenient on a score-weighted sample of 286 findings across 5 repositories in the historical v0.5 six-signal baseline (non-circular heuristic classification; 51 Disputed findings where only score evidence was available — independent multi-rater validation pending)
+- precision has not been revalidated for the current 14-signal model; treat the v0.5 number as a historical reference point, not as a blanket claim for the current composite model
 - **v0.7.1 (2026-03-27):** 88% detection recall on a controlled mutation benchmark of 17 injected patterns across 10 signal types (synthetic repo with git history; 2 patterns undetected: 1 return-pattern fragmentation variant, 1 system-misalignment below threshold)
 - **v0.5 baseline (historical):** 86% detection rate on a 14-pattern benchmark
 - self-analysis of drift reports a score of 0.442 (MEDIUM)
@@ -67,13 +65,14 @@ The strongest current claim is that drift provides a deterministic and inspectab
 
 Use a split message instead of a single blanket adjective:
 
+- package classifier: Beta
 - core Python analysis: stable
 - CI and SARIF workflow: stable
 - TypeScript support: experimental
 - embeddings-based parts: optional / experimental
 - benchmark methodology: evolving
 
-This keeps external communication conservative without understating the maturity of the primary Python workflow.
+This keeps external communication honest without turning the Beta classifier into a blanket production guarantee for every surface.
 
 See [Stability and Release Status](stability.md).
 
@@ -90,13 +89,12 @@ The raw benchmark and audit artifacts live in the repository alongside the docs.
 
 Useful starting points:
 
-- `benchmark_results/all_results.json` for aggregate benchmark output across the corpus
-- `benchmark_results/ground_truth_analysis.json` for labeled precision-analysis material
-- `benchmark_results/ground_truth_labels.json` for the underlying labels
-- `benchmark_results/mutation_benchmark.json` for the controlled recall benchmark
-- `benchmark_results/holdout_validation.json` for validation snapshots kept apart from the main analysis narrative
-- `benchmark_results/fastapi.json`, `benchmark_results/pydantic.json`, and `benchmark_results/django.json` for case-study-adjacent repository summaries
-- `audit_results/cli_audit.md`, `audit_results/requests_audit.md`, `audit_results/arrow_audit.md`, and `audit_results/frappe_audit.md` for focused audit writeups
+- `benchmark_results/all_results.json` — aggregate scores, file counts, and finding totals for every corpus repository in a single file
+- `benchmark_results/ground_truth_analysis.json` — the labeled precision-analysis matrix (TP / FP / Disputed per signal)
+- `benchmark_results/archive/validation/ground_truth_labels.json` — underlying per-finding ground-truth labels used by the precision analysis
+- `benchmark_results/mutation_benchmark.json` — controlled recall benchmark (17 injected mutation patterns, detection rate per signal)
+- `benchmark_results/archive/validation/holdout_validation.json` — leave-one-out cross-validation snapshots kept apart from the main analysis narrative
+- `benchmark_results/archive/single_repo/fastapi.json`, `benchmark_results/archive/single_repo/pydantic.json`, and `benchmark_results/archive/single_repo/django.json` — full per-repository analysis output used by the case studies
 
 These artifacts are most useful when read together with [Benchmarking and Trust](benchmarking.md) and [Benchmark Study](study.md), because the methodology and the limits determine how the numbers should be interpreted.
 

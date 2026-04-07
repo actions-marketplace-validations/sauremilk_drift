@@ -1378,25 +1378,6 @@
             }
           ],
           "message": {
-            "text": "README references missing directory: myapp/\nREADME mentions 'myapp/' but no such directory exists. Documentation may be outdated.\nFIX: Remove 'myapp/' from README.md or create the directory."
-          },
-          "ruleId": "doc_impl_drift"
-        },
-        {
-          "level": "note",
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "README.md"
-                },
-                "region": {
-                  "startLine": 1
-                }
-              }
-            }
-          ],
-          "message": {
             "text": "README references missing directory: utils/\nREADME mentions 'utils/' but no such directory exists. Documentation may be outdated.\nFIX: Remove 'utils/' from README.md or create the directory."
           },
           "ruleId": "doc_impl_drift"

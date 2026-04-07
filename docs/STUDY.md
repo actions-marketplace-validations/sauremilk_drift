@@ -1,6 +1,6 @@
 # STUDY.md — Evaluating Architectural Drift Detection in Real-World Python Projects
 
-> **Versioning note (2026-04-05):** The package version in this repository is drift v2.5.1. Most quantitative benchmark artifacts referenced in this document were generated with drift v0.5.0 unless a later dated section states otherwise. The current production model exposes 23 configured signals, of which 15 are scoring-active and 8 remain report-only pending broader validation. This file therefore documents a historical evidence baseline and must not be read as a full description of the current live signal model. As of v2.5.0 the `scan` API and CLI command expose a `strategy` parameter (`diverse` / `top-severity`) that controls finding selection.
+> **Versioning note (2026-04-05):** The package version in this repository is drift v2.5.3. Most quantitative benchmark artifacts referenced in this document were generated with drift v0.5.0 unless a later dated section states otherwise. The current production model exposes 23 configured signals, of which 15 are scoring-active and 8 remain report-only pending broader validation. This file therefore documents a historical evidence baseline and must not be read as a full description of the current live signal model. As of v2.5.0 the `scan` API and CLI command expose a `strategy` parameter (`diverse` / `top-severity`) that controls finding selection.
 
 > **Feature update (2026-04-05):** v2.5.0 extends `drift scan` with two agent-usability improvements. First, **signal filtering**: new `--exclude-signals` and `--max-per-signal` parameters on CLI, API, and MCP let callers suppress dominant signals or cap per-signal finding volume for balanced, token-efficient result lists (#173). ADR-013 documents the design decision. Second, **cross-validation fields**: all scan findings now include `signal_abbrev`, `signal_id`, `signal_type`, `severity_rank` (5=critical … 1=info), and a deterministic `fingerprint`; the response carries a top-level `cross_validation` block with field and score-range documentation for machine consumption (#171). DIA: suppress missing-README for bootstrap-sized repos (≤1 Python file). Evidence: `benchmark_results/v2.5.0_feature_evidence.json`; tests: `tests/test_scan_diversity.py`, `tests/test_agent_native_cli.py`, `tests/test_analysis_edge_cases.py`.
 
@@ -44,8 +44,8 @@
 
 ### Public Claims Safe To Repeat As Of 2026-03-30
 
-- The package version in this repository is drift v2.5.1. The core benchmark corpus summarized below is the v0.5.0 evidence baseline.
-- The v0.5 baseline composite score used 6 scoring signals. The current model exposes 19 configured signals, with 15 scoring-active and 4 report-only pending broader validation; quantitative precision/recall claims in this study apply only to the historical 6-signal model and have not been revalidated for the current live model.
+- The package version in this repository is drift v2.5.3. The core benchmark corpus summarized below is the v0.5.0 evidence baseline.
+- The v0.5 baseline composite score used 6 scoring signals. The current model exposes 23 configured signals, with 15 scoring-active and 8 report-only pending broader validation; quantitative precision/recall claims in this study apply only to the historical 6-signal model and have not been revalidated for the current live model.
 - The current study corpus still covers 15 real-world repositories.
 - All analysis is deterministic; no LLM is used in the detector pipeline.
 
@@ -59,7 +59,7 @@ For methodology, see §1. For precision tables, see §3. For threats to validity
 
 ## Abstract
 
-This document records the evidence base behind drift, whose package version in this repository is currently v2.5.1. The main quantitative corpus in §§1–12 is a frozen v0.5.0 benchmark baseline combining three methods: (1) a **ground-truth precision analysis** of 286 classified findings across 5 repositories, (2) a **historical controlled mutation benchmark** over 14 intentionally injected drift patterns, and (3) a **usefulness study** demonstrating actionable findings in a production codebase. The strongest current repeatable precision claim from that corpus remains 77% precision (strict) / 95% lenient on the score-weighted sample, using non-circular classification criteria; this claim applies to the v0.5 6-signal model and has not been revalidated for the current v2.5.x live model with 23 configured signals. A fresh v0.7.1 mutation benchmark (17 patterns, 10 signals, synthetic repo with git history) yields 88% detection recall. The tool is fully deterministic — no LLM is used in the analysis pipeline ([ADR-001](adr/001-deterministic-analysis-pipeline.md)).
+This document records the evidence base behind drift, whose package version in this repository is currently v2.5.3. The main quantitative corpus in §§1–12 is a frozen v0.5.0 benchmark baseline combining three methods: (1) a **ground-truth precision analysis** of 286 classified findings across 5 repositories, (2) a **historical controlled mutation benchmark** over 14 intentionally injected drift patterns, and (3) a **usefulness study** demonstrating actionable findings in a production codebase. The strongest current repeatable precision claim from that corpus remains 77% precision (strict) / 95% lenient on the score-weighted sample, using non-circular classification criteria; this claim applies to the v0.5 6-signal model and has not been revalidated for the current v2.5.x live model with 23 configured signals. A fresh v0.7.1 mutation benchmark (17 patterns, 10 signals, synthetic repo with git history) yields 88% detection recall. The tool is fully deterministic — no LLM is used in the analysis pipeline ([ADR-001](adr/001-deterministic-analysis-pipeline.md)).
 
 ---
 
@@ -88,7 +88,7 @@ $$S_i = \frac{\sum f_{ij}}{n_i} \cdot \min\!\left(1,\; \frac{\ln(1 + n_i)}{\ln(1
 
 DIA, BEM, TPD, and GCD are included in the analysis output but contribute 0.0 to the composite score. They are Phase 2 signals with known precision limitations (see §3.1 for DIA; see [ADR-007](adr/007-consistency-proxy-signals.md) for BEM/TPD/GCD).
 
-**Current codebase note (v0.10.0):** The live model exposes 19 configured signals, of which 15 are scoring-active and 4 remain report-only pending broader validation. The table above documents the v0.5 baseline only. Precision and recall claims in this study have not been revalidated for the current live model.
+**Current codebase note (v2.5.3):** The live model exposes 23 configured signals, of which 15 are scoring-active and 8 remain report-only pending broader validation. The table above documents the v0.5 baseline only. Precision and recall claims in this study have not been revalidated for the current live model.
 
 ### 1.2 Repository Selection
 
@@ -1328,7 +1328,7 @@ performance improvement in analyzer runtime.
 
 
 
-This study now represents a mixed evidence record: a frozen v0.5.0 benchmark baseline, later dated engineering addenda, and a current v0.10.8 codebase that has moved ahead of parts of the evaluation corpus. The strongest repeatable claim remains that deterministic static analysis — without LLM involvement — can surface meaningful structural erosion signals across Python and TypeScript/JavaScript codebases, but not every earlier headline metric should be repeated as a current-package claim. Across 8 Python repositories (score range 0.376–0.599) and 5 TypeScript repositories (score range 0.373–0.697):
+This study now represents a mixed evidence record: a frozen v0.5.0 benchmark baseline, later dated engineering addenda, and a current v2.5.3 codebase that has moved ahead of parts of the evaluation corpus. The strongest repeatable claim remains that deterministic static analysis — without LLM involvement — can surface meaningful structural erosion signals across Python and TypeScript/JavaScript codebases, but not every earlier headline metric should be repeated as a current-package claim. Across 8 Python repositories (score range 0.376–0.599) and 5 TypeScript repositories (score range 0.373–0.697):
 
 - **77% precision** (strict) / 95% lenient on 286 classified findings using non-circular heuristics, with **15 false positives** (6 from active signals, 9 from DIA)
 - **~93% pre-calibration precision** on 373 findings across 3 previously unseen repositories (httpie, arrow, frappe) — single-rater annotation; post-calibration 100% but constitutes data leakage (see §11.10)

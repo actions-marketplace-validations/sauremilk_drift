@@ -1,5 +1,39 @@
 # Fault Tree Analysis
 
+## 2026-04-07 - DIA false-positive reduction (FTA-based, 3 cut sets)
+
+### FT-1: DIA Finding = False Positive (Top Event)
+- Top event: DIA emits a finding for a directory reference that does not represent a real architecture problem.
+- Gate: OR (any of IE-1, IE-2, IE-3 sufficient)
+
+#### IE-1: Reference is not a directory (never was)
+- Branch BE-1: URL path segment escapes `_URL_PATH_SEGMENTS` blacklist (enumerative, not structural).
+- Branch BE-2: Inline `codespan` token extracted with `allow_without_context=True` — REST path or example code like `` `auth/callback` `` passes without structure-keyword context.
+- Branch BE-3: Foreign-repo example in README (e.g. `django/core`) passes `_is_likely_proper_noun()` because it's lowercase.
+- Branch BE-4: Prose word with slash (e.g. "services/as concept") extracted from codespan without nearby keyword.
+
+#### IE-2: Directory exists but under different path
+- Branch BE-5: `src/services/` exists but `_source_directories()` only records `src` as top-level; `services/` not in `source_dirs`.
+- Branch BE-6: `app/controllers/` exists but root-anchored check fails for `controllers/`.
+
+#### IE-3: ADR reference is historically correct but stale
+- Branch BE-7: ADR describes pre-refactoring state as context; paths no longer exist.
+- Branch BE-8: ADR describes target architecture (not yet built); paths don't exist yet.
+
+### FT-2: Mitigation trade-off risk (FN potential)
+- Top event: FP-reduction mitigations may suppress legitimate true positives.
+- Branch A: Codespan context gate suppresses dir refs in paragraphs without structure keywords (e.g. "use `services/` for the API logic") — risk: low, such sentences rarely constitute structure claims.
+- Branch B: Container-prefix existence check masks phantom dirs that coincidentally exist under `src/` — risk: low, existence under common prefixes is strong non-staleness evidence.
+- Branch C: ADR status skip (`superseded`/`deprecated`/`rejected`) hides phantom dirs still referenced in obsolete ADRs — risk: acceptable, superseded ADRs are not authoritative.
+- Mitigation implemented: Conservative defaults (only curated container prefixes, only 3 skip statuses), "architecture"/"component" added to context keywords, `trust_codespans=True` for ADR files.
+
+### Cut Sets
+| Cut Set | Base Events | Probability | Fix |
+|---|---|---|---|
+| CS-1 | BE-2 (codespan + allow_without_context) | High | Sibling-context keyword gate |
+| CS-2 | BE-5 + BE-6 (path normalization) | Medium | Container-prefix existence check |
+| CS-3 | BE-7 or BE-8 (ADR status ignored) | Medium | ADR status parsing + skip |
+
 ## 2026-04-07 - MAZ/ISD/HSC wave-2 calibration
 
 ### FT-1: Security findings lose credibility through wrapper and directive edge-cases

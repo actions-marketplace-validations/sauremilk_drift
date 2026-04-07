@@ -1,41 +1,196 @@
 {
-  "mutations": {
-    "mutant_duplicate": [
-      "Exact duplicate: process_order in service_a.py and service_b.py",
-      "Exact duplicate: validate_input in service_a.py and service_b.py",
-      "Near-duplicate: fetch_user_data ~ get_customer_info (same structure, different names)"
-    ],
-    "pattern_fragmentation": [
-      "error_handling: 4 variants in handlers/ (try/except, custom exception, result-dict, assert)",
-      "return_pattern: 3 variants in models/ (None, raise, tuple)"
-    ],
-    "explainability_deficit": [
-      "Unexplained complexity: calculate_pricing (CC>=12, no docstring, no tests)",
-      "Unexplained complexity: transform_dataset (CC>=15, no docstring, no tests)"
-    ],
-    "architecture_violation": [
-      "Upward import: models/enriched.py imports from handlers/",
-      "Transitive layer violation: utils/ -> models/ -> handlers/"
-    ],
-    "system_misalignment": [
-      "Novel dependencies: outlier_module.py uses ctypes/struct/mmap in web app"
-    ],
-    "doc_impl_drift": [
-      "Phantom directory: README references src/myapp/views/ (does not exist)",
-      "Phantom directory: README references src/myapp/middleware/ (does not exist)",
-      "Phantom directory: README references src/myapp/plugins/ (does not exist)"
-    ],
-    "temporal_volatility": [
-      "High volatility: src/myapp/hotspot.py (10 commits in 10 days)"
-    ],
-    "broad_exception_monoculture": [
-      "Broad exception monoculture: 8 handlers in connectors/ all catch Exception + log-only"
-    ],
-    "test_polarity_deficit": [
-      "Test polarity deficit: 6 test functions in tests/api/ with 12 positive assertions, 0 negative"
-    ],
-    "guard_clause_deficit": [
-      "Guard clause deficit: 3 public functions in processors/ with >=2 params, CC>=5, no guards"
+  "manifest": {
+    "benchmark_id": "synthetic_python_app_v1",
+    "language": "python",
+    "base_commit": "synthetic",
+    "mutations": [
+      {
+        "id": "mds_001",
+        "signal": "mutant_duplicate",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Exact duplicate: process_order in service_a.py and service_b.py"
+      },
+      {
+        "id": "mds_002",
+        "signal": "mutant_duplicate",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Exact duplicate: validate_input in service_a.py and service_b.py"
+      },
+      {
+        "id": "mds_003",
+        "signal": "mutant_duplicate",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Near-duplicate: fetch_user_data ~ get_customer_info (same structure, different names)"
+      },
+      {
+        "id": "pfs_001",
+        "signal": "pattern_fragmentation",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "error_handling: 4 variants in handlers/ (try/except, custom exception, result-dict, assert)"
+      },
+      {
+        "id": "pfs_002",
+        "signal": "pattern_fragmentation",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "return_pattern: 3 variants in models/ (None, raise, tuple)"
+      },
+      {
+        "id": "eds_001",
+        "signal": "explainability_deficit",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Unexplained complexity: calculate_pricing (CC>=12, no docstring, no tests)"
+      },
+      {
+        "id": "eds_002",
+        "signal": "explainability_deficit",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Unexplained complexity: transform_dataset (CC>=15, no docstring, no tests)"
+      },
+      {
+        "id": "avs_001",
+        "signal": "architecture_violation",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Upward import: models/enriched.py imports from handlers/"
+      },
+      {
+        "id": "avs_002",
+        "signal": "architecture_violation",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Transitive layer violation: utils/ -> models/ -> handlers/"
+      },
+      {
+        "id": "sms_001",
+        "signal": "system_misalignment",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Novel dependencies: outlier_module.py uses ctypes/struct/mmap in web app"
+      },
+      {
+        "id": "dia_001",
+        "signal": "doc_impl_drift",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Phantom directory: README references src/myapp/views/ (does not exist)"
+      },
+      {
+        "id": "dia_002",
+        "signal": "doc_impl_drift",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Phantom directory: README references src/myapp/middleware/ (does not exist)"
+      },
+      {
+        "id": "dia_003",
+        "signal": "doc_impl_drift",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Phantom directory: README references src/myapp/plugins/ (does not exist)"
+      },
+      {
+        "id": "tvs_001",
+        "signal": "temporal_volatility",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "High volatility: src/myapp/hotspot.py (10 commits in 10 days)"
+      },
+      {
+        "id": "bem_001",
+        "signal": "broad_exception_monoculture",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Broad exception monoculture: 8 handlers in connectors/ all catch Exception + log-only"
+      },
+      {
+        "id": "tpd_001",
+        "signal": "test_polarity_deficit",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Test polarity deficit: 6 test functions in tests/api/ with 12 positive assertions, 0 negative"
+      },
+      {
+        "id": "gcd_001",
+        "signal": "guard_clause_deficit",
+        "class": "injected_positive",
+        "severity_expectation": "medium",
+        "expected_detection": {
+          "must_detect": true,
+          "min_findings": 1
+        },
+        "rationale": "Guard clause deficit: 3 public functions in processors/ with >=2 params, CC>=5, no guards"
+      }
     ]
   },
   "detection": {
@@ -44,10 +199,43 @@
       "detected": 3,
       "recall": 1.0,
       "finding_count": 4,
-      "mutation_descriptions": [
-        "Exact duplicate: process_order in service_a.py and service_b.py",
-        "Exact duplicate: validate_input in service_a.py and service_b.py",
-        "Near-duplicate: fetch_user_data ~ get_customer_info (same structure, different names)"
+      "mutations": [
+        {
+          "id": "mds_001",
+          "signal": "mutant_duplicate",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Exact duplicate: process_order in service_a.py and service_b.py",
+          "description": "Exact duplicate: process_order in service_a.py and service_b.py"
+        },
+        {
+          "id": "mds_002",
+          "signal": "mutant_duplicate",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Exact duplicate: validate_input in service_a.py and service_b.py",
+          "description": "Exact duplicate: validate_input in service_a.py and service_b.py"
+        },
+        {
+          "id": "mds_003",
+          "signal": "mutant_duplicate",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Near-duplicate: fetch_user_data ~ get_customer_info (same structure, different names)",
+          "description": "Near-duplicate: fetch_user_data ~ get_customer_info (same structure, different names)"
+        }
       ],
       "finding_titles": [
         "Exact duplicates (2\u00d7): process_order",
@@ -61,9 +249,31 @@
       "detected": 1,
       "recall": 0.5,
       "finding_count": 1,
-      "mutation_descriptions": [
-        "error_handling: 4 variants in handlers/ (try/except, custom exception, result-dict, assert)",
-        "return_pattern: 3 variants in models/ (None, raise, tuple)"
+      "mutations": [
+        {
+          "id": "pfs_001",
+          "signal": "pattern_fragmentation",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "error_handling: 4 variants in handlers/ (try/except, custom exception, result-dict, assert)",
+          "description": "error_handling: 4 variants in handlers/ (try/except, custom exception, result-dict, assert)"
+        },
+        {
+          "id": "pfs_002",
+          "signal": "pattern_fragmentation",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "return_pattern: 3 variants in models/ (None, raise, tuple)",
+          "description": "return_pattern: 3 variants in models/ (None, raise, tuple)"
+        }
       ],
       "finding_titles": [
         "error_handling: 2 variants in src/myapp/handlers/"
@@ -74,16 +284,38 @@
       "detected": 2,
       "recall": 1.0,
       "finding_count": 5,
-      "mutation_descriptions": [
-        "Unexplained complexity: calculate_pricing (CC>=12, no docstring, no tests)",
-        "Unexplained complexity: transform_dataset (CC>=15, no docstring, no tests)"
+      "mutations": [
+        {
+          "id": "eds_001",
+          "signal": "explainability_deficit",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Unexplained complexity: calculate_pricing (CC>=12, no docstring, no tests)",
+          "description": "Unexplained complexity: calculate_pricing (CC>=12, no docstring, no tests)"
+        },
+        {
+          "id": "eds_002",
+          "signal": "explainability_deficit",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Unexplained complexity: transform_dataset (CC>=15, no docstring, no tests)",
+          "description": "Unexplained complexity: transform_dataset (CC>=15, no docstring, no tests)"
+        }
       ],
       "finding_titles": [
-        "Unexplained complexity: calculate_pricing",
         "Unexplained complexity: transform_dataset",
+        "Unexplained complexity: calculate_pricing",
+        "Unexplained complexity: enrich_payload",
         "Unexplained complexity: transform_records",
-        "Unexplained complexity: aggregate_metrics",
-        "Unexplained complexity: enrich_payload"
+        "Unexplained complexity: aggregate_metrics"
       ]
     },
     "architecture_violation": {
@@ -91,9 +323,31 @@
       "detected": 2,
       "recall": 1.0,
       "finding_count": 2,
-      "mutation_descriptions": [
-        "Upward import: models/enriched.py imports from handlers/",
-        "Transitive layer violation: utils/ -> models/ -> handlers/"
+      "mutations": [
+        {
+          "id": "avs_001",
+          "signal": "architecture_violation",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Upward import: models/enriched.py imports from handlers/",
+          "description": "Upward import: models/enriched.py imports from handlers/"
+        },
+        {
+          "id": "avs_002",
+          "signal": "architecture_violation",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Transitive layer violation: utils/ -> models/ -> handlers/",
+          "description": "Transitive layer violation: utils/ -> models/ -> handlers/"
+        }
       ],
       "finding_titles": [
         "Upward layer import: enriched.py \u2192 auth.py",
@@ -105,8 +359,19 @@
       "detected": 0,
       "recall": 0.0,
       "finding_count": 0,
-      "mutation_descriptions": [
-        "Novel dependencies: outlier_module.py uses ctypes/struct/mmap in web app"
+      "mutations": [
+        {
+          "id": "sms_001",
+          "signal": "system_misalignment",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Novel dependencies: outlier_module.py uses ctypes/struct/mmap in web app",
+          "description": "Novel dependencies: outlier_module.py uses ctypes/struct/mmap in web app"
+        }
       ],
       "finding_titles": []
     },
@@ -114,17 +379,49 @@
       "injected": 3,
       "detected": 3,
       "recall": 1.0,
-      "finding_count": 7,
-      "mutation_descriptions": [
-        "Phantom directory: README references src/myapp/views/ (does not exist)",
-        "Phantom directory: README references src/myapp/middleware/ (does not exist)",
-        "Phantom directory: README references src/myapp/plugins/ (does not exist)"
+      "finding_count": 6,
+      "mutations": [
+        {
+          "id": "dia_001",
+          "signal": "doc_impl_drift",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Phantom directory: README references src/myapp/views/ (does not exist)",
+          "description": "Phantom directory: README references src/myapp/views/ (does not exist)"
+        },
+        {
+          "id": "dia_002",
+          "signal": "doc_impl_drift",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Phantom directory: README references src/myapp/middleware/ (does not exist)",
+          "description": "Phantom directory: README references src/myapp/middleware/ (does not exist)"
+        },
+        {
+          "id": "dia_003",
+          "signal": "doc_impl_drift",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Phantom directory: README references src/myapp/plugins/ (does not exist)",
+          "description": "Phantom directory: README references src/myapp/plugins/ (does not exist)"
+        }
       ],
       "finding_titles": [
         "README references missing directory: handlers/",
         "README references missing directory: middleware/",
         "README references missing directory: models/",
-        "README references missing directory: myapp/",
         "README references missing directory: plugins/",
         "README references missing directory: utils/",
         "README references missing directory: views/"
@@ -135,8 +432,19 @@
       "detected": 1,
       "recall": 1.0,
       "finding_count": 1,
-      "mutation_descriptions": [
-        "High volatility: src/myapp/hotspot.py (10 commits in 10 days)"
+      "mutations": [
+        {
+          "id": "tvs_001",
+          "signal": "temporal_volatility",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "High volatility: src/myapp/hotspot.py (10 commits in 10 days)",
+          "description": "High volatility: src/myapp/hotspot.py (10 commits in 10 days)"
+        }
       ],
       "finding_titles": [
         "High volatility: src/myapp/hotspot.py"
@@ -147,8 +455,19 @@
       "detected": 1,
       "recall": 1.0,
       "finding_count": 1,
-      "mutation_descriptions": [
-        "Broad exception monoculture: 8 handlers in connectors/ all catch Exception + log-only"
+      "mutations": [
+        {
+          "id": "bem_001",
+          "signal": "broad_exception_monoculture",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Broad exception monoculture: 8 handlers in connectors/ all catch Exception + log-only",
+          "description": "Broad exception monoculture: 8 handlers in connectors/ all catch Exception + log-only"
+        }
       ],
       "finding_titles": [
         "Broad exception monoculture in src/myapp/connectors/"
@@ -159,8 +478,19 @@
       "detected": 1,
       "recall": 1.0,
       "finding_count": 1,
-      "mutation_descriptions": [
-        "Test polarity deficit: 6 test functions in tests/api/ with 12 positive assertions, 0 negative"
+      "mutations": [
+        {
+          "id": "tpd_001",
+          "signal": "test_polarity_deficit",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Test polarity deficit: 6 test functions in tests/api/ with 12 positive assertions, 0 negative",
+          "description": "Test polarity deficit: 6 test functions in tests/api/ with 12 positive assertions, 0 negative"
+        }
       ],
       "finding_titles": [
         "Happy-path-only test suite in tests/api/"
@@ -170,12 +500,25 @@
       "injected": 1,
       "detected": 1,
       "recall": 1.0,
-      "finding_count": 1,
-      "mutation_descriptions": [
-        "Guard clause deficit: 3 public functions in processors/ with >=2 params, CC>=5, no guards"
+      "finding_count": 3,
+      "mutations": [
+        {
+          "id": "gcd_001",
+          "signal": "guard_clause_deficit",
+          "class": "injected_positive",
+          "severity_expectation": "medium",
+          "expected_detection": {
+            "must_detect": true,
+            "min_findings": 1
+          },
+          "rationale": "Guard clause deficit: 3 public functions in processors/ with >=2 params, CC>=5, no guards",
+          "description": "Guard clause deficit: 3 public functions in processors/ with >=2 params, CC>=5, no guards"
+        }
       ],
       "finding_titles": [
-        "Guard clause deficit in src/myapp/processors/"
+        "Guard clause deficit in src/myapp/processors/",
+        "Deep nesting in enrich_payload()",
+        "Deep nesting in transform_records()"
       ]
     }
   },
@@ -183,614 +526,2595 @@
   "total_detected": 15,
   "overall_recall": 0.8823529411764706,
   "drift_output": {
-    "version": "0.5.0",
-    "repo": "C:/Users/mickg/AppData/Local/Temp/drift_mutation_8oaluc8_/synthetic_repo",
-    "analyzed_at": "2026-03-27T07:53:58.299905+00:00",
-    "drift_score": 0.28,
-    "severity": "low",
-    "trend": {
-      "previous_score": null,
-      "delta": null,
-      "direction": "baseline",
-      "recent_scores": [],
-      "history_depth": 0,
-      "transition_ratio": 0.0
+    "analysis_status": {
+      "affected_components": [],
+      "causes": [],
+      "degraded": false,
+      "events": [],
+      "is_fully_reliable": true,
+      "status": "complete"
     },
-    "summary": {
-      "total_files": 29,
-      "total_functions": 39,
-      "ai_attributed_ratio": 0.0,
-      "analysis_duration_seconds": 0.22
+    "analyzed_at": "2026-04-07T10:09:08.592366+00:00",
+    "baseline": null,
+    "compact_summary": {
+      "critical_count": 0,
+      "duplicate_findings_removed": 0,
+      "findings_deduplicated": 38,
+      "findings_total": 38,
+      "fix_first_count": 10,
+      "high_count": 22
     },
-    "modules": [
-      {
-        "path": "src/myapp",
-        "drift_score": 0.341,
-        "severity": "low",
-        "signal_scores": {
-          "mutant_duplicate": 0.5107,
-          "explainability_deficit": 0.4467,
-          "temporal_volatility": 0.0968
-        },
-        "finding_count": 6,
-        "ai_ratio": 0.0
+    "context_tagged_count": 0,
+    "drift_score": 0.277,
+    "drift_score_scope": "context:repo,signals:all,path:all",
+    "finding_context_policy": {
+      "counts": {
+        "library": 10,
+        "production": 28
       },
-      {
-        "path": ".",
-        "drift_score": 0.26,
-        "severity": "low",
-        "signal_scores": {
-          "doc_impl_drift": 0.2602
-        },
-        "finding_count": 7,
-        "ai_ratio": 0.0
-      },
-      {
-        "path": "src/myapp/connectors",
-        "drift_score": 0.256,
-        "severity": "low",
-        "signal_scores": {
-          "mutant_duplicate": 0.2457,
-          "broad_exception_monoculture": 0.2891
-        },
-        "finding_count": 2,
-        "ai_ratio": 0.0
-      },
-      {
-        "path": "src/myapp/processors",
-        "drift_score": 0.228,
-        "severity": "low",
-        "signal_scores": {
-          "explainability_deficit": 0.2602,
-          "guard_clause_deficit": 0.1301
-        },
-        "finding_count": 4,
-        "ai_ratio": 0.0
-      },
-      {
-        "path": "tests/api",
-        "drift_score": 0.173,
-        "severity": "info",
-        "signal_scores": {
-          "test_polarity_deficit": 0.1734
-        },
-        "finding_count": 1,
-        "ai_ratio": 0.0
-      },
-      {
-        "path": "src/myapp/handlers",
-        "drift_score": 0.144,
-        "severity": "info",
-        "signal_scores": {
-          "pattern_fragmentation": 0.1445
-        },
-        "finding_count": 1,
-        "ai_ratio": 0.0
-      },
-      {
-        "path": "src/myapp/models",
-        "drift_score": 0.114,
-        "severity": "info",
-        "signal_scores": {
-          "architecture_violation": 0.1145
-        },
-        "finding_count": 2,
-        "ai_ratio": 0.0
-      }
-    ],
+      "excluded_from_fix_first": 10,
+      "include_non_operational_in_fix_first": false,
+      "non_operational_contexts": [
+        "docs",
+        "fixture",
+        "generated",
+        "library",
+        "migration"
+      ]
+    },
     "findings": [
       {
-        "signal": "architecture_violation",
-        "severity": "medium",
-        "score": 0.25,
-        "impact": 0.0677,
-        "title": "Upward layer import: enriched.py \u2192 auth.py",
-        "description": "src/myapp/models/enriched.py:1 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
-        "fix": "Verschiebe auth.py-Logik in eine Service-Schicht oder Abstraktions-Interface, das von enriched.py importiert werden darf.",
-        "file": "src/myapp/models/enriched.py",
-        "start_line": 1,
-        "end_line": null,
-        "related_files": [
-          "src/myapp/handlers/auth.py"
-        ],
         "ai_attributed": false,
-        "metadata": {
-          "src_layer": 2,
-          "dst_layer": 0,
-          "hub_dampened": true,
-          "blast_radius": 1
-        }
-      },
-      {
-        "signal": "architecture_violation",
-        "severity": "medium",
-        "score": 0.25,
-        "impact": 0.0677,
-        "title": "Upward layer import: enriched.py \u2192 orders.py",
-        "description": "src/myapp/models/enriched.py:2 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
-        "fix": "Verschiebe orders.py-Logik in eine Service-Schicht oder Abstraktions-Interface, das von enriched.py importiert werden darf.",
-        "file": "src/myapp/models/enriched.py",
-        "start_line": 2,
+        "deferred": false,
+        "description": "2 identical copies (6 lines each) at: src\\myapp\\service_a.py:1, src\\myapp\\service_b.py:1. Consider consolidating.",
         "end_line": null,
-        "related_files": [
-          "src/myapp/handlers/orders.py"
-        ],
-        "ai_attributed": false,
+        "file": "src/myapp/service_a.py",
+        "finding_context": "production",
+        "fix": "Extract process_order() into src/myapp/shared.py. 2 identical copies (similarity: 1.00). Effort: S.",
+        "impact": 0.1981,
+        "impact_rank": 1,
         "metadata": {
-          "src_layer": 2,
-          "dst_layer": 0,
-          "hub_dampened": true,
-          "blast_radius": 1
-        }
-      },
-      {
-        "signal": "broad_exception_monoculture",
+          "body_hash": "57c71e30dc313cac",
+          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating.",
+          "finding_context": "production",
+          "functions": [
+            {
+              "file": "src/myapp/service_a.py",
+              "line": 1,
+              "name": "process_order"
+            },
+            {
+              "file": "src/myapp/service_b.py",
+              "line": 1,
+              "name": "process_order"
+            }
+          ],
+          "group_size": 2,
+          "similarity": 1.0
+        },
+        "related_files": [
+          "src/myapp/service_b.py"
+        ],
+        "remediation": {
+          "description": "These functions are 100% similar but in different files. Extract the common logic into a shared utility module, then have both call the shared version.",
+          "effort": "low",
+          "impact": "high",
+          "title": "Merge 'process_order' and 'process_order' (across src/myapp/service_a.py and src/myapp/service_b.py)"
+        },
+        "rule_id": "mutant_duplicate",
+        "score": 0.9,
+        "score_contribution": 0.1322,
         "severity": "high",
-        "score": 1.0,
-        "impact": 0.1044,
-        "title": "Broad exception monoculture in src/myapp/connectors/",
-        "description": "8/8 handlers catch broad exceptions (100%), 8/8 swallow errors (100%).",
-        "fix": "Differentiate exception handlers: catch specific exception types and re-raise or convert unknown errors.",
-        "file": "src/myapp/connectors",
-        "start_line": null,
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Exact duplicates (2\u00d7): process_order"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "2 identical copies (9 lines each) at: src\\myapp\\service_a.py:8, src\\myapp\\service_b.py:8. Consider consolidating.",
         "end_line": null,
+        "file": "src/myapp/service_a.py",
+        "finding_context": "production",
+        "fix": "Extract validate_input() into src/myapp/shared.py. 2 identical copies (similarity: 1.00). Effort: S.",
+        "impact": 0.1981,
+        "impact_rank": 2,
+        "metadata": {
+          "body_hash": "4642cfc909f608c3",
+          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating.",
+          "finding_context": "production",
+          "functions": [
+            {
+              "file": "src/myapp/service_a.py",
+              "line": 8,
+              "name": "validate_input"
+            },
+            {
+              "file": "src/myapp/service_b.py",
+              "line": 8,
+              "name": "validate_input"
+            }
+          ],
+          "group_size": 2,
+          "similarity": 1.0
+        },
+        "related_files": [
+          "src/myapp/service_b.py"
+        ],
+        "remediation": {
+          "description": "These functions are 100% similar but in different files. Extract the common logic into a shared utility module, then have both call the shared version.",
+          "effort": "low",
+          "impact": "high",
+          "title": "Merge 'validate_input' and 'validate_input' (across src/myapp/service_a.py and src/myapp/service_b.py)"
+        },
+        "rule_id": "mutant_duplicate",
+        "score": 0.9,
+        "score_contribution": 0.1322,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 8,
+        "symbol": null,
+        "title": "Exact duplicates (2\u00d7): validate_input"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\connectors\\aws_s3.py:10 and src\\myapp\\connectors\\slack_api.py:4 are 100% similar. Small differences may indicate copy-paste divergence.",
+        "end_line": null,
+        "file": "src/myapp/connectors/aws_s3.py",
+        "finding_context": "production",
+        "fix": "Extract download_file() into src/myapp/connectors/shared.py. Similarity: 100%. Effort: S.",
+        "impact": 0.1871,
+        "impact_rank": 3,
+        "metadata": {
+          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating.",
+          "file_a": "src/myapp/connectors/aws_s3.py",
+          "file_b": "src/myapp/connectors/slack_api.py",
+          "finding_context": "production",
+          "function_a": "download_file",
+          "function_b": "send_message",
+          "similarity": 1.0
+        },
+        "related_files": [
+          "src/myapp/connectors/slack_api.py"
+        ],
+        "remediation": {
+          "description": "These functions are 100% similar but in different files. Extract the common logic into a shared utility module, then have both call the shared version.",
+          "effort": "low",
+          "impact": "high",
+          "title": "Merge 'download_file' and 'send_message' (across src/myapp/connectors/aws_s3.py and src/myapp/connectors/slack_api.py)"
+        },
+        "rule_id": "mutant_duplicate",
+        "score": 0.85,
+        "score_contribution": 0.1249,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 10,
+        "symbol": null,
+        "title": "Near-duplicate (100%): download_file \u2194 send_message"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\handler_v1.py:1 and src\\myapp\\handler_v2.py:1 are 100% similar. Small differences may indicate copy-paste divergence.",
+        "end_line": null,
+        "file": "src/myapp/handler_v1.py",
+        "finding_context": "production",
+        "fix": "Extract fetch_user_data() into src/myapp/shared.py. Similarity: 100%. Effort: S.",
+        "impact": 0.1871,
+        "impact_rank": 4,
+        "metadata": {
+          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating.",
+          "file_a": "src/myapp/handler_v1.py",
+          "file_b": "src/myapp/handler_v2.py",
+          "finding_context": "production",
+          "function_a": "fetch_user_data",
+          "function_b": "get_customer_info",
+          "similarity": 1.0
+        },
+        "related_files": [
+          "src/myapp/handler_v2.py"
+        ],
+        "remediation": {
+          "description": "These functions are 100% similar but in different files. Extract the common logic into a shared utility module, then have both call the shared version.",
+          "effort": "low",
+          "impact": "high",
+          "title": "Merge 'fetch_user_data' and 'get_customer_info' (across src/myapp/handler_v1.py and src/myapp/handler_v2.py)"
+        },
+        "rule_id": "mutant_duplicate",
+        "score": 0.85,
+        "score_contribution": 0.1249,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Near-duplicate (100%): fetch_user_data \u2194 get_customer_info"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "8/8 handlers catch broad exceptions (100%), 8/8 swallow errors (100%).",
+        "end_line": null,
+        "file": "src/myapp/connectors",
+        "finding_context": "production",
+        "fix": "Differentiate exception handlers: catch specific exception types and re-raise or convert unknown errors.",
+        "impact": 0.1044,
+        "impact_rank": 5,
+        "metadata": {
+          "broad_count": 8,
+          "broadness_ratio": 1.0,
+          "finding_context": "production",
+          "swallowing_count": 8,
+          "swallowing_ratio": 1.0,
+          "total_handlers": 8
+        },
         "related_files": [
           "src/myapp/connectors/aws_s3.py",
           "src/myapp/connectors/google_api.py",
           "src/myapp/connectors/slack_api.py",
           "src/myapp/connectors/stripe_api.py"
         ],
-        "ai_attributed": false,
-        "metadata": {
-          "total_handlers": 8,
-          "broad_count": 8,
-          "swallowing_count": 8,
-          "broadness_ratio": 1.0,
-          "swallowing_ratio": 1.0
-        }
-      },
-      {
-        "signal": "doc_impl_drift",
-        "severity": "low",
-        "score": 0.3,
-        "impact": 0.012,
-        "title": "README references missing directory: handlers/",
-        "description": "README mentions 'handlers/' but no such directory exists. Documentation may be outdated.",
-        "fix": "Remove 'handlers/' from README.md or create the directory.",
-        "file": "README.md",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "referenced_dir": "handlers"
-        }
-      },
-      {
-        "signal": "doc_impl_drift",
-        "severity": "low",
-        "score": 0.3,
-        "impact": 0.012,
-        "title": "README references missing directory: middleware/",
-        "description": "README mentions 'middleware/' but no such directory exists. Documentation may be outdated.",
-        "fix": "Remove 'middleware/' from README.md or create the directory.",
-        "file": "README.md",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "referenced_dir": "middleware"
-        }
-      },
-      {
-        "signal": "doc_impl_drift",
-        "severity": "low",
-        "score": 0.3,
-        "impact": 0.012,
-        "title": "README references missing directory: models/",
-        "description": "README mentions 'models/' but no such directory exists. Documentation may be outdated.",
-        "fix": "Remove 'models/' from README.md or create the directory.",
-        "file": "README.md",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "referenced_dir": "models"
-        }
-      },
-      {
-        "signal": "doc_impl_drift",
-        "severity": "low",
-        "score": 0.3,
-        "impact": 0.012,
-        "title": "README references missing directory: myapp/",
-        "description": "README mentions 'myapp/' but no such directory exists. Documentation may be outdated.",
-        "fix": "Remove 'myapp/' from README.md or create the directory.",
-        "file": "README.md",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "referenced_dir": "myapp"
-        }
-      },
-      {
-        "signal": "doc_impl_drift",
-        "severity": "low",
-        "score": 0.3,
-        "impact": 0.012,
-        "title": "README references missing directory: plugins/",
-        "description": "README mentions 'plugins/' but no such directory exists. Documentation may be outdated.",
-        "fix": "Remove 'plugins/' from README.md or create the directory.",
-        "file": "README.md",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "referenced_dir": "plugins"
-        }
-      },
-      {
-        "signal": "doc_impl_drift",
-        "severity": "low",
-        "score": 0.3,
-        "impact": 0.012,
-        "title": "README references missing directory: utils/",
-        "description": "README mentions 'utils/' but no such directory exists. Documentation may be outdated.",
-        "fix": "Remove 'utils/' from README.md or create the directory.",
-        "file": "README.md",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "referenced_dir": "utils"
-        }
-      },
-      {
-        "signal": "doc_impl_drift",
-        "severity": "low",
-        "score": 0.3,
-        "impact": 0.012,
-        "title": "README references missing directory: views/",
-        "description": "README mentions 'views/' but no such directory exists. Documentation may be outdated.",
-        "fix": "Remove 'views/' from README.md or create the directory.",
-        "file": "README.md",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "referenced_dir": "views"
-        }
-      },
-      {
-        "signal": "explainability_deficit",
-        "severity": "high",
-        "score": 0.95,
-        "impact": 0.0855,
-        "title": "Unexplained complexity: calculate_pricing",
-        "description": "Complexity: 19, LOC: 36. No docstring. No corresponding test found. No return type annotation.",
-        "fix": "Funktion calculate_pricing (Complexity 19): F\u00fcge Docstring, Tests, Return-Type hinzu.",
-        "file": "src/myapp/complex_logic.py",
-        "start_line": 1,
-        "end_line": 36,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "function_name": "calculate_pricing",
-          "complexity": 19,
-          "loc": 36,
-          "has_docstring": false,
-          "has_test": false,
-          "has_return_type": false,
-          "explanation_score": 0.0
-        }
-      },
-      {
-        "signal": "explainability_deficit",
-        "severity": "high",
+        "remediation": null,
+        "rule_id": "broad_exception_monoculture",
         "score": 1.0,
-        "impact": 0.09,
-        "title": "Unexplained complexity: transform_dataset",
+        "score_contribution": 0.0452,
+        "severity": "high",
+        "signal": "broad_exception_monoculture",
+        "signal_abbrev": "BEM",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Broad exception monoculture in src/myapp/connectors/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
         "description": "Complexity: 30, LOC: 54. No docstring. No corresponding test found. No return type annotation.",
-        "fix": "Funktion transform_dataset (Complexity 30): F\u00fcge Docstring, Tests, Return-Type hinzu.",
-        "file": "src/myapp/complex_logic.py",
-        "start_line": 39,
         "end_line": 92,
-        "related_files": [],
-        "ai_attributed": false,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "fix": "Function transform_dataset (complexity 30): add Docstring, Tests, Return-Type.",
+        "impact": 0.09,
+        "impact_rank": 6,
         "metadata": {
-          "function_name": "transform_dataset",
           "complexity": 30,
-          "loc": 54,
+          "explanation_score": 0.0,
+          "finding_context": "production",
+          "function_name": "transform_dataset",
           "has_docstring": false,
-          "has_test": false,
           "has_return_type": false,
-          "explanation_score": 0.0
-        }
-      },
-      {
+          "has_test": false,
+          "loc": 54
+        },
+        "related_files": [],
+        "remediation": {
+          "description": "Add a docstring explaining what 'transform_dataset' does, its parameters, and return value. Add return type annotation. Consider splitting this function (complexity: 30) into smaller, well-named sub-functions.",
+          "effort": "low",
+          "impact": "medium",
+          "title": "Document 'transform_dataset'"
+        },
+        "rule_id": "explainability_deficit",
+        "score": 1.0,
+        "score_contribution": 0.1017,
+        "severity": "high",
         "signal": "explainability_deficit",
-        "severity": "low",
-        "score": 0.45,
-        "impact": 0.0405,
-        "title": "Unexplained complexity: transform_records",
-        "description": "Complexity: 9, LOC: 23. No docstring. No corresponding test found. No return type annotation.",
-        "fix": "Funktion transform_records (Complexity 9): F\u00fcge Docstring, Tests, Return-Type hinzu.",
-        "file": "src/myapp/processors/data_pipeline.py",
-        "start_line": 1,
-        "end_line": 23,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "function_name": "transform_records",
-          "complexity": 9,
-          "loc": 23,
-          "has_docstring": false,
-          "has_test": false,
-          "has_return_type": false,
-          "explanation_score": 0.0
-        }
+        "signal_abbrev": "EDS",
+        "start_line": 39,
+        "symbol": null,
+        "title": "Unexplained complexity: transform_dataset"
       },
       {
-        "signal": "explainability_deficit",
-        "severity": "low",
-        "score": 0.4,
-        "impact": 0.036,
-        "title": "Unexplained complexity: aggregate_metrics",
-        "description": "Complexity: 8, LOC: 20. No docstring. No corresponding test found. No return type annotation.",
-        "fix": "Funktion aggregate_metrics (Complexity 8): F\u00fcge Docstring, Tests, Return-Type hinzu.",
-        "file": "src/myapp/processors/data_pipeline.py",
-        "start_line": 25,
-        "end_line": 44,
-        "related_files": [],
         "ai_attributed": false,
-        "metadata": {
-          "function_name": "aggregate_metrics",
-          "complexity": 8,
-          "loc": 20,
-          "has_docstring": false,
-          "has_test": false,
-          "has_return_type": false,
-          "explanation_score": 0.0
-        }
-      },
-      {
-        "signal": "explainability_deficit",
-        "severity": "medium",
-        "score": 0.5,
-        "impact": 0.045,
-        "title": "Unexplained complexity: enrich_payload",
-        "description": "Complexity: 10, LOC: 20. No docstring. No corresponding test found. No return type annotation.",
-        "fix": "Funktion enrich_payload (Complexity 10): F\u00fcge Docstring, Tests, Return-Type hinzu.",
-        "file": "src/myapp/processors/data_pipeline.py",
-        "start_line": 46,
-        "end_line": 65,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "function_name": "enrich_payload",
-          "complexity": 10,
-          "loc": 20,
-          "has_docstring": false,
-          "has_test": false,
-          "has_return_type": false,
-          "explanation_score": 0.0
-        }
-      },
-      {
-        "signal": "guard_clause_deficit",
-        "severity": "medium",
-        "score": 0.45,
-        "impact": 0.0135,
-        "title": "Guard clause deficit in src/myapp/processors/",
-        "description": "3/3 public functions lack guard clauses (guarded ratio 0.0%, mean unguarded complexity 9.0).",
-        "fix": "Add guard clauses to 3/3 unguarded functions in src/myapp/processors/ (mean complexity 9.0): isinstance checks, None guards, or assert statements.",
-        "file": "src/myapp/processors",
-        "start_line": null,
+        "deferred": false,
+        "description": "2 error_handling variants in src/myapp/handlers/ (1/2 use canonical pattern).\n  - Framework-facing module detected; severity was context-calibrated for endpoint/orchestration diversity.\n  - src/myapp/handlers/orders.py:7 (create_order)",
         "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "total_qualifying": 3,
-          "guarded_count": 0,
-          "guarded_ratio": 0.0,
-          "mean_unguarded_complexity": 9.0
-        }
-      },
-      {
-        "signal": "mutant_duplicate",
-        "severity": "high",
-        "score": 0.9,
-        "impact": 0.1981,
-        "title": "Exact duplicates (2\u00d7): process_order",
-        "description": "2 identical copies (6 lines each) at: src\\myapp\\service_a.py:1, src\\myapp\\service_b.py:1. Consider consolidating.",
-        "fix": "Extrahiere process_order() in src/myapp/shared.py. 2 identische Kopien (Similarity: 1.00). Aufwand: S.",
-        "file": "src/myapp/service_a.py",
-        "start_line": 1,
-        "end_line": null,
-        "related_files": [
-          "src/myapp/service_b.py"
-        ],
-        "ai_attributed": false,
-        "metadata": {
-          "similarity": 1.0,
-          "body_hash": "57c71e30dc313cac",
-          "group_size": 2,
-          "functions": [
-            {
-              "name": "process_order",
-              "file": "src/myapp/service_a.py",
-              "line": 1
-            },
-            {
-              "name": "process_order",
-              "file": "src/myapp/service_b.py",
-              "line": 1
-            }
-          ],
-          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating."
-        }
-      },
-      {
-        "signal": "mutant_duplicate",
-        "severity": "high",
-        "score": 0.9,
-        "impact": 0.1981,
-        "title": "Exact duplicates (2\u00d7): validate_input",
-        "description": "2 identical copies (9 lines each) at: src\\myapp\\service_a.py:8, src\\myapp\\service_b.py:8. Consider consolidating.",
-        "fix": "Extrahiere validate_input() in src/myapp/shared.py. 2 identische Kopien (Similarity: 1.00). Aufwand: S.",
-        "file": "src/myapp/service_a.py",
-        "start_line": 8,
-        "end_line": null,
-        "related_files": [
-          "src/myapp/service_b.py"
-        ],
-        "ai_attributed": false,
-        "metadata": {
-          "similarity": 1.0,
-          "body_hash": "4642cfc909f608c3",
-          "group_size": 2,
-          "functions": [
-            {
-              "name": "validate_input",
-              "file": "src/myapp/service_a.py",
-              "line": 8
-            },
-            {
-              "name": "validate_input",
-              "file": "src/myapp/service_b.py",
-              "line": 8
-            }
-          ],
-          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating."
-        }
-      },
-      {
-        "signal": "mutant_duplicate",
-        "severity": "high",
-        "score": 0.85,
-        "impact": 0.1871,
-        "title": "Near-duplicate (100%): download_file \u2194 send_message",
-        "description": "src\\myapp\\connectors\\aws_s3.py:10 and src\\myapp\\connectors\\slack_api.py:4 are 100% similar. Small differences may indicate copy-paste divergence.",
-        "fix": "Extrahiere download_file() in src/myapp/connectors/shared.py. Similarity: 100%. Aufwand: S.",
-        "file": "src/myapp/connectors/aws_s3.py",
-        "start_line": 10,
-        "end_line": null,
-        "related_files": [
-          "src/myapp/connectors/slack_api.py"
-        ],
-        "ai_attributed": false,
-        "metadata": {
-          "similarity": 1.0,
-          "function_a": "download_file",
-          "function_b": "send_message",
-          "file_a": "src/myapp/connectors/aws_s3.py",
-          "file_b": "src/myapp/connectors/slack_api.py",
-          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating."
-        }
-      },
-      {
-        "signal": "mutant_duplicate",
-        "severity": "high",
-        "score": 0.85,
-        "impact": 0.1871,
-        "title": "Near-duplicate (100%): fetch_user_data \u2194 get_customer_info",
-        "description": "src\\myapp\\handler_v1.py:1 and src\\myapp\\handler_v2.py:1 are 100% similar. Small differences may indicate copy-paste divergence.",
-        "fix": "Extrahiere fetch_user_data() in src/myapp/shared.py. Similarity: 100%. Aufwand: S.",
-        "file": "src/myapp/handler_v1.py",
-        "start_line": 1,
-        "end_line": null,
-        "related_files": [
-          "src/myapp/handler_v2.py"
-        ],
-        "ai_attributed": false,
-        "metadata": {
-          "similarity": 1.0,
-          "function_a": "fetch_user_data",
-          "function_b": "get_customer_info",
-          "file_a": "src/myapp/handler_v1.py",
-          "file_b": "src/myapp/handler_v2.py",
-          "deliberate_pattern_risk": "May reflect deliberate polymorphism (Strategy, Adapter, Plugin). Verify intent before consolidating."
-        }
-      },
-      {
-        "signal": "pattern_fragmentation",
-        "severity": "medium",
-        "score": 0.5,
-        "impact": 0.1355,
-        "title": "error_handling: 2 variants in src/myapp/handlers/",
-        "description": "2 error_handling variants in src/myapp/handlers/ (1/2 use canonical pattern).\n  - orders.py:7 (create_order)",
-        "fix": "Konsolidiere auf das dominante Pattern (1\u00d7). 1 Abweichung(en) in: orders.py.",
         "file": "src/myapp/handlers",
-        "start_line": null,
-        "end_line": null,
+        "finding_context": "production",
+        "fix": "Consolidate to the dominant pattern (1x, exemplar: src/myapp/handlers/auth.py:5). Deviations: src/myapp/handlers/orders.py:7 (create_order).",
+        "impact": 0.088,
+        "impact_rank": 7,
+        "metadata": {
+          "canonical_count": 1,
+          "canonical_exemplar": "src/myapp/handlers/auth.py:5",
+          "canonical_variant": "{\"handler_count\": 2, \"handlers\": [{\"actions\": [\"log\", \"raise",
+          "category": "error_handling",
+          "deliberate_pattern_risk": "May reflect architecture transition or deliberate variation. Review whether variants serve distinct purposes.",
+          "finding_context": "production",
+          "framework_context_dampened": true,
+          "framework_context_hints": [
+            "module-path-token"
+          ],
+          "module": "src/myapp/handlers",
+          "num_variants": 2,
+          "total_instances": 2,
+          "variant_count": 2
+        },
         "related_files": [
           "src/myapp/handlers/orders.py"
         ],
-        "ai_attributed": false,
-        "metadata": {
-          "category": "error_handling",
-          "num_variants": 2,
-          "variant_count": 2,
-          "canonical_count": 1,
-          "canonical_variant": "{\"handler_count\": 2, \"handlers\": [{\"actions\": [\"log\", \"raise",
-          "module": "src/myapp/handlers",
-          "total_instances": 2,
-          "deliberate_pattern_risk": "May reflect architecture transition or deliberate variation. Review whether variants serve distinct purposes."
-        }
-      },
-      {
-        "signal": "temporal_volatility",
+        "remediation": {
+          "description": "Found 2 variants of the same pattern. Adopt the canonical variant '{\"handler_count\": 2, \"handlers\": [{\"actions\": [\"log\", \"raise' across: src/myapp/handlers/orders.py. Extract a shared helper function and replace inline implementations.",
+          "effort": "medium",
+          "impact": "high",
+          "title": "Consolidate 2 pattern variants in src/myapp/handlers"
+        },
+        "rule_id": "pattern_fragmentation",
+        "score": 0.325,
+        "score_contribution": 0.0588,
         "severity": "low",
-        "score": 0.335,
-        "impact": 0.0436,
-        "title": "High volatility: src/myapp/hotspot.py",
-        "description": "Change frequency: 2.3/week (3.0\u03c3 above mean).",
-        "fix": "10 Commits in 30 Tagen \u2014 erw\u00e4ge Datei aufzuteilen.",
-        "file": "src/myapp/hotspot.py",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
-        "ai_attributed": false,
-        "metadata": {
-          "change_frequency_30d": 2.33,
-          "unique_authors": 1,
-          "defect_correlated": 0,
-          "ai_ratio": 0.0,
-          "freq_z": 3.02,
-          "author_z": 0.0,
-          "defect_z": 0.0
-        }
+        "signal": "pattern_fragmentation",
+        "signal_abbrev": "PFS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "error_handling: 2 variants in src/myapp/handlers/"
       },
       {
-        "signal": "test_polarity_deficit",
-        "severity": "medium",
-        "score": 0.6,
-        "impact": 0.024,
-        "title": "Happy-path-only test suite in tests/api/",
-        "description": "6 test functions with 11 positive / 0 negative assertions (negative ratio 0.0%). 0 boundary-named tests.",
-        "fix": "Add negative tests to tests/api/ (6 test functions, only 0 negative assertions): use pytest.raises for expected exceptions, test edge cases (empty, None, invalid input).",
-        "file": "tests/api",
-        "start_line": null,
-        "end_line": null,
-        "related_files": [],
         "ai_attributed": false,
+        "deferred": false,
+        "description": "Complexity: 19, LOC: 36. No docstring. No corresponding test found. No return type annotation.",
+        "end_line": 36,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "fix": "Function calculate_pricing (complexity 19): add Docstring, Tests, Return-Type.",
+        "impact": 0.0855,
+        "impact_rank": 8,
         "metadata": {
-          "test_functions": 6,
-          "positive_assertions": 11,
+          "complexity": 19,
+          "explanation_score": 0.0,
+          "finding_context": "production",
+          "function_name": "calculate_pricing",
+          "has_docstring": false,
+          "has_return_type": false,
+          "has_test": false,
+          "loc": 36
+        },
+        "related_files": [],
+        "remediation": {
+          "description": "Add a docstring explaining what 'calculate_pricing' does, its parameters, and return value. Add return type annotation. Consider splitting this function (complexity: 19) into smaller, well-named sub-functions.",
+          "effort": "low",
+          "impact": "medium",
+          "title": "Document 'calculate_pricing'"
+        },
+        "rule_id": "explainability_deficit",
+        "score": 0.95,
+        "score_contribution": 0.0966,
+        "severity": "high",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Unexplained complexity: calculate_pricing"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src/myapp/models/enriched.py:1 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
+        "end_line": null,
+        "file": "src/myapp/models/enriched.py",
+        "finding_context": "production",
+        "fix": "Move auth.py logic behind a service layer or abstraction interface that enriched.py is allowed to import.",
+        "impact": 0.0677,
+        "impact_rank": 9,
+        "metadata": {
+          "blast_radius": 1,
+          "dst_layer": 0,
+          "finding_context": "production",
+          "hub_dampened": true,
+          "import_target": "src/myapp/handlers/auth.py",
+          "src_layer": 2
+        },
+        "related_files": [
+          "src/myapp/handlers/auth.py"
+        ],
+        "remediation": {
+          "description": "src/myapp/models/enriched.py:1 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data. Move the shared code to a lower-level module, or introduce an interface/protocol that the lower layer defines and the upper layer implements.",
+          "effort": "medium",
+          "impact": "high",
+          "title": "Fix upward layer import"
+        },
+        "rule_id": "avs_upward_import",
+        "score": 0.25,
+        "score_contribution": 0.0452,
+        "severity": "medium",
+        "signal": "architecture_violation",
+        "signal_abbrev": "AVS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Upward layer import: enriched.py \u2192 auth.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src/myapp/models/enriched.py:2 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data.",
+        "end_line": null,
+        "file": "src/myapp/models/enriched.py",
+        "finding_context": "production",
+        "fix": "Move orders.py logic behind a service layer or abstraction interface that enriched.py is allowed to import.",
+        "impact": 0.0677,
+        "impact_rank": 10,
+        "metadata": {
+          "blast_radius": 1,
+          "dst_layer": 0,
+          "finding_context": "production",
+          "hub_dampened": true,
+          "import_target": "src/myapp/handlers/orders.py",
+          "src_layer": 2
+        },
+        "related_files": [
+          "src/myapp/handlers/orders.py"
+        ],
+        "remediation": {
+          "description": "src/myapp/models/enriched.py:2 \u2014 data/infrastructure layer imports from presentation/API layer. Expected direction: presentation \u2192 service \u2192 data. Move the shared code to a lower-level module, or introduce an interface/protocol that the lower layer defines and the upper layer implements.",
+          "effort": "medium",
+          "impact": "high",
+          "title": "Fix upward layer import"
+        },
+        "rule_id": "avs_upward_import",
+        "score": 0.25,
+        "score_contribution": 0.0452,
+        "severity": "medium",
+        "signal": "architecture_violation",
+        "signal_abbrev": "AVS",
+        "start_line": 2,
+        "symbol": null,
+        "title": "Upward layer import: enriched.py \u2192 orders.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Complexity: 10, LOC: 20. No docstring. No corresponding test found. No return type annotation.",
+        "end_line": 65,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "fix": "Function enrich_payload (complexity 10): add Docstring, Tests, Return-Type.",
+        "impact": 0.0405,
+        "impact_rank": 11,
+        "metadata": {
+          "complexity": 10,
+          "explanation_score": 0.0,
+          "finding_context": "production",
+          "function_name": "enrich_payload",
+          "has_docstring": false,
+          "has_return_type": false,
+          "has_test": false,
+          "loc": 20
+        },
+        "related_files": [],
+        "remediation": {
+          "description": "Add a docstring explaining what 'enrich_payload' does, its parameters, and return value. Add return type annotation.",
+          "effort": "low",
+          "impact": "medium",
+          "title": "Document 'enrich_payload'"
+        },
+        "rule_id": "explainability_deficit",
+        "score": 0.45,
+        "score_contribution": 0.0458,
+        "severity": "low",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 46,
+        "symbol": null,
+        "title": "Unexplained complexity: enrich_payload"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Complexity: 9, LOC: 23. No docstring. No corresponding test found. No return type annotation.",
+        "end_line": 23,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "fix": "Function transform_records (complexity 9): add Docstring, Tests, Return-Type.",
+        "impact": 0.0376,
+        "impact_rank": 12,
+        "metadata": {
+          "complexity": 9,
+          "explanation_score": 0.0,
+          "finding_context": "production",
+          "function_name": "transform_records",
+          "has_docstring": false,
+          "has_return_type": false,
+          "has_test": false,
+          "loc": 23
+        },
+        "related_files": [],
+        "remediation": {
+          "description": "Add a docstring explaining what 'transform_records' does, its parameters, and return value. Add return type annotation.",
+          "effort": "low",
+          "impact": "medium",
+          "title": "Document 'transform_records'"
+        },
+        "rule_id": "explainability_deficit",
+        "score": 0.418,
+        "score_contribution": 0.0425,
+        "severity": "low",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Unexplained complexity: transform_records"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Complexity: 8, LOC: 20. No docstring. No corresponding test found. No return type annotation.",
+        "end_line": 44,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "fix": "Function aggregate_metrics (complexity 8): add Docstring, Tests, Return-Type.",
+        "impact": 0.0324,
+        "impact_rank": 13,
+        "metadata": {
+          "complexity": 8,
+          "explanation_score": 0.0,
+          "finding_context": "production",
+          "function_name": "aggregate_metrics",
+          "has_docstring": false,
+          "has_return_type": false,
+          "has_test": false,
+          "loc": 20
+        },
+        "related_files": [],
+        "remediation": {
+          "description": "Add a docstring explaining what 'aggregate_metrics' does, its parameters, and return value. Add return type annotation.",
+          "effort": "low",
+          "impact": "medium",
+          "title": "Document 'aggregate_metrics'"
+        },
+        "rule_id": "explainability_deficit",
+        "score": 0.36,
+        "score_contribution": 0.0366,
+        "severity": "low",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 25,
+        "symbol": null,
+        "title": "Unexplained complexity: aggregate_metrics"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "3/3 public functions lack guard clauses (guarded ratio 0.0%, mean unguarded complexity 18.0).",
+        "end_line": null,
+        "file": "src/myapp/processors",
+        "finding_context": "production",
+        "fix": "Add guard clauses to 3/3 unguarded functions in src/myapp/processors/ (mean complexity 18.0): isinstance checks, None guards, or assert statements.",
+        "impact": 0.027,
+        "impact_rank": 14,
+        "metadata": {
+          "finding_context": "production",
+          "guarded_count": 0,
+          "guarded_ratio": 0.0,
+          "mean_unguarded_complexity": 18.0,
+          "total_qualifying": 3
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "guard_clause_deficit",
+        "score": 0.9,
+        "score_contribution": 0.0305,
+        "severity": "high",
+        "signal": "guard_clause_deficit",
+        "signal_abbrev": "GCD",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Guard clause deficit in src/myapp/processors/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "6 test functions with 11 positive / 0 negative assertions (negative ratio 0.0%). 0 boundary-named tests.",
+        "end_line": null,
+        "file": "tests/api",
+        "finding_context": "production",
+        "fix": "Add negative tests to tests/api/ (6 test functions, only 0 negative assertions): use pytest.raises for expected exceptions, test edge cases (empty, None, invalid input).",
+        "impact": 0.024,
+        "impact_rank": 15,
+        "metadata": {
+          "boundary_functions": 0,
+          "finding_context": "production",
           "negative_assertions": 0,
           "negative_ratio": 0.0,
-          "boundary_functions": 0
+          "positive_assertions": 11,
+          "test_functions": 6
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "test_polarity_deficit",
+        "score": 0.6,
+        "score_contribution": 0.0271,
+        "severity": "medium",
+        "signal": "test_polarity_deficit",
+        "signal_abbrev": "TPD",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Happy-path-only test suite in tests/api/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Function 'enrich_payload' in src\\myapp\\processors\\data_pipeline.py has nesting depth 6 (threshold: 4). Deep nesting makes control flow hard to follow.",
+        "end_line": 65,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "fix": "Reduce nesting in 'enrich_payload' (depth 6, threshold 4): use early returns, extract nested blocks into helpers, or invert conditions.",
+        "impact": 0.018,
+        "impact_rank": 16,
+        "metadata": {
+          "finding_context": "production",
+          "function_name": "enrich_payload",
+          "nesting_depth": 6,
+          "threshold": 4
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "deep_nesting",
+        "score": 0.6,
+        "score_contribution": 0.0203,
+        "severity": "high",
+        "signal": "guard_clause_deficit",
+        "signal_abbrev": "GCD",
+        "start_line": 46,
+        "symbol": null,
+        "title": "Deep nesting in enrich_payload()"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Function 'transform_records' in src\\myapp\\processors\\data_pipeline.py has nesting depth 5 (threshold: 4). Deep nesting makes control flow hard to follow.",
+        "end_line": 23,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "fix": "Reduce nesting in 'transform_records' (depth 5, threshold 4): use early returns, extract nested blocks into helpers, or invert conditions.",
+        "impact": 0.0135,
+        "impact_rank": 17,
+        "metadata": {
+          "finding_context": "production",
+          "function_name": "transform_records",
+          "nesting_depth": 5,
+          "threshold": 4
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "deep_nesting",
+        "score": 0.45,
+        "score_contribution": 0.0153,
+        "severity": "medium",
+        "signal": "guard_clause_deficit",
+        "signal_abbrev": "GCD",
+        "start_line": 1,
+        "symbol": null,
+        "title": "Deep nesting in transform_records()"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "README mentions 'handlers/' but no such directory exists. Documentation may be outdated.",
+        "end_line": null,
+        "file": "README.md",
+        "finding_context": "production",
+        "fix": "Remove 'handlers/' from README.md or create the directory.",
+        "impact": 0.012,
+        "impact_rank": 18,
+        "metadata": {
+          "finding_context": "production",
+          "library_context_candidate": false,
+          "referenced_dir": "handlers"
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "doc_impl_drift",
+        "score": 0.3,
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "README references missing directory: handlers/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "README mentions 'middleware/' but no such directory exists. Documentation may be outdated.",
+        "end_line": null,
+        "file": "README.md",
+        "finding_context": "production",
+        "fix": "Remove 'middleware/' from README.md or create the directory.",
+        "impact": 0.012,
+        "impact_rank": 19,
+        "metadata": {
+          "finding_context": "production",
+          "library_context_candidate": false,
+          "referenced_dir": "middleware"
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "doc_impl_drift",
+        "score": 0.3,
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "README references missing directory: middleware/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "README mentions 'models/' but no such directory exists. Documentation may be outdated.",
+        "end_line": null,
+        "file": "README.md",
+        "finding_context": "production",
+        "fix": "Remove 'models/' from README.md or create the directory.",
+        "impact": 0.012,
+        "impact_rank": 20,
+        "metadata": {
+          "finding_context": "production",
+          "library_context_candidate": false,
+          "referenced_dir": "models"
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "doc_impl_drift",
+        "score": 0.3,
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "README references missing directory: models/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "README mentions 'plugins/' but no such directory exists. Documentation may be outdated.",
+        "end_line": null,
+        "file": "README.md",
+        "finding_context": "production",
+        "fix": "Remove 'plugins/' from README.md or create the directory.",
+        "impact": 0.012,
+        "impact_rank": 21,
+        "metadata": {
+          "finding_context": "production",
+          "library_context_candidate": false,
+          "referenced_dir": "plugins"
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "doc_impl_drift",
+        "score": 0.3,
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "README references missing directory: plugins/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "README mentions 'utils/' but no such directory exists. Documentation may be outdated.",
+        "end_line": null,
+        "file": "README.md",
+        "finding_context": "production",
+        "fix": "Remove 'utils/' from README.md or create the directory.",
+        "impact": 0.012,
+        "impact_rank": 22,
+        "metadata": {
+          "finding_context": "production",
+          "library_context_candidate": false,
+          "referenced_dir": "utils"
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "doc_impl_drift",
+        "score": 0.3,
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "README references missing directory: utils/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "README mentions 'views/' but no such directory exists. Documentation may be outdated.",
+        "end_line": null,
+        "file": "README.md",
+        "finding_context": "production",
+        "fix": "Remove 'views/' from README.md or create the directory.",
+        "impact": 0.012,
+        "impact_rank": 23,
+        "metadata": {
+          "finding_context": "production",
+          "library_context_candidate": false,
+          "referenced_dir": "views"
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "doc_impl_drift",
+        "score": 0.3,
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "README references missing directory: views/"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Function 'calculate_pricing' in src\\myapp\\complex_logic.py has cognitive complexity 57 (threshold: 15). Complex control flow makes this function hard to understand and maintain.",
+        "end_line": 36,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "fix": "Reduce cognitive complexity of 'calculate_pricing' (currently 57, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "impact": 0.0,
+        "impact_rank": 24,
+        "metadata": {
+          "body_lines": 36,
+          "cognitive_complexity": 57,
+          "finding_context": "production",
+          "function_name": "calculate_pricing",
+          "threshold": 15
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "cognitive_complexity",
+        "score": 1.0,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "High cognitive complexity in calculate_pricing()"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Function 'transform_dataset' in src\\myapp\\complex_logic.py has cognitive complexity 113 (threshold: 15). Complex control flow makes this function hard to understand and maintain.",
+        "end_line": 92,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "fix": "Reduce cognitive complexity of 'transform_dataset' (currently 113, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "impact": 0.0,
+        "impact_rank": 25,
+        "metadata": {
+          "body_lines": 54,
+          "cognitive_complexity": 113,
+          "finding_context": "production",
+          "function_name": "transform_dataset",
+          "threshold": 15
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "cognitive_complexity",
+        "score": 1.0,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 39,
+        "symbol": null,
+        "title": "High cognitive complexity in transform_dataset()"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Function 'transform_records' in src\\myapp\\processors\\data_pipeline.py has cognitive complexity 24 (threshold: 15). Complex control flow makes this function hard to understand and maintain.",
+        "end_line": 23,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "fix": "Reduce cognitive complexity of 'transform_records' (currently 24, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "impact": 0.0,
+        "impact_rank": 26,
+        "metadata": {
+          "body_lines": 23,
+          "cognitive_complexity": 24,
+          "finding_context": "production",
+          "function_name": "transform_records",
+          "threshold": 15
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "cognitive_complexity",
+        "score": 0.66,
+        "score_contribution": 0.0,
+        "severity": "medium",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "High cognitive complexity in transform_records()"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Function 'enrich_payload' in src\\myapp\\processors\\data_pipeline.py has cognitive complexity 28 (threshold: 15). Complex control flow makes this function hard to understand and maintain.",
+        "end_line": 65,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "fix": "Reduce cognitive complexity of 'enrich_payload' (currently 28, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "impact": 0.0,
+        "impact_rank": 27,
+        "metadata": {
+          "body_lines": 20,
+          "cognitive_complexity": 28,
+          "finding_context": "production",
+          "function_name": "enrich_payload",
+          "threshold": 15
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "cognitive_complexity",
+        "score": 0.82,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 46,
+        "symbol": null,
+        "title": "High cognitive complexity in enrich_payload()"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\complex_logic.py exports 2/2 public symbols that are never imported elsewhere: calculate_pricing, transform_dataset. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in complex_logic.py: calculate_pricing, transform_dataset. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 28,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 1,
+              "name": "calculate_pricing"
+            },
+            {
+              "kind": "function",
+              "line": 39,
+              "name": "transform_dataset"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "2 potentially unused exports in complex_logic.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\connectors\\aws_s3.py exports 2/2 public symbols that are never imported elsewhere: upload_file, download_file. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/connectors/aws_s3.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in aws_s3.py: upload_file, download_file. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 29,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 4,
+              "name": "upload_file"
+            },
+            {
+              "kind": "function",
+              "line": 10,
+              "name": "download_file"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "symbol": null,
+        "title": "2 potentially unused exports in aws_s3.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\connectors\\google_api.py exports 2/2 public symbols that are never imported elsewhere: fetch_calendar, sync_contacts. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/connectors/google_api.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in google_api.py: fetch_calendar, sync_contacts. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 30,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 4,
+              "name": "fetch_calendar"
+            },
+            {
+              "kind": "function",
+              "line": 11,
+              "name": "sync_contacts"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "symbol": null,
+        "title": "2 potentially unused exports in google_api.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\connectors\\slack_api.py exports 2/2 public symbols that are never imported elsewhere: send_message, list_channels. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/connectors/slack_api.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in slack_api.py: send_message, list_channels. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 31,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 4,
+              "name": "send_message"
+            },
+            {
+              "kind": "function",
+              "line": 10,
+              "name": "list_channels"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "symbol": null,
+        "title": "2 potentially unused exports in slack_api.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\connectors\\stripe_api.py exports 2/2 public symbols that are never imported elsewhere: charge_card, refund. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/connectors/stripe_api.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in stripe_api.py: charge_card, refund. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 32,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 4,
+              "name": "charge_card"
+            },
+            {
+              "kind": "function",
+              "line": 10,
+              "name": "refund"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "symbol": null,
+        "title": "2 potentially unused exports in stripe_api.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\hotspot.py exports 2/2 public symbols that are never imported elsewhere: unstable_function, also_changes. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/hotspot.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in hotspot.py: unstable_function, also_changes. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 33,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 12,
+              "name": "unstable_function"
+            },
+            {
+              "kind": "function",
+              "line": 16,
+              "name": "also_changes"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 12,
+        "symbol": null,
+        "title": "2 potentially unused exports in hotspot.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\models\\user.py exports 3/3 public symbols that are never imported elsewhere: get_user, get_user_or_raise, get_user_result. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/models/user.py",
+        "finding_context": "library",
+        "fix": "Review and remove 3 unused exports in user.py: get_user, get_user_or_raise, get_user_result. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 34,
+        "metadata": {
+          "dead_count": 3,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 1,
+              "name": "get_user"
+            },
+            {
+              "kind": "function",
+              "line": 7,
+              "name": "get_user_or_raise"
+            },
+            {
+              "kind": "function",
+              "line": 13,
+              "name": "get_user_result"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 3
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.86,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "3 potentially unused exports in user.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\processors\\data_pipeline.py exports 3/3 public symbols that are never imported elsewhere: transform_records, aggregate_metrics, enrich_payload. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "library",
+        "fix": "Review and remove 3 unused exports in data_pipeline.py: transform_records, aggregate_metrics, enrich_payload. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 35,
+        "metadata": {
+          "dead_count": 3,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 1,
+              "name": "transform_records"
+            },
+            {
+              "kind": "function",
+              "line": 25,
+              "name": "aggregate_metrics"
+            },
+            {
+              "kind": "function",
+              "line": 46,
+              "name": "enrich_payload"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 3
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.86,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "3 potentially unused exports in data_pipeline.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\service_a.py exports 2/2 public symbols that are never imported elsewhere: process_order, validate_input. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/service_a.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in service_a.py: process_order, validate_input. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 36,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 1,
+              "name": "process_order"
+            },
+            {
+              "kind": "function",
+              "line": 8,
+              "name": "validate_input"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "2 potentially unused exports in service_a.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "src\\myapp\\service_b.py exports 2/2 public symbols that are never imported elsewhere: process_order, validate_input. Dead code increases maintenance cost and confuses contributors.",
+        "end_line": null,
+        "file": "src/myapp/service_b.py",
+        "finding_context": "library",
+        "fix": "Review and remove 2 unused exports in service_b.py: process_order, validate_input. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "impact": 0.0,
+        "impact_rank": 37,
+        "metadata": {
+          "dead_count": 2,
+          "dead_ratio": 1.0,
+          "dead_symbols": [
+            {
+              "kind": "function",
+              "line": 1,
+              "name": "process_order"
+            },
+            {
+              "kind": "function",
+              "line": 8,
+              "name": "validate_input"
+            }
+          ],
+          "finding_context": "library",
+          "library_context_candidate": true,
+          "total_exports": 2
+        },
+        "related_files": [],
+        "remediation": null,
+        "rule_id": "dead_code_accumulation",
+        "score": 0.84,
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "symbol": null,
+        "title": "2 potentially unused exports in service_b.py"
+      },
+      {
+        "ai_attributed": false,
+        "deferred": false,
+        "description": "Change frequency: 2.3/week (2.5\u03c3 above mean).",
+        "end_line": null,
+        "file": "src/myapp/hotspot.py",
+        "finding_context": "production",
+        "fix": "10 commits in 30 days \u2014 consider splitting the file.",
+        "impact": 0.0,
+        "impact_rank": 38,
+        "metadata": {
+          "ai_ratio": 0.0,
+          "author_z": 0.0,
+          "change_frequency_30d": 2.33,
+          "defect_correlated": 0,
+          "defect_z": 0.0,
+          "finding_context": "production",
+          "freq_z": 2.47,
+          "unique_authors": 1
+        },
+        "related_files": [],
+        "remediation": {
+          "description": "Add integration tests to catch regressions early and reduce the fix-commit cycle.",
+          "effort": "medium",
+          "impact": "medium",
+          "title": "Stabilize src\\myapp\\hotspot.py"
+        },
+        "rule_id": "temporal_volatility",
+        "score": 0.275,
+        "score_contribution": 0.0,
+        "severity": "info",
+        "signal": "temporal_volatility",
+        "signal_abbrev": "TVS",
+        "start_line": 1,
+        "symbol": null,
+        "title": "High volatility: src/myapp/hotspot.py"
+      }
+    ],
+    "findings_compact": [
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/service_a.py",
+        "finding_context": "production",
+        "impact": 0.1981,
+        "next_step": "Merge 'process_order' and 'process_order' (across src/myapp/service_a.py and src/myapp/service_b.py)",
+        "rank": 1,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1322,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 1,
+        "title": "Exact duplicates (2\u00d7): process_order"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/service_a.py",
+        "finding_context": "production",
+        "impact": 0.1981,
+        "next_step": "Merge 'validate_input' and 'validate_input' (across src/myapp/service_a.py and src/myapp/service_b.py)",
+        "rank": 2,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1322,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 8,
+        "title": "Exact duplicates (2\u00d7): validate_input"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/connectors/aws_s3.py",
+        "finding_context": "production",
+        "impact": 0.1871,
+        "next_step": "Merge 'download_file' and 'send_message' (across src/myapp/connectors/aws_s3.py and src/myapp/connectors/slack_api.py)",
+        "rank": 3,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1249,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 10,
+        "title": "Near-duplicate (100%): download_file \u2194 send_message"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/handler_v1.py",
+        "finding_context": "production",
+        "impact": 0.1871,
+        "next_step": "Merge 'fetch_user_data' and 'get_customer_info' (across src/myapp/handler_v1.py and src/myapp/handler_v2.py)",
+        "rank": 4,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1249,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 1,
+        "title": "Near-duplicate (100%): fetch_user_data \u2194 get_customer_info"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/connectors",
+        "finding_context": "production",
+        "impact": 0.1044,
+        "next_step": "Differentiate exception handlers: catch specific exception types and re-raise or convert unknown errors.",
+        "rank": 5,
+        "rule_id": "broad_exception_monoculture",
+        "score_contribution": 0.0452,
+        "severity": "high",
+        "signal": "broad_exception_monoculture",
+        "signal_abbrev": "BEM",
+        "start_line": 1,
+        "title": "Broad exception monoculture in src/myapp/connectors/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "impact": 0.09,
+        "next_step": "Document 'transform_dataset'",
+        "rank": 6,
+        "rule_id": "explainability_deficit",
+        "score_contribution": 0.1017,
+        "severity": "high",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 39,
+        "title": "Unexplained complexity: transform_dataset"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/handlers",
+        "finding_context": "production",
+        "impact": 0.088,
+        "next_step": "Consolidate 2 pattern variants in src/myapp/handlers",
+        "rank": 7,
+        "rule_id": "pattern_fragmentation",
+        "score_contribution": 0.0588,
+        "severity": "low",
+        "signal": "pattern_fragmentation",
+        "signal_abbrev": "PFS",
+        "start_line": 1,
+        "title": "error_handling: 2 variants in src/myapp/handlers/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "impact": 0.0855,
+        "next_step": "Document 'calculate_pricing'",
+        "rank": 8,
+        "rule_id": "explainability_deficit",
+        "score_contribution": 0.0966,
+        "severity": "high",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 1,
+        "title": "Unexplained complexity: calculate_pricing"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/models/enriched.py",
+        "finding_context": "production",
+        "impact": 0.0677,
+        "next_step": "Fix upward layer import",
+        "rank": 9,
+        "rule_id": "avs_upward_import",
+        "score_contribution": 0.0452,
+        "severity": "medium",
+        "signal": "architecture_violation",
+        "signal_abbrev": "AVS",
+        "start_line": 1,
+        "title": "Upward layer import: enriched.py \u2192 auth.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/models/enriched.py",
+        "finding_context": "production",
+        "impact": 0.0677,
+        "next_step": "Fix upward layer import",
+        "rank": 10,
+        "rule_id": "avs_upward_import",
+        "score_contribution": 0.0452,
+        "severity": "medium",
+        "signal": "architecture_violation",
+        "signal_abbrev": "AVS",
+        "start_line": 2,
+        "title": "Upward layer import: enriched.py \u2192 orders.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.0405,
+        "next_step": "Document 'enrich_payload'",
+        "rank": 11,
+        "rule_id": "explainability_deficit",
+        "score_contribution": 0.0458,
+        "severity": "low",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 46,
+        "title": "Unexplained complexity: enrich_payload"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.0376,
+        "next_step": "Document 'transform_records'",
+        "rank": 12,
+        "rule_id": "explainability_deficit",
+        "score_contribution": 0.0425,
+        "severity": "low",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 1,
+        "title": "Unexplained complexity: transform_records"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.0324,
+        "next_step": "Document 'aggregate_metrics'",
+        "rank": 13,
+        "rule_id": "explainability_deficit",
+        "score_contribution": 0.0366,
+        "severity": "low",
+        "signal": "explainability_deficit",
+        "signal_abbrev": "EDS",
+        "start_line": 25,
+        "title": "Unexplained complexity: aggregate_metrics"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors",
+        "finding_context": "production",
+        "impact": 0.027,
+        "next_step": "Add guard clauses to 3/3 unguarded functions in src/myapp/processors/ (mean complexity 18.0): isinstance checks, None guards, or assert statements.",
+        "rank": 14,
+        "rule_id": "guard_clause_deficit",
+        "score_contribution": 0.0305,
+        "severity": "high",
+        "signal": "guard_clause_deficit",
+        "signal_abbrev": "GCD",
+        "start_line": 1,
+        "title": "Guard clause deficit in src/myapp/processors/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "tests/api",
+        "finding_context": "production",
+        "impact": 0.024,
+        "next_step": "Add negative tests to tests/api/ (6 test functions, only 0 negative assertions): use pytest.raises for expected exceptions, test edge cases (empty, None, invalid input).",
+        "rank": 15,
+        "rule_id": "test_polarity_deficit",
+        "score_contribution": 0.0271,
+        "severity": "medium",
+        "signal": "test_polarity_deficit",
+        "signal_abbrev": "TPD",
+        "start_line": 1,
+        "title": "Happy-path-only test suite in tests/api/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.018,
+        "next_step": "Reduce nesting in 'enrich_payload' (depth 6, threshold 4): use early returns, extract nested blocks into helpers, or invert conditions.",
+        "rank": 16,
+        "rule_id": "deep_nesting",
+        "score_contribution": 0.0203,
+        "severity": "high",
+        "signal": "guard_clause_deficit",
+        "signal_abbrev": "GCD",
+        "start_line": 46,
+        "title": "Deep nesting in enrich_payload()"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.0135,
+        "next_step": "Reduce nesting in 'transform_records' (depth 5, threshold 4): use early returns, extract nested blocks into helpers, or invert conditions.",
+        "rank": 17,
+        "rule_id": "deep_nesting",
+        "score_contribution": 0.0153,
+        "severity": "medium",
+        "signal": "guard_clause_deficit",
+        "signal_abbrev": "GCD",
+        "start_line": 1,
+        "title": "Deep nesting in transform_records()"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "README.md",
+        "finding_context": "production",
+        "impact": 0.012,
+        "next_step": "Remove 'handlers/' from README.md or create the directory.",
+        "rank": 18,
+        "rule_id": "doc_impl_drift",
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "title": "README references missing directory: handlers/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "README.md",
+        "finding_context": "production",
+        "impact": 0.012,
+        "next_step": "Remove 'middleware/' from README.md or create the directory.",
+        "rank": 19,
+        "rule_id": "doc_impl_drift",
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "title": "README references missing directory: middleware/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "README.md",
+        "finding_context": "production",
+        "impact": 0.012,
+        "next_step": "Remove 'models/' from README.md or create the directory.",
+        "rank": 20,
+        "rule_id": "doc_impl_drift",
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "title": "README references missing directory: models/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "README.md",
+        "finding_context": "production",
+        "impact": 0.012,
+        "next_step": "Remove 'plugins/' from README.md or create the directory.",
+        "rank": 21,
+        "rule_id": "doc_impl_drift",
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "title": "README references missing directory: plugins/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "README.md",
+        "finding_context": "production",
+        "impact": 0.012,
+        "next_step": "Remove 'utils/' from README.md or create the directory.",
+        "rank": 22,
+        "rule_id": "doc_impl_drift",
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "title": "README references missing directory: utils/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "README.md",
+        "finding_context": "production",
+        "impact": 0.012,
+        "next_step": "Remove 'views/' from README.md or create the directory.",
+        "rank": 23,
+        "rule_id": "doc_impl_drift",
+        "score_contribution": 0.0136,
+        "severity": "low",
+        "signal": "doc_impl_drift",
+        "signal_abbrev": "DIA",
+        "start_line": 1,
+        "title": "README references missing directory: views/"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Reduce cognitive complexity of 'calculate_pricing' (currently 57, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "rank": 24,
+        "rule_id": "cognitive_complexity",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 1,
+        "title": "High cognitive complexity in calculate_pricing()"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Reduce cognitive complexity of 'transform_dataset' (currently 113, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "rank": 25,
+        "rule_id": "cognitive_complexity",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 39,
+        "title": "High cognitive complexity in transform_dataset()"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Reduce cognitive complexity of 'transform_records' (currently 24, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "rank": 26,
+        "rule_id": "cognitive_complexity",
+        "score_contribution": 0.0,
+        "severity": "medium",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 1,
+        "title": "High cognitive complexity in transform_records()"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Reduce cognitive complexity of 'enrich_payload' (currently 28, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "rank": 27,
+        "rule_id": "cognitive_complexity",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 46,
+        "title": "High cognitive complexity in enrich_payload()"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in complex_logic.py: calculate_pricing, transform_dataset. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 28,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "title": "2 potentially unused exports in complex_logic.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/connectors/aws_s3.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in aws_s3.py: upload_file, download_file. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 29,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "title": "2 potentially unused exports in aws_s3.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/connectors/google_api.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in google_api.py: fetch_calendar, sync_contacts. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 30,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "title": "2 potentially unused exports in google_api.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/connectors/slack_api.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in slack_api.py: send_message, list_channels. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 31,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "title": "2 potentially unused exports in slack_api.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/connectors/stripe_api.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in stripe_api.py: charge_card, refund. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 32,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 4,
+        "title": "2 potentially unused exports in stripe_api.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/hotspot.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in hotspot.py: unstable_function, also_changes. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 33,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 12,
+        "title": "2 potentially unused exports in hotspot.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/models/user.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 3 unused exports in user.py: get_user, get_user_or_raise, get_user_result. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 34,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "title": "3 potentially unused exports in user.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 3 unused exports in data_pipeline.py: transform_records, aggregate_metrics, enrich_payload. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 35,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "title": "3 potentially unused exports in data_pipeline.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/service_a.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in service_a.py: process_order, validate_input. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 36,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "title": "2 potentially unused exports in service_a.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/service_b.py",
+        "finding_context": "library",
+        "impact": 0.0,
+        "next_step": "Review and remove 2 unused exports in service_b.py: process_order, validate_input. If they are framework entry-points or dynamically loaded, mark with # drift:ignore or add to exclude patterns.",
+        "rank": 37,
+        "rule_id": "dead_code_accumulation",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "dead_code_accumulation",
+        "signal_abbrev": "DCA",
+        "start_line": 1,
+        "title": "2 potentially unused exports in service_b.py"
+      },
+      {
+        "duplicate_count": 1,
+        "file": "src/myapp/hotspot.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Stabilize src\\myapp\\hotspot.py",
+        "rank": 38,
+        "rule_id": "temporal_volatility",
+        "score_contribution": 0.0,
+        "severity": "info",
+        "signal": "temporal_volatility",
+        "signal_abbrev": "TVS",
+        "start_line": 1,
+        "title": "High volatility: src/myapp/hotspot.py"
+      }
+    ],
+    "fix_first": [
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/models/enriched.py",
+        "finding_context": "production",
+        "impact": 0.0677,
+        "next_step": "Fix upward layer import",
+        "priority_class": "architecture_boundary",
+        "rank": 1,
+        "rule_id": "avs_upward_import",
+        "score_contribution": 0.0452,
+        "severity": "medium",
+        "signal": "architecture_violation",
+        "signal_abbrev": "AVS",
+        "start_line": 1,
+        "title": "Upward layer import: enriched.py \u2192 auth.py"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/models/enriched.py",
+        "finding_context": "production",
+        "impact": 0.0677,
+        "next_step": "Fix upward layer import",
+        "priority_class": "architecture_boundary",
+        "rank": 2,
+        "rule_id": "avs_upward_import",
+        "score_contribution": 0.0452,
+        "severity": "medium",
+        "signal": "architecture_violation",
+        "signal_abbrev": "AVS",
+        "start_line": 2,
+        "title": "Upward layer import: enriched.py \u2192 orders.py"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/service_a.py",
+        "finding_context": "production",
+        "impact": 0.1981,
+        "next_step": "Merge 'process_order' and 'process_order' (across src/myapp/service_a.py and src/myapp/service_b.py)",
+        "priority_class": "structural_risk",
+        "rank": 3,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1322,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 1,
+        "title": "Exact duplicates (2\u00d7): process_order"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/service_a.py",
+        "finding_context": "production",
+        "impact": 0.1981,
+        "next_step": "Merge 'validate_input' and 'validate_input' (across src/myapp/service_a.py and src/myapp/service_b.py)",
+        "priority_class": "structural_risk",
+        "rank": 4,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1322,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 8,
+        "title": "Exact duplicates (2\u00d7): validate_input"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/connectors/aws_s3.py",
+        "finding_context": "production",
+        "impact": 0.1871,
+        "next_step": "Merge 'download_file' and 'send_message' (across src/myapp/connectors/aws_s3.py and src/myapp/connectors/slack_api.py)",
+        "priority_class": "structural_risk",
+        "rank": 5,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1249,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 10,
+        "title": "Near-duplicate (100%): download_file \u2194 send_message"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/handler_v1.py",
+        "finding_context": "production",
+        "impact": 0.1871,
+        "next_step": "Merge 'fetch_user_data' and 'get_customer_info' (across src/myapp/handler_v1.py and src/myapp/handler_v2.py)",
+        "priority_class": "structural_risk",
+        "rank": 6,
+        "rule_id": "mutant_duplicate",
+        "score_contribution": 0.1249,
+        "severity": "high",
+        "signal": "mutant_duplicate",
+        "signal_abbrev": "MDS",
+        "start_line": 1,
+        "title": "Near-duplicate (100%): fetch_user_data \u2194 get_customer_info"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Reduce cognitive complexity of 'calculate_pricing' (currently 57, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "priority_class": "structural_risk",
+        "rank": 7,
+        "rule_id": "cognitive_complexity",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 1,
+        "title": "High cognitive complexity in calculate_pricing()"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/complex_logic.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Reduce cognitive complexity of 'transform_dataset' (currently 113, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "priority_class": "structural_risk",
+        "rank": 8,
+        "rule_id": "cognitive_complexity",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 39,
+        "title": "High cognitive complexity in transform_dataset()"
+      },
+      {
+        "expected_benefit": "high",
+        "file": "src/myapp/processors/data_pipeline.py",
+        "finding_context": "production",
+        "impact": 0.0,
+        "next_step": "Reduce cognitive complexity of 'enrich_payload' (currently 28, threshold 15): extract nested logic into helper functions, replace nested conditionals with guard clauses, simplify boolean expressions.",
+        "priority_class": "structural_risk",
+        "rank": 9,
+        "rule_id": "cognitive_complexity",
+        "score_contribution": 0.0,
+        "severity": "high",
+        "signal": "cognitive_complexity",
+        "signal_abbrev": "CXS",
+        "start_line": 46,
+        "title": "High cognitive complexity in enrich_payload()"
+      },
+      {
+        "expected_benefit": "medium",
+        "file": "tests/api",
+        "finding_context": "production",
+        "impact": 0.024,
+        "next_step": "Add negative tests to tests/api/ (6 test functions, only 0 negative assertions): use pytest.raises for expected exceptions, test edge cases (empty, None, invalid input).",
+        "priority_class": "structural_risk",
+        "rank": 10,
+        "rule_id": "test_polarity_deficit",
+        "score_contribution": 0.0271,
+        "severity": "medium",
+        "signal": "test_polarity_deficit",
+        "signal_abbrev": "TPD",
+        "start_line": 1,
+        "title": "Happy-path-only test suite in tests/api/"
+      }
+    ],
+    "modules": [
+      {
+        "ai_ratio": 0.0,
+        "drift_score": 0.485,
+        "finding_count": 12,
+        "path": "src/myapp",
+        "severity": "medium",
+        "signal_scores": {
+          "cognitive_complexity": 0.4582,
+          "dead_code_accumulation": 0.5638,
+          "explainability_deficit": 0.4467,
+          "mutant_duplicate": 0.5107,
+          "temporal_volatility": 0.0795
+        }
+      },
+      {
+        "ai_ratio": 0.0,
+        "drift_score": 0.271,
+        "finding_count": 9,
+        "path": "src/myapp/processors",
+        "severity": "low",
+        "signal_scores": {
+          "cognitive_complexity": 0.339,
+          "dead_code_accumulation": 0.2486,
+          "explainability_deficit": 0.2366,
+          "guard_clause_deficit": 0.3758
+        }
+      },
+      {
+        "ai_ratio": 0.0,
+        "drift_score": 0.256,
+        "finding_count": 6,
+        "path": "src/myapp/connectors",
+        "severity": "low",
+        "signal_scores": {
+          "broad_exception_monoculture": 0.2891,
+          "dead_code_accumulation": 0.5638,
+          "mutant_duplicate": 0.2457
+        }
+      },
+      {
+        "ai_ratio": 0.0,
+        "drift_score": 0.243,
+        "finding_count": 6,
+        "path": ".",
+        "severity": "low",
+        "signal_scores": {
+          "doc_impl_drift": 0.2435
+        }
+      },
+      {
+        "ai_ratio": 0.0,
+        "drift_score": 0.173,
+        "finding_count": 1,
+        "path": "tests/api",
+        "severity": "info",
+        "signal_scores": {
+          "test_polarity_deficit": 0.1734
+        }
+      },
+      {
+        "ai_ratio": 0.0,
+        "drift_score": 0.114,
+        "finding_count": 3,
+        "path": "src/myapp/models",
+        "severity": "info",
+        "signal_scores": {
+          "architecture_violation": 0.1145,
+          "dead_code_accumulation": 0.2486
+        }
+      },
+      {
+        "ai_ratio": 0.0,
+        "drift_score": 0.094,
+        "finding_count": 1,
+        "path": "src/myapp/handlers",
+        "severity": "info",
+        "signal_scores": {
+          "pattern_fragmentation": 0.0939
         }
       }
     ],
+    "negative_context": [
+      {
+        "affected_files": [
+          "src/myapp/connectors",
+          "src/myapp/connectors/aws_s3.py",
+          "src/myapp/connectors/google_api.py",
+          "src/myapp/connectors/slack_api.py",
+          "src/myapp/connectors/stripe_api.py"
+        ],
+        "anti_pattern_id": "neg-bro-1e8a380110",
+        "canonical_alternative": "# REQUIRED: Catch specific exceptions, re-raise or handle\ntry:\n    result = dangerous_operation()\nexcept SpecificError as exc:\n    logger.warning('Operation failed: %s', exc)\n    raise  # or: return fallback_value",
+        "category": "error_handling",
+        "confidence": 0.9,
+        "description": "Broad exception handler swallows errors without recovery or re-raise. Handler action: 'pass'.",
+        "forbidden_pattern": "# ANTI-PATTERN: Bare except or broad except with pass/print\ntry:\n    result = dangerous_operation()\nexcept Exception:\n    pass  # <- Silently swallows ALL errors!",
+        "metadata": {},
+        "rationale": "AI agents generate syntactically correct but semantically empty exception handlers (FMEA FM-02, RPN 288). Always catch specific exceptions and either re-raise or handle with recovery logic.",
+        "scope": "module",
+        "severity": "high",
+        "source_signal": "broad_exception_monoculture"
+      },
+      {
+        "affected_files": [
+          "src/myapp/service_a.py",
+          "src/myapp/service_b.py"
+        ],
+        "anti_pattern_id": "neg-mut-fbe92f1c93",
+        "canonical_alternative": "# REQUIRED: Reuse 'function_a' or extract shared logic\n# Parameterize differences instead of copy-pasting",
+        "category": "architecture",
+        "confidence": 0.85,
+        "description": "'function_a' and 'function_b' are 100% similar. Reuse or consolidate instead of duplicating.",
+        "forbidden_pattern": "# ANTI-PATTERN: Creating a near-duplicate of 'function_a'\n# 'function_b' already exists with 100% similarity",
+        "metadata": {},
+        "rationale": "AI agents copy-paste and modify instead of parameterizing.",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "mutant_duplicate"
+      },
+      {
+        "affected_files": [
+          "src/myapp/service_a.py",
+          "src/myapp/service_b.py"
+        ],
+        "anti_pattern_id": "neg-mut-62660bd259",
+        "canonical_alternative": "# REQUIRED: Reuse 'function_a' or extract shared logic\n# Parameterize differences instead of copy-pasting",
+        "category": "architecture",
+        "confidence": 0.85,
+        "description": "'function_a' and 'function_b' are 100% similar. Reuse or consolidate instead of duplicating.",
+        "forbidden_pattern": "# ANTI-PATTERN: Creating a near-duplicate of 'function_a'\n# 'function_b' already exists with 100% similarity",
+        "metadata": {},
+        "rationale": "AI agents copy-paste and modify instead of parameterizing.",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "mutant_duplicate"
+      },
+      {
+        "affected_files": [
+          "src/myapp/connectors/aws_s3.py",
+          "src/myapp/connectors/slack_api.py"
+        ],
+        "anti_pattern_id": "neg-mut-118a77c52a",
+        "canonical_alternative": "# REQUIRED: Reuse 'download_file' or extract shared logic\n# Parameterize differences instead of copy-pasting",
+        "category": "architecture",
+        "confidence": 0.85,
+        "description": "'download_file' and 'send_message' are 100% similar. Reuse or consolidate instead of duplicating.",
+        "forbidden_pattern": "# ANTI-PATTERN: Creating a near-duplicate of 'download_file'\n# 'send_message' already exists with 100% similarity",
+        "metadata": {},
+        "rationale": "AI agents copy-paste and modify instead of parameterizing.",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "mutant_duplicate"
+      },
+      {
+        "affected_files": [
+          "src/myapp/handler_v1.py",
+          "src/myapp/handler_v2.py"
+        ],
+        "anti_pattern_id": "neg-mut-3f7e7a87c8",
+        "canonical_alternative": "# REQUIRED: Reuse 'fetch_user_data' or extract shared logic\n# Parameterize differences instead of copy-pasting",
+        "category": "architecture",
+        "confidence": 0.85,
+        "description": "'fetch_user_data' and 'get_customer_info' are 100% similar. Reuse or consolidate instead of duplicating.",
+        "forbidden_pattern": "# ANTI-PATTERN: Creating a near-duplicate of 'fetch_user_data'\n# 'get_customer_info' already exists with 100% similarity",
+        "metadata": {},
+        "rationale": "AI agents copy-paste and modify instead of parameterizing.",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "mutant_duplicate"
+      },
+      {
+        "affected_files": [
+          "src/myapp/complex_logic.py"
+        ],
+        "anti_pattern_id": "neg-cog-b9ebf8c9f5",
+        "canonical_alternative": "# REQUIRED: Extract helper functions to reduce complexity\n# Each function should have a single responsibility",
+        "category": "complexity",
+        "confidence": 0.8,
+        "description": "'calculate_pricing' has complexity 0. Keep new code simple.",
+        "forbidden_pattern": "# ANTI-PATTERN: Adding more branches to already-complex function\n# 'calculate_pricing' complexity is already 0 -- do not increase",
+        "metadata": {},
+        "rationale": "High-complexity functions attract more complexity over time.",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "cognitive_complexity"
+      },
+      {
+        "affected_files": [
+          "src/myapp/complex_logic.py"
+        ],
+        "anti_pattern_id": "neg-cog-e779523b8f",
+        "canonical_alternative": "# REQUIRED: Extract helper functions to reduce complexity\n# Each function should have a single responsibility",
+        "category": "complexity",
+        "confidence": 0.8,
+        "description": "'transform_dataset' has complexity 0. Keep new code simple.",
+        "forbidden_pattern": "# ANTI-PATTERN: Adding more branches to already-complex function\n# 'transform_dataset' complexity is already 0 -- do not increase",
+        "metadata": {},
+        "rationale": "High-complexity functions attract more complexity over time.",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "cognitive_complexity"
+      },
+      {
+        "affected_files": [
+          "src/myapp/processors/data_pipeline.py"
+        ],
+        "anti_pattern_id": "neg-cog-17a4d65242",
+        "canonical_alternative": "# REQUIRED: Extract helper functions to reduce complexity\n# Each function should have a single responsibility",
+        "category": "complexity",
+        "confidence": 0.8,
+        "description": "'enrich_payload' has complexity 0. Keep new code simple.",
+        "forbidden_pattern": "# ANTI-PATTERN: Adding more branches to already-complex function\n# 'enrich_payload' complexity is already 0 -- do not increase",
+        "metadata": {},
+        "rationale": "High-complexity functions attract more complexity over time.",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "cognitive_complexity"
+      },
+      {
+        "affected_files": [
+          "src/myapp/processors/data_pipeline.py"
+        ],
+        "anti_pattern_id": "neg-gua-2a93ed8f25",
+        "canonical_alternative": "# PREFERRED: Guard clauses with early return\ndef process(data):\n    if not data:\n        return None\n    if not data.valid:\n        raise ValueError('invalid')\n    if not data.ready:\n        return None\n    return do_work(data)",
+        "category": "complexity",
+        "confidence": 0.8,
+        "description": "'enrich_payload' uses deep nesting instead of early returns.",
+        "forbidden_pattern": "# ANTI-PATTERN: Deep nesting\ndef process(data):\n    if data:\n        if data.valid:\n            if data.ready:\n                return do_work(data)  # <- 3 levels deep",
+        "metadata": {},
+        "rationale": "AI agents generate nested if/else chains instead of guard clauses (FMEA FM-06, RPN 105).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "guard_clause_deficit"
+      },
+      {
+        "affected_files": [
+          "src/myapp/processors"
+        ],
+        "anti_pattern_id": "neg-gua-296d705229",
+        "canonical_alternative": "# PREFERRED: Guard clauses with early return\ndef process(data):\n    if not data:\n        return None\n    if not data.valid:\n        raise ValueError('invalid')\n    if not data.ready:\n        return None\n    return do_work(data)",
+        "category": "complexity",
+        "confidence": 0.8,
+        "description": "'function' uses deep nesting instead of early returns.",
+        "forbidden_pattern": "# ANTI-PATTERN: Deep nesting\ndef process(data):\n    if data:\n        if data.valid:\n            if data.ready:\n                return do_work(data)  # <- 3 levels deep",
+        "metadata": {},
+        "rationale": "AI agents generate nested if/else chains instead of guard clauses (FMEA FM-06, RPN 105).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "guard_clause_deficit"
+      },
+      {
+        "affected_files": [
+          "src/myapp/complex_logic.py"
+        ],
+        "anti_pattern_id": "neg-dea-1bb28446b7",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/connectors/aws_s3.py"
+        ],
+        "anti_pattern_id": "neg-dea-ad3ae8efc6",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/connectors/google_api.py"
+        ],
+        "anti_pattern_id": "neg-dea-fe69cff397",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/connectors/slack_api.py"
+        ],
+        "anti_pattern_id": "neg-dea-6fcdadff97",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/connectors/stripe_api.py"
+        ],
+        "anti_pattern_id": "neg-dea-627246b3c5",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/hotspot.py"
+        ],
+        "anti_pattern_id": "neg-dea-4317bc9015",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/models/user.py"
+        ],
+        "anti_pattern_id": "neg-dea-5e4f90242d",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/processors/data_pipeline.py"
+        ],
+        "anti_pattern_id": "neg-dea-ee3e39471f",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/service_a.py"
+        ],
+        "anti_pattern_id": "neg-dea-c92d94d3aa",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      },
+      {
+        "affected_files": [
+          "src/myapp/service_b.py"
+        ],
+        "anti_pattern_id": "neg-dea-02753f3344",
+        "canonical_alternative": "# REQUIRED: Only add code that is immediately used\n# Remove unused imports and speculative helper functions",
+        "category": "completeness",
+        "confidence": 0.75,
+        "description": "Unreachable or unused code detected. Do not add speculative code.",
+        "forbidden_pattern": "# ANTI-PATTERN: Unused imports, functions, or constants\nimport unused_module  # <- never referenced\ndef helper_just_in_case(): ...  # <- never called",
+        "metadata": {},
+        "rationale": "AI agents add 'just in case' code that is never used (FMEA FM-10, RPN 96).",
+        "scope": "file",
+        "severity": "high",
+        "source_signal": "dead_code_accumulation"
+      }
+    ],
+    "repo": "C:/Users/mickg/AppData/Local/Temp/drift_mutation_djuwfkhq/synthetic_repo",
+    "schema_version": "1.0",
+    "severity": "low",
+    "signal_abbrev_map": {
+      "AVS": "architecture_violation",
+      "BAT": "bypass_accumulation",
+      "BEM": "broad_exception_monoculture",
+      "CCC": "co_change_coupling",
+      "CIR": "circular_import",
+      "COD": "cohesion_deficit",
+      "CXS": "cognitive_complexity",
+      "DCA": "dead_code_accumulation",
+      "DIA": "doc_impl_drift",
+      "ECM": "exception_contract_drift",
+      "EDS": "explainability_deficit",
+      "FOE": "fan_out_explosion",
+      "GCD": "guard_clause_deficit",
+      "HSC": "hardcoded_secret",
+      "ISD": "insecure_default",
+      "MAZ": "missing_authorization",
+      "MDS": "mutant_duplicate",
+      "NBV": "naming_contract_violation",
+      "PFS": "pattern_fragmentation",
+      "SMS": "system_misalignment",
+      "TPD": "test_polarity_deficit",
+      "TSA": "ts_architecture",
+      "TVS": "temporal_volatility"
+    },
+    "summary": {
+      "ai_attributed_ratio": 0.0,
+      "ai_tools_detected": [],
+      "analysis_duration_seconds": 0.23,
+      "total_files": 25,
+      "total_functions": 31
+    },
     "suppressed_count": 0,
-    "context_tagged_count": 0
+    "trend": {
+      "delta": null,
+      "direction": "baseline",
+      "history_depth": 0,
+      "previous_score": null,
+      "recent_scores": [],
+      "transition_ratio": 0.0
+    },
+    "version": "2.5.3"
   }
 }

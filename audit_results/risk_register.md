@@ -1,5 +1,28 @@
 # Risk Register
 
+## 2026-04-07 - DIA false-positive reduction (FTA-based, 3 cut sets)
+
+- Risk ID: RISK-SIG-2026-04-07-189
+- Component: src/drift/signals/doc_impl_drift.py
+- Type: Signal quality (false-positive reduction via FTA-driven precision hardening)
+- Description: DIA signal emitted false positives through three independent failure paths identified via Fault Tree Analysis: (CS-1) inline codespan tokens were extracted without context validation, (CS-2) directory existence checks missed paths under common prefixes like `src/`, (CS-3) superseded/deprecated ADR documents were scanned as if active.
+- Trigger examples:
+  - README with `` `auth/callback` `` in prose → phantom-dir finding for `auth/` (CS-1).
+  - Repo with `src/services/` + README mentioning `services/` → false FP (CS-2).
+  - ADR with `status: superseded` referencing pre-refactoring path → stale finding (CS-3).
+- Impact: Reduced DIA precision and triage trust, especially on repos with inline code examples and mature ADR processes.
+- Mitigation:
+  - CS-1: Sibling-context keyword gate — collect text-children from paragraph/heading, only trust codespans when structure keywords present in sibling context. Added "architecture" and "component"/"components" to keyword set. ADR files use `trust_codespans=True`.
+  - CS-2: Container-prefix existence check via `_ref_exists_in_repo()` — checks direct path plus curated prefixes (`src`, `lib`, `app`, `pkg`, `packages`, `libs`, `internal`).
+  - CS-3: ADR status parsing via `_extract_adr_status()` — YAML frontmatter + MADR freetext; skip `superseded`/`deprecated`/`rejected`.
+  - 14 new regression tests covering all 3 cut sets + FN edge cases.
+  - Golden snapshots updated (corpus findings count changed due to improved precision).
+- Verification:
+  - `python -m pytest tests/test_dia_enhanced.py -v --maxfail=1`
+  - `python -m pytest tests/test_precision_recall.py -k dia -v --maxfail=1`
+  - `python -m pytest tests/test_golden_snapshot.py -v`
+- Residual risk: Low; conservative defaults limit FN surface. Codespan context gate may miss structure refs in keyword-free prose, but such cases are rare and rarely constitute genuine structure claims. Container-prefix set is curated and excludes test/docs dirs.
+
 ## 2026-04-07 - MAZ/ISD/HSC wave-2 calibration
 
 - Risk ID: RISK-SIG-2026-04-07-188

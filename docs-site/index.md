@@ -3,40 +3,49 @@ template: home.html
 title: Drift — Architecture Erosion Detection
 ---
 
-## Why teams add drift next to existing checks
+Drift is a deterministic analyzer for structural erosion in Python repositories.
 
-AI coding tools write code that works — but doesn't fit. Error handling fragments across patterns, layer boundaries erode, near-identical utilities accumulate. Drift finds exactly that.
+It surfaces the cross-file problems that usually pass tests but still make a codebase harder to change: fragmented patterns, layer leaks, near-duplicate helpers, and inconsistent architecture decisions.
 
-- Ruff, formatting, and typing keep local code clean.
-- Semgrep, CodeQL, and security tooling catch risky flows.
-- Drift adds a deterministic view of architecture erosion analysis and cross-file coherence detection: pattern fragmentation, boundary erosion, and drift hotspots.
-
-## Start Here
+## See Drift First
 
 ```bash
 pip install -q drift-analyzer
 drift analyze --repo .
 ```
 
-## Choose Your Path
+<div align="center">
+	<img src="https://raw.githubusercontent.com/mick-gsk/drift/main/demos/demo.gif" alt="drift analyze terminal demo" width="900">
+</div>
 
-Use the central [Start Here](start-here.md) page if you want the documentation segmented by goal instead of by section.
+## What Drift Adds
 
-- I want to **use** drift
-- I want to **evaluate** drift
-- I want to **contribute**
-- I want to understand the **research and methodology**
+- Ruff, formatting, and typing keep local code clean.
+- Semgrep, CodeQL, and security tooling catch risky flows.
+- Drift adds a deterministic view of architecture erosion analysis and cross-file coherence detection: pattern fragmentation, boundary erosion, and drift hotspots.
 
-Direct shortcuts:
+## Evaluate Drift
+
+**[Start here](start-here.md)** — choose your path: try it, check the evidence, or plan a rollout.
+
+Or jump directly: [Example Findings](product/example-findings.md) · [Trust and Evidence](trust-evidence.md) · [Stability](stability.md) · [Comparisons](comparisons/index.md)
+
+## Use Drift
 
 - [Quick Start](getting-started/quickstart.md)
-- [Trust and Evidence](trust-evidence.md)
-- [Contributing](contributing.md)
-- [Algorithm Deep Dive](algorithms/deep-dive.md)
+- [Team Rollout](getting-started/team-rollout.md)
+- [Integrations](integrations.md)
+- [API and Outputs](reference/api-outputs.md)
 
-Current public evidence: 15 real-world repositories in the study corpus, 14 scoring signals (TVS currently report-only in the composite score). The [benchmark study](study.md) documents a v0.5 baseline with 6 core signals; quantitative claims there apply to that historical model.
+## Public Evidence and Release Posture
 
-Release posture is intentionally conservative: the PyPI classifier remains Alpha, while the core Python analysis and CI-facing workflows are already the most stable parts of the product. See [Stability and Release Status](stability.md) for the explicit maturity matrix.
+Current public benchmark claim: 77% strict precision / 95% lenient on the historical v0.5 six-signal baseline (286 findings, 5 repositories, score-weighted sample, single-rater classification with 51 disputed cases).
+
+The drift score reported per repository is a composite coherence metric (higher = more erosion). Individual finding scores measure detection confidence. The precision claim describes historical accuracy across the benchmark corpus — it is not a per-repo guarantee.
+
+The current study corpus covers 15 real-world repositories and the current composite model uses 14 scoring signals, with TVS held report-only pending re-validation. The broader corpus supports case studies and ongoing validation, but it is not a revalidated headline precision claim for the current model.
+
+Package metadata currently uses the Beta classifier. Rollout guidance is still conservative because the core Python path is stronger than optional or experimental surfaces such as TypeScript support and embeddings-based features.
 
 ## Example Findings
 
@@ -73,6 +82,13 @@ If you need a compact evidence summary first, read [Trust and Evidence](trust-ev
 
 If you need the release-maturity breakdown first, read [Stability and Release Status](stability.md).
 
+## Contribute or Go Deeper
+
+- [Contributing](contributing.md)
+- [Algorithm Deep Dive](algorithms/deep-dive.md)
+- [Signal Reference](algorithms/signals.md)
+- [Benchmark Study](study.md)
+
 ## Compare Drift to Adjacent Tools
 
 - [Drift vs Ruff](comparisons/drift-vs-ruff.md)
@@ -80,11 +96,6 @@ If you need the release-maturity breakdown first, read [Stability and Release St
 - [Drift vs Architecture Conformance Tools](comparisons/drift-vs-architecture-conformance.md)
 
 These pages are intentionally narrow: they explain where drift fits, where it does not, and how teams combine it with existing checks.
-
-## Integration Paths
-
-- [Integrations](integrations.md)
-- [API and Outputs](reference/api-outputs.md)
 
 ## Reusable Project Summary
 

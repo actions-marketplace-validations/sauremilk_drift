@@ -16,7 +16,7 @@
 
 Drift detects structural erosion that accumulates across files: the same error handling done four different ways, database imports leaking into the API layer, AST-level near-duplicate helpers across modules. These problems pass existing tests but make the codebase progressively harder to change.
 
-The analysis is deterministic (no LLM in the pipeline) and produces findings with file locations, severity, and a suggested next step. Precision upper-bound estimate: [77 % strict / 95 % lenient on a v0.5 ground-truth corpus](docs/STUDY.md) (score-weighted sample of 286 findings, 5 repos, single-rater — not yet independently replicated). See [Trust and limitations](#trust-and-limitations) for full caveats.
+The analysis is deterministic (no LLM in the pipeline) and produces findings with file locations, severity, and a suggested next step. Precision upper-bound estimate: [77 % strict / 95 % lenient on the historical v0.5.0 ground-truth baseline](docs/STUDY.md) (score-weighted sample of 286 findings, 5 repos, single-rater — not yet independently replicated). See [Trust and limitations](#trust-and-limitations) for full caveats.
 
 ```bash
 pip install drift-analyzer        # requires Python 3.11+
@@ -283,7 +283,7 @@ The safest rollout path is progressive:
 Drift's analysis pipeline is deterministic and its benchmark artifacts are published in the repository, so claims can be inspected rather than trusted on assertion.
 
 - **Deterministic pipeline:** no LLMs in detection — same input produces the same output.
-- **Benchmarked:** precision upper-bound estimate on a [v0.5 ground-truth corpus](docs/STUDY.md) (77 % strict / 95 % lenient, score-weighted sample of 286 findings, 5 repos). 88 % mutation recall on a [controlled benchmark](benchmark_results/mutation_benchmark.json) (15/17 patterns, 10 signal types). These numbers apply to the historical benchmark models and have not been revalidated for the current signal set.
+- **Benchmarked:** precision upper-bound estimate on a [historical v0.5.0 ground-truth baseline](docs/STUDY.md) (77 % strict / 95 % lenient, score-weighted sample of 286 findings, 5 repos). 88 % mutation recall on a [controlled benchmark](benchmark_results/mutation_benchmark.json) (15/17 patterns, 10 signal types). These numbers apply to historical benchmark models and have not been revalidated for the current signal set.
 - **Single-rater caveat:** ground-truth classification is not yet independently replicated.
 - **Small-repo noise:** repositories with few files can produce noisy scores. Auto-calibration mitigates but does not eliminate this.
 - **Temporal signals** depend on clone depth and git history quality.

@@ -1,12 +1,12 @@
 [
   {
-    "timestamp": "2026-04-07T08:12:01.132583+00:00",
-    "drift_score": 0.374,
+    "timestamp": "2026-04-07T10:11:32.329556+00:00",
+    "drift_score": 0.372,
     "signal_scores": {
       "architecture_violation": 0.1145,
       "mutant_duplicate": 0.8532,
       "explainability_deficit": 0.4673,
-      "doc_impl_drift": 0.2602,
+      "doc_impl_drift": 0.2435,
       "test_polarity_deficit": 0.1734,
       "guard_clause_deficit": 0.4698,
       "naming_contract_violation": 0.3469,
@@ -14,7 +14,7 @@
       "dead_code_accumulation": 0.8146
     },
     "total_files": 26,
-    "total_findings": 64,
+    "total_findings": 63,
     "scope": "repo"
   }
 ]
