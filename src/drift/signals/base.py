@@ -158,7 +158,7 @@ def create_signals(
     *,
     active_signals: set[str] | None = None,
 ) -> list[BaseSignal]:
-    """Instantiate all registered signals.
+    """Instantiate registered signals with optional pre-filtering.
 
     Preferred contract:
     1. Parameterless constructor on the signal class
