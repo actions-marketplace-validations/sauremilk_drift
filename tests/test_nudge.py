@@ -183,11 +183,24 @@ class TestNudgeAPI:
         assert call_count["n"] == 0
         assert result["baseline_refresh_reason"] is None
 
-    def test_nudge_error_returns_error_response(self, tmp_path: Path) -> None:
+    def test_nudge_error_returns_error_response(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
         """nudge() returns error_response on exception (not raised)."""
-        # Non-existent path that triggers config load error
+        # Force a fast deterministic failure path instead of relying on FS/git behavior.
+        from drift.config import DriftConfig
+
+        def _raise_load_error(*a, **kw):
+            raise RuntimeError("forced config load failure")
+
+        monkeypatch.setattr(DriftConfig, "load", staticmethod(_raise_load_error))
+
+        # Non-existent path still exercises error response contract.
         broken = tmp_path / "nonexistent_repo_xyz"
         result = nudge(broken, changed_files=[])
+
         # Should not crash, returns error dict
         assert "schema_version" in result or "error" in result
 
@@ -279,6 +292,10 @@ class TestSafeToCommitHardrule:
         monkeypatch.setattr(
             "drift.api._emit_api_telemetry",
             lambda **kw: None,
+        )
+        monkeypatch.setattr(
+            "drift.analyzer.analyze_repo",
+            lambda *a, **kw: _stub_analysis(),
         )
         # Suppress git-state check (tmp_path is not a git repo)
         monkeypatch.setattr(
