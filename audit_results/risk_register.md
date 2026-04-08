@@ -1,5 +1,32 @@
 # Risk Register
 
+## 2026-04-08 - ADR-026: A2A Agent Card and HTTP Serve Endpoint
+
+- Risk ID: RISK-SERVE-2026-04-08-026a
+- Component: `src/drift/serve/app.py`, `src/drift/serve/a2a_router.py`
+- Type: New HTTP input/output path (network-accessible trust boundary)
+- Description: `drift serve` exposes analysis capabilities over HTTP without authentication. Any client that can reach the bind address can invoke analysis on any local directory the OS user has read access to.
+- Severity: Medium
+- Likelihood: Low (default localhost-only; network exposure requires explicit `--host 0.0.0.0`)
+- Mitigation:
+  - Default bind to `127.0.0.1` — not reachable from network without explicit opt-in
+  - Documentation warns about production exposure requiring reverse proxy with auth
+  - No sensitive credentials stored or processed by the serve endpoint
+- Residual risk: Low. Localhost-only default limits attack surface to local processes. Users deploying on `0.0.0.0` accept responsibility for network-level access control.
+
+- Risk ID: RISK-SERVE-2026-04-08-026b
+- Component: `src/drift/serve/a2a_router.py`
+- Type: Input validation (path traversal prevention)
+- Description: A2A JSON-RPC requests include a `path` parameter specifying which repository to analyze. Insufficient validation could allow path traversal to analyze or probe arbitrary filesystem directories.
+- Severity: Medium
+- Likelihood: Low (requires network access to the serve endpoint)
+- Mitigation:
+  - `_validate_repo_path()` normalizes via `os.path.realpath(os.path.normpath(path))`
+  - Validates `os.path.isdir()` — rejects non-existent and non-directory paths
+  - Resolved path is used for all downstream API calls (no raw user input forwarded)
+  - ValueError raised with descriptive message on invalid paths
+- Residual risk: Low. Validation prevents traversal; attacker can only analyze directories the OS user can read (same as running `drift` directly). Combined with localhost-only default, risk is very low.
+
 ## 2026-04-08 - Ingestion dedup + signal factory active_signals pass-through + git history cache
 
 - Risk ID: RISK-INGESTION-2026-04-08-DEDUP

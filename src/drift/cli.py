@@ -174,6 +174,7 @@ from drift.commands.mcp import mcp
 from drift.commands.patterns import patterns
 from drift.commands.scan import scan
 from drift.commands.self_analyze import self_analyze
+from drift.commands.serve import serve
 from drift.commands.timeline import timeline
 from drift.commands.trend import trend
 from drift.commands.validate_cmd import validate
@@ -192,6 +193,7 @@ main.add_command(fix_plan)
 main.add_command(mcp)
 main.add_command(patterns)
 main.add_command(scan)
+main.add_command(serve)
 main.add_command(timeline)
 main.add_command(trend)
 main.add_command(validate)

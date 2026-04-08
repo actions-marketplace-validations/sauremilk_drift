@@ -1,5 +1,20 @@
 # STRIDE Threat Model
 
+## 2026-04-08 - ADR-026: A2A Agent Card and HTTP Serve Endpoint
+
+- Scope: New optional HTTP server (`drift serve`) exposing `GET /.well-known/agent-card.json` (A2A v1.0 Agent Card) and `POST /a2a/v1` (JSON-RPC 2.0 skill dispatch). Backed by FastAPI + uvicorn as optional dependencies (`pip install drift-analyzer[serve]`). 8 core analysis skills exposed: scan, diff, explain, fix_plan, validate, nudge, brief, negative_context. No signal, scoring, or ingestion changes.
+- Input path changes: Yes — new HTTP input path. Clients send JSON-RPC 2.0 requests with repo paths and skill parameters over HTTP.
+- Output path changes: Yes — new HTTP output path. Analysis results returned as JSON-RPC responses over HTTP. Agent card returned as A2A JSON.
+- External interface changes: Entirely new, additive. No existing CLI/MCP/API interfaces changed.
+- Trust boundary: HTTP client ↔ drift serve process. First network-accessible trust boundary in drift.
+- STRIDE review:
+	- S (Spoofing): Medium risk. No authentication in v1 — any client that can reach the HTTP port can invoke analysis. Mitigation: default bind to `127.0.0.1` (localhost-only); network exposure only via explicit `--host 0.0.0.0`. Users must deploy behind authenticating reverse proxy for production network exposure.
+	- T (Tampering): Medium risk. `path` parameter in A2A requests could be used for path traversal. Mitigation: `_validate_repo_path()` resolves via `os.path.realpath(os.path.normpath(...))` and verifies `os.path.isdir()` before passing to any API function. Only existing directories are accepted.
+	- R (Repudiation): Low risk. JSON-RPC responses include request IDs for correlation. No authentication means no attributable identity for requests.
+	- I (Information Disclosure): Medium risk. Scan results, findings, anti-patterns, and fix plans are exposed over HTTP. Mitigation: localhost-only default prevents remote information leakage. Sensitive repository analysis data stays on the local machine unless intentionally exposed.
+	- D (Denial of Service): Low risk. Full drift analysis is CPU-intensive — an attacker on the network could trigger repeated scans. Mitigation: localhost-only default; no concurrent request protection in v1 (acceptable for single-user localhost usage).
+	- E (Elevation of Privilege): Low risk. Server runs with the same OS-level privileges as the drift CLI user. No privilege escalation path. `_validate_repo_path()` prevents analysis of arbitrary filesystem paths (must be existing directories).
+
 ## 2026-04-11 - ADR-024: Machine-Readable Next-Step Contracts
 
 - Scope: Three additive JSON fields (`next_tool_call`, `fallback_tool_call`, `done_when`) on every agent-oriented API response (scan, diff, fix_plan, nudge, brief, negative_context). MCP session enrichment injects `session_id` into contract params. Error responses gain optional `recovery_tool_call`. No signal, scoring, or ingestion changes.
