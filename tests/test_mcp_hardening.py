@@ -221,3 +221,121 @@ class TestMcpStdioTransportSafety:
             "_eager_imports() must be called BEFORE mcp.run() to avoid "
             "Windows DLL loader lock deadlock with IOCP"
         )
+
+
+class TestMcpSessionIntegration:
+    """Regression tests for MCP session management (ADR-022)."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_sessions(self):
+        from drift.session import SessionManager
+
+        SessionManager.reset_instance()
+        yield
+        SessionManager.reset_instance()
+
+    def test_session_start_returns_session_id(self) -> None:
+        from drift import mcp_server
+
+        raw = _run_tool(mcp_server.drift_session_start(path="/tmp/test"))
+        result = json.loads(raw)
+        assert result["status"] == "ok"
+        assert len(result["session_id"]) == 32
+
+    def test_session_status_returns_summary(self) -> None:
+        from drift import mcp_server
+
+        start = json.loads(_run_tool(mcp_server.drift_session_start(path="/tmp/test")))
+        sid = start["session_id"]
+
+        raw = _run_tool(mcp_server.drift_session_status(session_id=sid))
+        result = json.loads(raw)
+        assert result["session_id"] == sid
+        assert result["valid"] is True
+
+    def test_session_end_returns_summary_and_removes(self) -> None:
+        from drift import mcp_server
+
+        start = json.loads(_run_tool(mcp_server.drift_session_start(path="/tmp/test")))
+        sid = start["session_id"]
+
+        end = json.loads(_run_tool(mcp_server.drift_session_end(session_id=sid)))
+        assert end["session_id"] == sid
+        assert "duration_seconds" in end
+
+        # Session should be gone
+        status = json.loads(_run_tool(mcp_server.drift_session_status(session_id=sid)))
+        assert status["type"] == "error"
+
+    def test_invalid_session_id_returns_error(self) -> None:
+        from drift import mcp_server
+
+        raw = _run_tool(mcp_server.drift_session_status(session_id="nonexistent"))
+        result = json.loads(raw)
+        assert result["type"] == "error"
+        assert result["error_code"] == "DRIFT-6001"
+
+    def test_session_tools_are_in_exported_list(self) -> None:
+        from drift.mcp_server import _EXPORTED_MCP_TOOLS
+
+        names = {t.__name__ for t in _EXPORTED_MCP_TOOLS}
+        assert "drift_session_start" in names
+        assert "drift_session_status" in names
+        assert "drift_session_update" in names
+        assert "drift_session_end" in names
+
+    def test_all_original_tools_accept_session_id(self) -> None:
+        """Every non-session MCP tool should accept an optional session_id param."""
+        from drift.mcp_server import _EXPORTED_MCP_TOOLS
+
+        session_tools = {
+            "drift_session_start",
+            "drift_session_status",
+            "drift_session_update",
+            "drift_session_end",
+        }
+
+        for tool in _EXPORTED_MCP_TOOLS:
+            if tool.__name__ in session_tools:
+                continue
+            sig = inspect.signature(tool)
+            assert "session_id" in sig.parameters, (
+                f"{tool.__name__} must accept session_id parameter (ADR-022)"
+            )
+
+    def test_scan_with_session_updates_state(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from drift import mcp_server
+        from drift.session import SessionManager
+
+        fake_scan = {
+            "drift_score": 35.5,
+            "findings": [{"name": "PFS"}, {"name": "AVS"}],
+            "signal_scores": {"PFS": 0.8, "AVS": 0.5},
+        }
+        monkeypatch.setattr("drift.api.scan", lambda *a, **kw: fake_scan)
+
+        start = json.loads(_run_tool(mcp_server.drift_session_start(path="/tmp/test")))
+        sid = start["session_id"]
+
+        _run_tool(mcp_server.drift_scan(path="/tmp/test", session_id=sid))
+
+        session = SessionManager.instance().get(sid)
+        assert session is not None
+        assert session.last_scan_score == 35.5
+        assert session.last_scan_finding_count == 2
+        assert session.tool_calls > 0
+
+    def test_tools_without_session_unchanged(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Calling tools without session_id still works (backward compat)."""
+        from drift import mcp_server
+
+        fake_scan = {"drift_score": 40.0, "findings": []}
+        monkeypatch.setattr("drift.api.scan", lambda *a, **kw: fake_scan)
+
+        raw = _run_tool(mcp_server.drift_scan(path="."))
+        result = json.loads(raw)
+
+        # Should not contain session block
+        assert "session" not in result
+        assert result["drift_score"] == 40.0
+

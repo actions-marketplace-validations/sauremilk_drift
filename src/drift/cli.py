@@ -7,6 +7,7 @@ modules under ``src/drift/commands/`` to keep each file focused.
 
 from __future__ import annotations
 
+# ruff: noqa: E402
 import difflib
 import json
 import logging
@@ -17,7 +18,7 @@ import warnings
 import click
 
 from drift import __version__
-from drift.commands import console  # noqa: F401 — re-export for backwards compat
+from drift.commands import console
 from drift.errors import (
     ERROR_REGISTRY,
     EXIT_ANALYSIS_ERROR,
@@ -25,6 +26,8 @@ from drift.errors import (
     EXIT_SYSTEM_ERROR,
     DriftError,
 )
+
+__all__ = ["console"]
 
 # Suppress all SyntaxWarnings: drift is a static analyzer that parses
 # arbitrary source code — SyntaxWarnings from ast.parse / compile or from
@@ -155,25 +158,25 @@ def main(verbose: bool = False) -> None:
 
 
 # --- Register subcommands -------------------------------------------------
-from drift.commands.analyze import analyze  # noqa: E402
-from drift.commands.badge import badge  # noqa: E402
-from drift.commands.baseline import baseline  # noqa: E402
-from drift.commands.brief import brief  # noqa: E402
-from drift.commands.check import check  # noqa: E402
-from drift.commands.config_cmd import config  # noqa: E402
-from drift.commands.copilot_context import copilot_context  # noqa: E402
-from drift.commands.diff_cmd import diff  # noqa: E402
-from drift.commands.explain import explain  # noqa: E402
-from drift.commands.export_context import export_context  # noqa: E402
-from drift.commands.fix_plan import fix_plan  # noqa: E402
-from drift.commands.init_cmd import init  # noqa: E402
-from drift.commands.mcp import mcp  # noqa: E402
-from drift.commands.patterns import patterns  # noqa: E402
-from drift.commands.scan import scan  # noqa: E402
-from drift.commands.self_analyze import self_analyze  # noqa: E402
-from drift.commands.timeline import timeline  # noqa: E402
-from drift.commands.trend import trend  # noqa: E402
-from drift.commands.validate_cmd import validate  # noqa: E402
+from drift.commands.analyze import analyze
+from drift.commands.badge import badge
+from drift.commands.baseline import baseline
+from drift.commands.brief import brief
+from drift.commands.check import check
+from drift.commands.config_cmd import config
+from drift.commands.copilot_context import copilot_context
+from drift.commands.diff_cmd import diff
+from drift.commands.explain import explain
+from drift.commands.export_context import export_context
+from drift.commands.fix_plan import fix_plan
+from drift.commands.init_cmd import init
+from drift.commands.mcp import mcp
+from drift.commands.patterns import patterns
+from drift.commands.scan import scan
+from drift.commands.self_analyze import self_analyze
+from drift.commands.timeline import timeline
+from drift.commands.trend import trend
+from drift.commands.validate_cmd import validate
 
 main.add_command(analyze)
 main.add_command(baseline)

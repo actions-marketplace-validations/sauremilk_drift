@@ -5,13 +5,21 @@ Requires the optional ``mcp`` extra: ``pip install drift-analyzer[mcp]``
 The server uses stdio transport (no network listener) and is started via
 ``drift mcp --serve``.  VS Code discovers it through ``.vscode/mcp.json``.
 
-Tool surface (v2):
-    drift_scan       — Full repo analysis (concise/detailed)
-    drift_diff       — Diff-based change detection
-    drift_explain    — Signal/rule/error explanations
-    drift_fix_plan   — Prioritised repair tasks with constraints
-    drift_validate   — Preflight config & environment check
-    drift_brief      — Pre-task structural briefing with guardrails
+Tool surface (v3 — sessions):
+    drift_scan            — Full repo analysis (concise/detailed)
+    drift_diff            — Diff-based change detection
+    drift_explain         — Signal/rule/error explanations
+    drift_fix_plan        — Prioritised repair tasks with constraints
+    drift_validate        — Preflight config & environment check
+    drift_brief           — Pre-task structural briefing with guardrails
+    drift_nudge           — Fast directional feedback after edits
+    drift_negative_context — Anti-pattern warnings
+    drift_session_start   — Create a stateful session (scope, baseline, tasks)
+    drift_session_status  — Show current session state
+    drift_session_update  — Modify session scope, mark tasks complete
+    drift_session_end     — End session with summary
+
+Decision: ADR-022
 """
 
 from __future__ import annotations
@@ -62,6 +70,29 @@ async def _run_sync_with_timeout(
         timeout=timeout_seconds,
     )
 
+
+def _parse_csv_ids(raw: str | None) -> list[str] | None:
+    if not raw:
+        return None
+    values = [part.strip() for part in raw.split(",") if part.strip()]
+    return values or None
+
+
+async def _run_api_tool(tool_name: str, api_fn: Any, **kwargs: Any) -> str:
+    def _sync() -> str:
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = api_fn(**kwargs)
+            return json.dumps(result, default=str)
+        except Exception as exc:
+            from drift.api_helpers import _error_response
+
+            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
+            error["tool"] = tool_name
+            return json.dumps(error, default=str)
+
+    return cast(str, await _run_sync_in_thread(_sync))
+
 try:
     from mcp.server.fastmcp import FastMCP as _ImportedFastMCP
     from pydantic import Field
@@ -108,19 +139,20 @@ _BASE_INSTRUCTIONS = (
     "(returns scope-aware guardrails as prompt constraints)\n"
     "3. drift_scan — assess overall architectural health\n"
     "4. drift_negative_context — get anti-patterns to avoid in new code\n"
-    "5. drift_diff — detect regressions in a PR or after changes\n"
+    "5. drift_diff — detect regressions or verify completed batches\n"
     "6. drift_fix_plan — get actionable repair tasks with constraints\n"
     "7. drift_explain — understand unfamiliar signals or findings\n"
-    "8. drift_nudge — get directional feedback after each file change "
-    "(do not batch)\n\n"
+    "8. drift_nudge — fast directional feedback between edits "
+    "(usable inside batches)\n\n"
     "IMPORTANT: When asked to implement a feature, add functionality, or make "
     "structural changes, call drift_brief(task=\"<task description>\") FIRST "
     "before writing any code. Use the returned guardrails as constraints "
     "in your code generation. If the scope confidence is below 0.5, ask the "
     "user to specify a --scope path.\n\n"
-    "After each file change, call drift_nudge for fast directional feedback. "
-    "Use drift_diff for full regression analysis. Do not batch multiple file "
-    "changes without checking drift impact. "
+    "FEEDBACK LOOP ROLES:\n"
+    "- drift_nudge = fast inner loop (use between edits, even inside a batch)\n"
+    "- drift_diff  = full verification outer loop (use after completing a "
+    "batch or before committing)\n"
     "Every response includes an 'agent_instruction' field — follow it.\n\n"
     "FIX-LOOP PROTOCOL (when fixing multiple findings):\n"
     "0. BASELINE WARM-UP: Call drift_validate, then drift_scan once to "
@@ -129,8 +161,9 @@ _BASE_INSTRUCTIONS = (
     "1. SESSION START: Call drift_fix_plan(max_tasks=20) to see full scope. "
     "Then run 'drift baseline save' to create a checkpoint.\n"
     "2. BATCH AWARENESS: Tasks with batch_eligible=true share a fix pattern. "
-    "Apply the fix to ALL affected_files_for_pattern listed, not just the first.\n"
-    "3. VERIFICATION: After batch fixes, call "
+    "Apply the fix to ALL affected_files_for_pattern listed, not just the "
+    "first. Use drift_nudge between edits for quick direction checks.\n"
+    "3. VERIFICATION: After completing a batch, call "
     "drift_diff(uncommitted=True, baseline_file='.drift-baseline.json') "
     "to verify resolution. Check resolved_count_by_rule for batch efficiency.\n"
     "4. SESSION RESUME: After interruption, call "
@@ -139,12 +172,23 @@ _BASE_INSTRUCTIONS = (
     "5. COMPLETED: When drift_diff shows 0 new findings vs baseline, "
     "session is done.\n\n"
     "BATCH REPAIR MODE:\n"
-    "When fixing drift findings, you may apply the same fix pattern across "
+    "When fixing drift findings, apply the same fix pattern across "
     "multiple files in one iteration for batch_eligible tasks.\n"
     "Rules: Only batch fixes where batch_eligible=true in fix_plan response. "
     "Apply the SAME fix template to ALL affected_files_for_pattern. "
     "Verify the batch with a single drift_diff call, not per-file. "
-    "If any file in the batch fails verification, revert that file only."
+    "If any file in the batch fails verification, revert that file only.\n\n"
+    "SESSION WORKFLOW (recommended for multi-step tasks):\n"
+    "1. drift_session_start(path=\"/repo\") → session_id\n"
+    "2. drift_scan(session_id=sid) → baseline warm-up (cached in session)\n"
+    "3. drift_brief(session_id=sid, task=\"...\") → guardrails cached\n"
+    "4. drift_fix_plan(session_id=sid) → tasks queued in session\n"
+    "5. [batch fix loop with drift_nudge(session_id=sid)]\n"
+    "6. drift_session_status(session_id=sid) → progress overview\n"
+    "7. drift_diff(session_id=sid, uncommitted=True) → verify\n"
+    "8. drift_session_end(session_id=sid) → summary + cleanup\n"
+    "Benefits: scope defaults carry across calls, scan results feed into "
+    "fix_plan, guardrails persist, progress is tracked automatically."
 )
 
 
@@ -257,6 +301,20 @@ async def drift_scan(
             ),
         ),
     ] = False,
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Analyze a repository for architectural drift.
 
@@ -273,43 +331,44 @@ async def drift_scan(
         max_per_signal: Optional cap of findings per signal in the returned list.
         response_detail: "concise" (token-sparing) or "detailed" (full fields).
         include_non_operational: Include non-operational contexts in fix_first ordering.
+        session_id: Optional session ID for stateful workflows.
     """
 
-    def _sync() -> str:
-        from drift.api import scan
+    from drift.api import scan
 
-        try:
-            signal_list = (
-                [s.strip() for s in signals.split(",") if s.strip()]
-                if signals
-                else None
-            )
-            exclude_signal_list = (
-                [s.strip() for s in exclude_signals.split(",") if s.strip()]
-                if exclude_signals
-                else None
-            )
-            with contextlib.redirect_stdout(io.StringIO()):
-                result = scan(
-                    path,
-                    target_path=target_path,
-                    since_days=since_days,
-                    signals=signal_list,
-                    exclude_signals=exclude_signal_list,
-                    max_findings=max_findings,
-                    max_per_signal=max_per_signal,
-                    response_detail=response_detail,
-                    include_non_operational=include_non_operational,
-                )
-            return json.dumps(result, default=str)
-        except Exception as exc:
-            from drift.api_helpers import _error_response
+    session = _resolve_session(session_id)
+    kwargs = _session_defaults(session, {
+        "path": path,
+        "target_path": target_path,
+        "signals": _parse_csv_ids(signals),
+        "exclude_signals": _parse_csv_ids(exclude_signals),
+    })
 
-            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
-            error["tool"] = "drift_scan"
-            return json.dumps(error, default=str)
+    try:
+        raw = await _run_api_tool(
+            "drift_scan",
+            scan,
+            path=kwargs["path"],
+            target_path=kwargs["target_path"],
+            since_days=since_days,
+            signals=kwargs["signals"],
+            exclude_signals=kwargs["exclude_signals"],
+            max_findings=max_findings,
+            max_per_signal=max_per_signal,
+            response_detail=response_detail,
+            include_non_operational=include_non_operational,
+            response_profile=response_profile,
+        )
+        if session:
+            with contextlib.suppress(json.JSONDecodeError, TypeError):
+                _update_session_from_scan(session, json.loads(raw))
+        return _enrich_response_with_session(raw, session)
+    except Exception as exc:
+        from drift.api_helpers import _error_response
 
-    return cast(str, await _run_sync_in_thread(_sync))
+        error = _error_response("DRIFT-5001", str(exc), recoverable=True)
+        error["tool"] = "drift_scan"
+        return json.dumps(error, default=str)
 
 
 @mcp.tool()
@@ -348,6 +407,20 @@ async def drift_diff(
         str | None,
         Field(description="Comma-separated signal abbreviations to exclude (e.g. 'MDS,DIA')."),
     ] = None,
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Detect drift changes since a git ref or baseline.
 
@@ -364,44 +437,39 @@ async def drift_diff(
         response_detail: "concise" or "detailed".
         signals: Comma-separated signal abbreviations to include.
         exclude_signals: Comma-separated signal abbreviations to exclude.
+        session_id: Optional session ID for stateful workflows.
     """
 
-    def _sync() -> str:
-        from drift.api import diff
+    from drift.api import diff
 
-        signal_list = (
-            [s.strip() for s in signals.split(",") if s.strip()]
-            if signals
-            else None
-        )
-        exclude_list = (
-            [s.strip() for s in exclude_signals.split(",") if s.strip()]
-            if exclude_signals
-            else None
-        )
+    session = _resolve_session(session_id)
+    kwargs = _session_defaults(session, {
+        "path": path,
+        "signals": _parse_csv_ids(signals),
+        "exclude_signals": _parse_csv_ids(exclude_signals),
+    })
+    bl_file = baseline_file
+    if bl_file is None and session and session.baseline_file:
+        bl_file = session.baseline_file
 
-        try:
-            with contextlib.redirect_stdout(io.StringIO()):
-                result = diff(
-                    path,
-                    diff_ref=diff_ref,
-                    uncommitted=uncommitted,
-                    staged_only=staged_only,
-                    baseline_file=baseline_file,
-                    max_findings=max_findings,
-                    response_detail=response_detail,
-                    signals=signal_list,
-                    exclude_signals=exclude_list,
-                )
-            return json.dumps(result, default=str)
-        except Exception as exc:
-            from drift.api_helpers import _error_response
-
-            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
-            error["tool"] = "drift_diff"
-            return json.dumps(error, default=str)
-
-    return cast(str, await _run_sync_in_thread(_sync))
+    raw = await _run_api_tool(
+        "drift_diff",
+        diff,
+        path=kwargs["path"],
+        diff_ref=diff_ref,
+        uncommitted=uncommitted,
+        staged_only=staged_only,
+        baseline_file=bl_file,
+        max_findings=max_findings,
+        response_detail=response_detail,
+        signals=kwargs["signals"],
+        exclude_signals=kwargs["exclude_signals"],
+        response_profile=response_profile,
+    )
+    if session:
+        with contextlib.suppress(json.JSONDecodeError, TypeError):
+            _update_session_from_diff(session, json.loads(raw))
+    return _enrich_response_with_session(raw, session)
 
 
 @mcp.tool()
@@ -415,6 +483,20 @@ async def drift_explain(
             ),
         ),
     ],
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Explain a drift signal, rule, or error code.
 
@@ -424,23 +506,19 @@ async def drift_explain(
     Args:
         topic: Signal abbreviation ("PFS"), signal name
             ("pattern_fragmentation"), or error code ("DRIFT-1001").
+        session_id: Optional session ID for stateful workflows.
     """
 
-    def _sync() -> str:
-        from drift.api import explain
+    from drift.api import explain
 
-        try:
-            with contextlib.redirect_stdout(io.StringIO()):
-                result = explain(topic)
-            return json.dumps(result, default=str)
-        except Exception as exc:
-            from drift.api_helpers import _error_response
-
-            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
-            error["tool"] = "drift_explain"
-            return json.dumps(error, default=str)
-
-    return cast(str, await _run_sync_in_thread(_sync))
+    session = _resolve_session(session_id)
+    raw = await _run_api_tool(
+        "drift_explain", explain,
+        topic=topic, response_profile=response_profile,
+    )
+    if session:
+        session.touch()
+    return _enrich_response_with_session(raw, session)
 
 
 @mcp.tool()
@@ -483,6 +561,20 @@ async def drift_fix_plan(
             ),
         ),
     ] = False,
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Generate prioritised repair tasks with constraints and success criteria.
 
@@ -499,37 +591,36 @@ async def drift_fix_plan(
         exclude_paths: Exclude findings inside one or more subpaths.
         include_deferred: Include findings tagged deferred by config.
         include_non_operational: Include non-operational contexts in prioritized tasks.
+        session_id: Optional session ID for stateful workflows.
     """
 
-    def _sync() -> str:
-        from drift.api import fix_plan
+    from drift.api import fix_plan
 
-        try:
-            with contextlib.redirect_stdout(io.StringIO()):
-                exclude_paths_list = (
-                    [p.strip() for p in exclude_paths.split(",") if p.strip()]
-                    if exclude_paths
-                    else None
-                )
-                result = fix_plan(
-                    path,
-                    signal=signal,
-                    max_tasks=max_tasks,
-                    automation_fit_min=automation_fit_min,
-                    target_path=target_path,
-                    exclude_paths=exclude_paths_list,
-                    include_deferred=include_deferred,
-                    include_non_operational=include_non_operational,
-                )
-            return json.dumps(result, default=str)
-        except Exception as exc:
-            from drift.api_helpers import _error_response
+    session = _resolve_session(session_id)
+    kwargs = _session_defaults(session, {
+        "path": path,
+        "target_path": target_path,
+        "signals": None,
+        "exclude_signals": None,
+    })
 
-            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
-            error["tool"] = "drift_fix_plan"
-            return json.dumps(error, default=str)
-
-    return cast(str, await _run_sync_in_thread(_sync))
+    raw = await _run_api_tool(
+        "drift_fix_plan",
+        fix_plan,
+        path=kwargs["path"],
+        signal=signal,
+        max_tasks=max_tasks,
+        automation_fit_min=automation_fit_min,
+        target_path=kwargs["target_path"],
+        exclude_paths=_parse_csv_ids(exclude_paths),
+        include_deferred=include_deferred,
+        include_non_operational=include_non_operational,
+        response_profile=response_profile,
+    )
+    if session:
+        with contextlib.suppress(json.JSONDecodeError, TypeError):
+            _update_session_from_fix_plan(session, json.loads(raw))
+    return _enrich_response_with_session(raw, session)
 
 
 @mcp.tool()
@@ -539,6 +630,20 @@ async def drift_validate(
         str | None,
         Field(description="Explicit config file path (auto-discovered from repo root if omitted)."),
     ] = None,
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Validate configuration and environment before running analysis.
 
@@ -548,23 +653,26 @@ async def drift_validate(
     Args:
         path: Repository path (default: current directory).
         config_file: Explicit config file path (auto-discovered if omitted).
+        session_id: Optional session ID for stateful workflows.
     """
 
-    def _sync() -> str:
-        from drift.api import validate
+    from drift.api import validate
 
-        try:
-            with contextlib.redirect_stdout(io.StringIO()):
-                result = validate(path, config_file=config_file)
-            return json.dumps(result, default=str)
-        except Exception as exc:
-            from drift.api_helpers import _error_response
+    session = _resolve_session(session_id)
+    resolved_path = path
+    if session and (not path or path == "."):
+        resolved_path = session.repo_path
 
-            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
-            error["tool"] = "drift_validate"
-            return json.dumps(error, default=str)
-
-    return cast(str, await _run_sync_in_thread(_sync))
+    raw = await _run_api_tool(
+        "drift_validate",
+        validate,
+        path=resolved_path,
+        config_file=config_file,
+        response_profile=response_profile,
+    )
+    if session:
+        session.touch()
+    return _enrich_response_with_session(raw, session)
 
 
 @mcp.tool()
@@ -589,6 +697,20 @@ async def drift_nudge(
             ),
         ),
     ] = True,
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Get directional feedback after a file change (experimental).
 
@@ -606,31 +728,34 @@ async def drift_nudge(
             (posix, relative to repo root).  Auto-detected via git if omitted.
         uncommitted: When auto-detecting, use uncommitted working-tree
             changes (default) vs. staged-only.
+        session_id: Optional session ID for stateful workflows.
     """
 
-    def _sync() -> str:
-        from drift.api import nudge
+    from drift.api import nudge
 
+    session = _resolve_session(session_id)
+    resolved_path = path
+    if session and (not path or path == "."):
+        resolved_path = session.repo_path
+
+    raw = await _run_api_tool(
+        "drift_nudge",
+        nudge,
+        path=resolved_path,
+        changed_files=_parse_csv_ids(changed_files),
+        uncommitted=uncommitted,
+        response_profile=response_profile,
+    )
+    if session:
         try:
-            file_list: list[str] | None = None
-            if changed_files is not None:
-                file_list = [f.strip() for f in changed_files.split(",") if f.strip()]
-
-            with contextlib.redirect_stdout(io.StringIO()):
-                result = nudge(
-                    path,
-                    changed_files=file_list,
-                    uncommitted=uncommitted,
-                )
-            return json.dumps(result, default=str)
-        except Exception as exc:
-            from drift.api_helpers import _error_response
-
-            error = _error_response("DRIFT-5001", str(exc), recoverable=True)
-            error["tool"] = "drift_nudge"
-            return json.dumps(error, default=str)
-
-    return cast(str, await _run_sync_in_thread(_sync))
+            result = json.loads(raw)
+            score = result.get("score")
+            if score is not None:
+                session.last_scan_score = score
+        except (json.JSONDecodeError, TypeError):
+            pass
+        session.touch()
+    return _enrich_response_with_session(raw, session)
 
 
 @mcp.tool()
@@ -666,6 +791,20 @@ async def drift_brief(
             ),
         ),
     ] = "concise",
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Get a pre-task structural briefing before writing code.
 
@@ -682,7 +821,13 @@ async def drift_brief(
         scope: Manual scope override path. Auto-resolved from task if omitted.
         max_guardrails: Maximum guardrails to return (default: 10).
         response_detail: "concise" (token-sparing) or "detailed" (full fields).
+        session_id: Optional session ID for stateful workflows.
     """
+
+    session = _resolve_session(session_id)
+    resolved_path = path
+    if session and (not path or path == "."):
+        resolved_path = session.repo_path
 
     def _sync() -> str:
         from drift.api import brief
@@ -690,10 +835,11 @@ async def drift_brief(
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 result = brief(
-                    path,
+                    resolved_path,
                     task=task,
                     scope_override=scope,
                     max_guardrails=max_guardrails,
+                    response_profile=response_profile,
                 )
 
             if response_detail == "concise":
@@ -714,7 +860,10 @@ async def drift_brief(
             return json.dumps(error, default=str)
 
     payload: str = await asyncio.to_thread(_sync)
-    return payload
+    if session:
+        with contextlib.suppress(json.JSONDecodeError, TypeError):
+            _update_session_from_brief(session, json.loads(payload))
+    return _enrich_response_with_session(payload, session)
 
 
 @mcp.tool()
@@ -736,6 +885,20 @@ async def drift_negative_context(
     max_items: Annotated[
         int, Field(description="Maximum number of anti-pattern items to return.")
     ] = 10,
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner' (tasks/graph/phases),"
+                " 'coder' (findings/actions), 'verifier' (deltas/criteria),"
+                " 'merge_readiness' (score/blocking). Omit for full response."
+            ),
+        ),
+    ] = None,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start for stateful workflows."),
+    ] = "",
 ) -> str:
     """Get anti-pattern warnings derived from drift analysis.
 
@@ -751,20 +914,31 @@ async def drift_negative_context(
         scope: Filter by scope: "file", "module", or "repo" (default: all).
         target_file: Restrict to items affecting a specific file path.
         max_items: Maximum items to return (default: 10).
+        session_id: Optional session ID for stateful workflows.
     """
+
+    session = _resolve_session(session_id)
+    resolved_path = path
+    if session and (not path or path == "."):
+        resolved_path = session.repo_path
 
     def _sync() -> str:
         from drift.api import negative_context
 
+        kwargs: dict[str, Any] = {
+            "scope": scope,
+            "target_file": target_file,
+            "max_items": max_items,
+            "disable_embeddings": True,
+        }
+        # Keep backward compatibility with monkeypatched callables/tests
+        # that may not accept response_profile yet.
+        if response_profile is not None:
+            kwargs["response_profile"] = response_profile
+
         # Keep MCP stdio clean if dependencies emit accidental stdout lines.
         with contextlib.redirect_stdout(io.StringIO()):
-            result = negative_context(
-                path,
-                scope=scope,
-                target_file=target_file,
-                max_items=max_items,
-                disable_embeddings=True,
-            )
+            result = negative_context(resolved_path, **kwargs)
 
         if not isinstance(result, dict):
             fallback = {
@@ -781,10 +955,13 @@ async def drift_negative_context(
         return json.dumps(result, default=str)
 
     try:
-        return cast(
+        raw = cast(
             str,
             await _run_sync_with_timeout(_sync, _NEGATIVE_CONTEXT_TIMEOUT_SECONDS),
         )
+        if session:
+            session.touch()
+        return _enrich_response_with_session(raw, session)
     except TimeoutError:
         timeout_response = _negative_context_timeout_response(
             path=path,
@@ -844,6 +1021,801 @@ def _negative_context_timeout_response(
     }
 
 
+# ---------------------------------------------------------------------------
+# Session helpers — resolve session defaults and enrich responses
+# ---------------------------------------------------------------------------
+
+
+def _resolve_session(session_id: str | None) -> Any:
+    """Look up an active session. Returns ``DriftSession`` or ``None``."""
+    if not session_id:
+        return None
+    from drift.session import SessionManager
+
+    return SessionManager.instance().get(session_id)
+
+
+def _session_defaults(session: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Apply session scope defaults for params that the caller omitted."""
+    if session is None:
+        return kwargs
+    out = dict(kwargs)
+    if not out.get("path") or out["path"] == ".":
+        out["path"] = session.repo_path
+    if out.get("signals") is None and session.signals:
+        out["signals"] = session.signals
+    if out.get("exclude_signals") is None and session.exclude_signals:
+        out["exclude_signals"] = session.exclude_signals
+    if out.get("target_path") is None and session.target_path:
+        out["target_path"] = session.target_path
+    return out
+
+
+def _update_session_from_scan(session: Any, result: dict[str, Any]) -> None:
+    """Push scan results into the session state."""
+    if session is None:
+        return
+    session.last_scan_score = result.get("drift_score")
+    session.last_scan_top_signals = result.get("top_signals")
+    finding_count = result.get("finding_count")
+    if finding_count is None:
+        findings = result.get("findings")
+        if isinstance(findings, list):
+            finding_count = len(findings)
+    session.last_scan_finding_count = finding_count
+    if session.score_at_start is None:
+        session.score_at_start = result.get("drift_score")
+    session.touch()
+
+
+def _update_session_from_fix_plan(session: Any, result: dict[str, Any]) -> None:
+    """Push fix-plan tasks into the session state."""
+    if session is None:
+        return
+    tasks = result.get("tasks")
+    if tasks:
+        session.selected_tasks = tasks
+    session.touch()
+
+
+def _update_session_from_brief(session: Any, result: dict[str, Any]) -> None:
+    """Push brief guardrails into the session state."""
+    if session is None:
+        return
+    session.guardrails = result.get("guardrails")
+    session.guardrails_prompt_block = result.get("guardrails_prompt_block")
+    session.touch()
+
+
+def _update_session_from_diff(session: Any, result: dict[str, Any]) -> None:
+    """Track score delta from diff results."""
+    if session is None:
+        return
+    score_after = result.get("score_after")
+    if score_after is not None:
+        session.last_scan_score = score_after
+    session.touch()
+
+
+def _enrich_response_with_session(
+    raw_json: str, session: Any
+) -> str:
+    """Inject session metadata into a tool response JSON string."""
+    if session is None:
+        return raw_json
+    try:
+        result = json.loads(raw_json)
+    except (json.JSONDecodeError, TypeError):
+        return raw_json
+
+    if not isinstance(result, dict):
+        return raw_json
+
+    result["session"] = {
+        "session_id": session.session_id,
+        "scope": session.scope_label(),
+        "tasks_remaining": session.tasks_remaining(),
+        "score_delta_since_start": (
+            round(session.last_scan_score - session.score_at_start, 2)
+            if session.last_scan_score is not None
+            and session.score_at_start is not None
+            else None
+        ),
+    }
+
+    # Enrich agent_instruction with session hint
+    hint = (
+        f"Session {session.session_id[:8]} active"
+        f" ({session.tasks_remaining()} tasks remaining)."
+        " Use drift_session_status for full state."
+    )
+    existing = result.get("agent_instruction", "")
+    if existing:
+        result["agent_instruction"] = f"{existing} {hint}"
+    else:
+        result["agent_instruction"] = hint
+
+    # Inject session_id into next-step contracts (ADR-024)
+    sid = session.session_id
+    for key in ("next_tool_call", "fallback_tool_call"):
+        tc = result.get(key)
+        if isinstance(tc, dict) and isinstance(tc.get("params"), dict):
+            tc["params"].setdefault("session_id", sid)
+
+    return json.dumps(result, default=str)
+
+
+def _session_error_response(
+    code: str, message: str, session_id: str
+) -> str:
+    """Build a JSON error response for session-related failures."""
+    from drift.api_helpers import _error_response
+
+    error = _error_response(code, message, recoverable=True)
+    error["session_id"] = session_id
+    return json.dumps(error, default=str)
+
+
+# ---------------------------------------------------------------------------
+# MCP Tools — Session management (v3)
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+async def drift_session_start(
+    path: Annotated[str, Field(description="Repository path for the session.")] = ".",
+    signals: Annotated[
+        str | None,
+        Field(description="Comma-separated default signal filter for this session."),
+    ] = None,
+    exclude_signals: Annotated[
+        str | None,
+        Field(description="Comma-separated signals to exclude by default."),
+    ] = None,
+    target_path: Annotated[
+        str | None,
+        Field(description="Default target subdirectory for all session tools."),
+    ] = None,
+    exclude_paths: Annotated[
+        str | None,
+        Field(description="Comma-separated paths to exclude by default."),
+    ] = None,
+    ttl_seconds: Annotated[
+        int,
+        Field(description="Session time-to-live in seconds (default: 1800 = 30 min)."),
+    ] = 1800,
+    autopilot: Annotated[
+        bool,
+        Field(
+            description=(
+                "When true, automatically runs validate → brief → scan → fix_plan "
+                "after session creation and returns combined results."
+            ),
+        ),
+    ] = False,
+    response_profile: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Response profile: 'planner', 'coder', 'verifier', "
+                "'merge_readiness', or null for full response."
+            ),
+        ),
+    ] = None,
+) -> str:
+    """Start a new stateful session for multi-step agent workflows.
+
+    Creates a session that persists scope defaults, scan results,
+    fix-plan tasks, and guardrails across subsequent tool calls.
+    Pass the returned session_id to other drift tools.
+
+    When autopilot=true, automatically runs validate → brief → scan →
+    fix_plan after session creation. The combined results are returned
+    in a single response, saving 4 round-trips.
+
+    Args:
+        path: Repository path (default: current directory).
+        signals: Comma-separated default signal filter.
+        exclude_signals: Comma-separated signals to exclude.
+        target_path: Default target subdirectory.
+        exclude_paths: Comma-separated paths to exclude.
+        ttl_seconds: Session TTL in seconds (default: 1800).
+        autopilot: Run validate → brief → scan → fix_plan automatically.
+        response_profile: Shape sub-results for a specific agent role.
+    """
+    from drift.session import SessionManager
+
+    mgr = SessionManager.instance()
+    session_id = mgr.create(
+        repo_path=str(Path(path).resolve()),
+        signals=_parse_csv_ids(signals),
+        exclude_signals=_parse_csv_ids(exclude_signals),
+        target_path=target_path,
+        exclude_paths=_parse_csv_ids(exclude_paths),
+        ttl_seconds=ttl_seconds,
+    )
+    session = mgr.get(session_id)
+    result = {
+        "status": "ok",
+        "session_id": session_id,
+        "repo_path": str(Path(path).resolve()),
+        "scope": session.scope_label() if session else "all",
+        "ttl_seconds": ttl_seconds,
+        "created_at": session.created_at if session else None,
+        "agent_instruction": (
+            f"Session {session_id[:8]} created. Pass session_id=\"{session_id}\" "
+            "to subsequent drift tools to use session defaults and track state. "
+            "Recommended next: drift_validate, then drift_scan with this session_id."
+        ),
+        "recommended_next_actions": [
+            f"drift_validate(session_id=\"{session_id}\")",
+            f"drift_scan(session_id=\"{session_id}\")",
+        ],
+        "next_tool_call": {
+            "tool": "drift_scan",
+            "params": {"session_id": session_id},
+        },
+        "fallback_tool_call": {
+            "tool": "drift_validate",
+            "params": {"session_id": session_id},
+        },
+        "done_when": "session.tasks_remaining == 0",
+    }
+
+    # ADR-025 Phase D: Session autopilot
+    if autopilot:
+        from drift.api import brief, fix_plan, scan, validate
+
+        loop = asyncio.get_event_loop()
+        resolved = str(Path(path).resolve())
+        sig_list = _parse_csv_ids(signals) or None
+        excl_sig_list = _parse_csv_ids(exclude_signals) or None
+        excl_paths = _parse_csv_ids(exclude_paths) or None
+
+        val_result = await loop.run_in_executor(
+            None,
+            lambda: validate(
+                path=resolved,
+                response_profile=response_profile,
+            ),
+        )
+        brief_result = await loop.run_in_executor(
+            None,
+            lambda: brief(
+                path=resolved,
+                task="autopilot session start",
+                signals=sig_list,
+                response_profile=response_profile,
+            ),
+        )
+        scan_result = await loop.run_in_executor(
+            None,
+            lambda: scan(
+                path=resolved,
+                signals=sig_list,
+                exclude_signals=excl_sig_list,
+                target_path=target_path,
+                response_profile=response_profile,
+            ),
+        )
+        fp_result = await loop.run_in_executor(
+            None,
+            lambda: fix_plan(
+                path=resolved,
+                target_path=target_path,
+                exclude_paths=excl_paths,
+                response_profile=response_profile,
+            ),
+        )
+        result["autopilot"] = {
+            "validate": val_result,
+            "brief": brief_result,
+            "scan": scan_result,
+            "fix_plan": fp_result,
+        }
+        result["agent_instruction"] = (
+            f"Session {session_id[:8]} created with autopilot. "
+            "Validate, brief, scan, and fix_plan already executed — "
+            "results included in autopilot field. Proceed to fix tasks."
+        )
+        result["next_tool_call"] = {
+            "tool": "drift_fix_plan",
+            "params": {"session_id": session_id},
+        }
+
+    return json.dumps(result, default=str)
+
+
+@mcp.tool()
+async def drift_session_status(
+    session_id: Annotated[
+        str, Field(description="The session ID returned by drift_session_start.")
+    ],
+) -> str:
+    """Show the current state of an active session.
+
+    Returns scope, last scan results, task queue progress, active
+    guardrails, and TTL information.
+
+    Args:
+        session_id: The session ID to query.
+    """
+    from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    result = session.summary()
+    result["status"] = "ok"
+    result["agent_instruction"] = (
+        f"Session {session_id[:8]} is active"
+        f" with {session.tasks_remaining()} tasks remaining."
+    )
+    return json.dumps(result, default=str)
+
+
+@mcp.tool()
+async def drift_session_update(
+    session_id: Annotated[
+        str, Field(description="The session ID to update.")
+    ],
+    signals: Annotated[
+        str | None,
+        Field(description="New signal filter (replaces current). Omit to keep."),
+    ] = None,
+    exclude_signals: Annotated[
+        str | None,
+        Field(description="New exclude filter (replaces current). Omit to keep."),
+    ] = None,
+    target_path: Annotated[
+        str | None,
+        Field(description="New target path. Omit to keep current."),
+    ] = None,
+    mark_tasks_complete: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Comma-separated task IDs to mark as completed"
+                " in the session's fix-plan queue."
+            ),
+        ),
+    ] = None,
+    save_to_disk: Annotated[
+        bool, Field(description="Persist session to .drift-session-{id}.json.")
+    ] = False,
+) -> str:
+    """Update session scope, mark tasks complete, or save to disk.
+
+    Args:
+        session_id: The session ID to update.
+        signals: New signal filter (replaces current).
+        exclude_signals: New exclude filter (replaces current).
+        target_path: New target path.
+        mark_tasks_complete: Comma-separated task IDs to mark complete.
+        save_to_disk: Persist session to a JSON file.
+    """
+    from drift.session import SessionManager
+
+    mgr = SessionManager.instance()
+    session = mgr.get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    updates: dict[str, Any] = {}
+    if signals is not None:
+        updates["signals"] = _parse_csv_ids(signals)
+    if exclude_signals is not None:
+        updates["exclude_signals"] = _parse_csv_ids(exclude_signals)
+    if target_path is not None:
+        updates["target_path"] = target_path
+
+    if mark_tasks_complete:
+        task_ids = _parse_csv_ids(mark_tasks_complete) or []
+        existing = list(session.completed_task_ids)
+        existing.extend(tid for tid in task_ids if tid not in existing)
+        updates["completed_task_ids"] = existing
+
+    if updates:
+        mgr.update(session_id, **updates)
+
+    saved_path: str | None = None
+    if save_to_disk:
+        disk_path = mgr.save_to_disk(session_id)
+        saved_path = str(disk_path) if disk_path else None
+
+    result = session.summary()
+    result["status"] = "ok"
+    if saved_path:
+        result["saved_to"] = saved_path
+    result["agent_instruction"] = (
+        f"Session {session_id[:8]} updated. Scope: {session.scope_label()}."
+    )
+    return json.dumps(result, default=str)
+
+
+@mcp.tool()
+async def drift_session_end(
+    session_id: Annotated[
+        str, Field(description="The session ID to end.")
+    ],
+) -> str:
+    """End a session and return a final summary.
+
+    Destroys the session and returns duration, score delta, and
+    task completion statistics.
+
+    Args:
+        session_id: The session ID to end.
+    """
+    from drift.session import SessionManager
+
+    summary = SessionManager.instance().destroy(session_id)
+    if summary is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or already ended.",
+            session_id,
+        )
+
+    summary["status"] = "ok"
+    summary["agent_instruction"] = (
+        f"Session {session_id[:8]} ended. "
+        f"Duration: {summary.get('duration_seconds', 0)}s, "
+        f"tool calls: {summary.get('tool_calls', 0)}."
+    )
+    return json.dumps(summary, default=str)
+
+
+# ---------------------------------------------------------------------------
+# MCP Tools — Task-queue leasing (multi-agent coordination)
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+async def drift_task_claim(
+    session_id: Annotated[
+        str, Field(description="Active session ID from drift_session_start.")
+    ],
+    agent_id: Annotated[
+        str,
+        Field(
+            description=(
+                "Unique identifier for the calling agent or role"
+                " (e.g. 'agent-a', 'fixer')."
+            )
+        ),
+    ],
+    task_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Specific task ID to claim. If omitted, the next FIFO"
+                " pending task is claimed."
+            ),
+        ),
+    ] = None,
+    lease_ttl_seconds: Annotated[
+        int,
+        Field(
+            description=(
+                "Lease lifetime in seconds before the task reverts to pending"
+                " (default: 300)."
+            )
+        ),
+    ] = 300,
+    max_reclaim: Annotated[
+        int,
+        Field(
+            description=(
+                "Maximum times a task may be reclaimed before being marked"
+                " failed (default: 3)."
+            )
+        ),
+    ] = 3,
+) -> str:
+    """Claim a pending task from the session's fix-plan queue.
+
+    Atomically acquires a lease on the next pending task (FIFO) or a
+    specific task by ID.  While a task is claimed, other agents cannot
+    claim the same task.  The lease expires after ``lease_ttl_seconds``;
+    use drift_task_renew to extend it before expiry.
+
+    Requires an active session with tasks loaded via drift_fix_plan.
+
+    Args:
+        session_id: Active session ID from drift_session_start.
+        agent_id: Unique identifier for the calling agent or role.
+        task_id: Specific task ID to claim (FIFO if omitted).
+        lease_ttl_seconds: Lease lifetime before task reverts (default: 300s).
+        max_reclaim: Max reclaims before task is marked failed (default: 3).
+    """
+    from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    claim = session.claim_task(
+        agent_id=agent_id,
+        task_id=task_id or None,
+        lease_ttl_seconds=lease_ttl_seconds,
+        max_reclaim=max_reclaim,
+    )
+    if claim is None:
+        q = session.queue_status()
+        result: dict[str, Any] = {
+            "status": "no_tasks_available",
+            "session_id": session_id,
+            "pending_count": q["pending_count"],
+            "claimed_count": q["claimed_count"],
+            "completed_count": q["completed_count"],
+            "failed_count": q["failed_count"],
+            "agent_instruction": (
+                "No pending tasks available in this session."
+                " All tasks may be claimed, completed, or failed."
+                " Call drift_task_status for a full queue overview."
+            ),
+        }
+        return json.dumps(result, default=str)
+
+    task_dict = claim["task"]
+    lease_dict = claim["lease"]
+    result = {
+        "status": "claimed",
+        "session_id": session_id,
+        "task": task_dict,
+        "lease": lease_dict,
+        "agent_instruction": (
+            f"Task {lease_dict['task_id']} claimed by {agent_id}."
+            f" Lease expires in {lease_ttl_seconds}s."
+            " Call drift_task_renew before expiry if more time is needed."
+            " Call drift_task_complete when done, or drift_task_release to"
+            " return the task to the pending pool."
+        ),
+    }
+    return json.dumps(result, default=str)
+
+
+@mcp.tool()
+async def drift_task_renew(
+    session_id: Annotated[
+        str, Field(description="Active session ID from drift_session_start.")
+    ],
+    agent_id: Annotated[
+        str, Field(description="Agent ID that holds the current lease.")
+    ],
+    task_id: Annotated[
+        str, Field(description="Task ID to extend the lease for.")
+    ],
+    extend_seconds: Annotated[
+        int,
+        Field(description="Seconds to add to the current lease deadline (default: 300)."),
+    ] = 300,
+) -> str:
+    """Extend an active task lease to prevent it from expiring.
+
+    Call this while still working on a claimed task if the original
+    ``lease_ttl_seconds`` is about to expire.  Only the agent that holds
+    the lease can renew it.
+
+    Args:
+        session_id: Active session ID from drift_session_start.
+        agent_id: Agent ID that holds the current lease.
+        task_id: Task ID whose lease should be extended.
+        extend_seconds: Seconds to add to the current deadline (default: 300s).
+    """
+    from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    outcome = session.renew_lease(
+        agent_id=agent_id,
+        task_id=task_id,
+        extend_seconds=extend_seconds,
+    )
+    status = outcome.get("status", "not_found")
+    if status == "renewed":
+        outcome["session_id"] = session_id
+        outcome["agent_instruction"] = (
+            f"Lease for task {task_id} extended by {extend_seconds}s."
+        )
+    else:
+        outcome["session_id"] = session_id
+        outcome["agent_instruction"] = (
+            outcome.get("error", "Renewal failed.")
+            + " Call drift_task_status for current queue state."
+        )
+    return json.dumps(outcome, default=str)
+
+
+@mcp.tool()
+async def drift_task_release(
+    session_id: Annotated[
+        str, Field(description="Active session ID from drift_session_start.")
+    ],
+    agent_id: Annotated[
+        str, Field(description="Agent ID that holds the current lease.")
+    ],
+    task_id: Annotated[
+        str, Field(description="Task ID to release back to the pending pool.")
+    ],
+    max_reclaim: Annotated[
+        int,
+        Field(
+            description=(
+                "Maximum reclaim count before the task is marked failed"
+                " (default: 3)."
+            )
+        ),
+    ] = 3,
+) -> str:
+    """Release a claimed task back to the pending pool.
+
+    Use this when a task cannot be completed (e.g. blocked, out of scope).
+    The task's reclaim count is incremented; after ``max_reclaim`` releases
+    the task is marked as failed instead of re-queued.
+
+    Args:
+        session_id: Active session ID from drift_session_start.
+        agent_id: Agent ID that holds the current lease.
+        task_id: Task ID to release.
+        max_reclaim: Max releases before marking failed (default: 3).
+    """
+    from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    outcome = session.release_task(
+        agent_id=agent_id,
+        task_id=task_id,
+        max_reclaim=max_reclaim,
+    )
+    state = outcome.get("status", "released")
+    if state == "released":
+        agent_instruction = (
+            f"Task {task_id} released back to the pending pool"
+            f" (reclaim count: {outcome.get('reclaim_count', 0)})."
+            " Another agent can now claim it."
+        )
+    elif state == "failed":
+        agent_instruction = (
+            f"Task {task_id} has reached max_reclaim={max_reclaim}"
+            " and is now marked as failed. It will not be re-queued."
+        )
+    else:
+        agent_instruction = (
+            outcome.get("error", "Release failed.")
+            + " Call drift_task_status for current queue state."
+        )
+    outcome["session_id"] = session_id
+    outcome["agent_instruction"] = agent_instruction
+    return json.dumps(outcome, default=str)
+
+
+@mcp.tool()
+async def drift_task_complete(
+    session_id: Annotated[
+        str, Field(description="Active session ID from drift_session_start.")
+    ],
+    agent_id: Annotated[
+        str, Field(description="Agent ID that holds the lease for this task.")
+    ],
+    task_id: Annotated[
+        str, Field(description="Task ID to mark as completed.")
+    ],
+) -> str:
+    """Mark a claimed task as completed and release its lease.
+
+    Only the agent holding the active lease can complete the task.
+    Completed tasks are excluded from future drift_task_claim calls.
+
+    Args:
+        session_id: Active session ID from drift_session_start.
+        agent_id: Agent ID that holds the lease.
+        task_id: Task ID to mark as completed.
+    """
+    from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    outcome = session.complete_task(agent_id=agent_id, task_id=task_id)
+    state = outcome.get("status", "completed")
+    if state == "completed":
+        remaining = session.tasks_remaining()
+        agent_instruction = (
+            f"Task {task_id} completed. {remaining} task(s) remaining."
+        )
+        if remaining == 0:
+            agent_instruction += (
+                " All tasks done — call drift_session_end for final summary."
+            )
+    elif state == "already_completed":
+        agent_instruction = f"Task {task_id} was already completed."
+    else:
+        agent_instruction = (
+            outcome.get("error", "Completion failed.")
+            + " Call drift_task_status for current queue state."
+        )
+    outcome["session_id"] = session_id
+    outcome["tasks_remaining"] = session.tasks_remaining()
+    outcome["agent_instruction"] = agent_instruction
+    return json.dumps(outcome, default=str)
+
+
+@mcp.tool()
+async def drift_task_status(
+    session_id: Annotated[
+        str, Field(description="Active session ID from drift_session_start.")
+    ],
+) -> str:
+    """Return a full queue overview: pending, claimed, completed, failed tasks.
+
+    Use this to understand the current distribution of work across agents
+    and to decide which tasks still need attention.
+
+    Args:
+        session_id: Active session ID from drift_session_start.
+    """
+    from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    status = session.queue_status()
+    status["session_id"] = session_id
+    status["tasks_remaining"] = session.tasks_remaining()
+    pending = status.get("pending_count", 0)
+    claimed = status.get("claimed_count", 0)
+    completed = status.get("completed_count", 0)
+    failed = status.get("failed_count", 0)
+    status["agent_instruction"] = (
+        f"Queue: {pending} pending, {claimed} claimed,"
+        f" {completed} completed, {failed} failed."
+        + (
+            " All tasks done — call drift_session_end."
+            if pending == 0 and claimed == 0 and completed > 0
+            else ""
+        )
+    )
+    return json.dumps(status, default=str)
+
+
 _EXPORTED_MCP_TOOLS = (
     drift_scan,
     drift_diff,
@@ -853,6 +1825,15 @@ _EXPORTED_MCP_TOOLS = (
     drift_nudge,
     drift_brief,
     drift_negative_context,
+    drift_session_start,
+    drift_session_status,
+    drift_session_update,
+    drift_session_end,
+    drift_task_claim,
+    drift_task_renew,
+    drift_task_release,
+    drift_task_complete,
+    drift_task_status,
 )
 
 
@@ -932,6 +1913,21 @@ def _annotation_to_string(annotation: Any) -> str:
     return str(annotation).replace("typing.", "")
 
 
+def _field_description_from_annotation(annotation: Any) -> str | None:
+    """Extract Field(description=...) from typing.Annotated metadata when present."""
+    import typing
+
+    if typing.get_origin(annotation) is not typing.Annotated:
+        return None
+
+    args = typing.get_args(annotation)
+    for meta in args[1:]:
+        description = getattr(meta, "description", None)
+        if isinstance(description, str) and description.strip():
+            return description.strip()
+    return None
+
+
 def get_tool_catalog() -> list[dict[str, Any]]:
     """Return MCP tool metadata for local inspection via CLI."""
     import typing
@@ -969,6 +1965,10 @@ def get_tool_catalog() -> list[dict[str, Any]]:
                 parameter_info["default"] = parameter.default
             if parameter.name in param_descs:
                 parameter_info["description"] = param_descs[parameter.name]
+            else:
+                field_desc = _field_description_from_annotation(annotation)
+                if field_desc:
+                    parameter_info["description"] = field_desc
             parameters.append(parameter_info)
 
         catalog.append(

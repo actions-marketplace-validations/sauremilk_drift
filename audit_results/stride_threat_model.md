@@ -1,5 +1,61 @@
 # STRIDE Threat Model
 
+## 2026-04-11 - ADR-024: Machine-Readable Next-Step Contracts
+
+- Scope: Three additive JSON fields (`next_tool_call`, `fallback_tool_call`, `done_when`) on every agent-oriented API response (scan, diff, fix_plan, nudge, brief, negative_context). MCP session enrichment injects `session_id` into contract params. Error responses gain optional `recovery_tool_call`. No signal, scoring, or ingestion changes.
+- Input path changes: None.
+- Output path changes: Yes (six API responses gain three additive fields; MCP `_enrich_response_with_session` propagates `session_id` into contract params; `_error_response` gains optional `recovery_tool_call`; `drift_session_start` gains contract fields).
+- External interface changes: Additive only; `schema_version` remains "2.0", no fields removed/renamed.
+- STRIDE review:
+	- S (Spoofing): No identity or trust-boundary change. Contracts reference existing tool names only.
+	- T (Tampering): Low risk; contract fields are deterministic, derived from response state (finding count, degradation status, batch eligibility). Agents remain advisory consumers — contract execution is not enforced server-side.
+	- R (Repudiation): Improved traceability — each contract encodes the exact tool + params the API recommends, replacing ambiguous freeform text.
+	- I (Information Disclosure): No new data classes exposed; `session_id` is already present in session-enriched responses.
+	- D (Denial of Service): Negligible; three small dict fields per response, constant-time construction.
+	- E (Elevation of Privilege): No privilege boundary change. Contracts suggest tool calls but do not execute them.
+
+## 2026-04-08 - ADR-023: Canonical Examples in Agent-Output (fix_plan + brief)
+
+- Scope: Additive output fields in guardrails (`preferred_pattern`) and fix_plan tasks (`canonical_refs`). No signal, scoring, or ingestion changes. Data sourced from existing NegativeContext.canonical_alternative and Finding.metadata.canonical_exemplar.
+- Input path changes: None.
+- Output path changes: Yes (brief guardrails gain `preferred_pattern` field and optional `PREFERRED:` prompt line; fix_plan tasks gain `canonical_refs` array).
+- External interface changes: Additive only; `schema_version` remains "2.0", no fields removed/renamed.
+- STRIDE review:
+	- S (Spoofing): No identity or trust-boundary change.
+	- T (Tampering): No risk; new fields are derived deterministically from existing analysis data. Comment-prefix stripping uses bounded substring operations only.
+	- R (Repudiation): Improved traceability — each canonical_ref carries `source_signal` attribution.
+	- I (Information Disclosure): No new data classes exposed; `canonical_exemplar` already present in Finding.metadata, `canonical_alternative` already in NegativeContext serialization.
+	- D (Denial of Service): Negligible; max 3 refs per task, preferred_pattern capped at 200 chars.
+	- E (Elevation of Privilege): No privilege boundary change.
+
+## 2026-04-09 - ADR-021: Batch-Dominant Fix-Loop Orchestration
+
+- Scope: Agent instruction text alignment across scan, fix_plan, diff, nudge API responses and MCP `_BASE_INSTRUCTIONS`. No structural, scoring, or schema changes — only `agent_instruction` plaintext strings modified.
+- Input path changes: None.
+- Output path changes: Yes (agent_instruction text content changed in scan, fix_plan, diff, nudge responses and MCP system prompt).
+- External interface changes: None; `schema_version` remains "2.0", no fields added/removed.
+- STRIDE review:
+	- S (Spoofing): No identity or trust-boundary change.
+	- T (Tampering): No risk change; instruction texts are non-binding agent guidance.
+	- R (Repudiation): No change; all instructions traceable to source code constants.
+	- I (Information Disclosure): No new data exposed; instructions reference existing API concepts (batch_eligible, nudge, diff).
+	- D (Denial of Service): No risk; text-only changes with no computational impact.
+	- E (Elevation of Privilege): No privilege boundary change.
+
+## 2026-04-08 - Agent Repair Workflow Quick Wins (V-3a/V-5/V-6/V-8a/V-13)
+
+- Scope: Additive output enhancements for agent repair workflows: `finding_count_by_signal` in scan, `expected_score_delta` in fix_plan tasks, `dependency_depth` metadata in tasks, `signals`/`exclude_signals` params on nudge, increased negative-context depth (3→5), baseline-warming docs in MCP prompt.
+- Input path changes: None (nudge gains optional filter params — existing calls unaffected).
+- Output path changes: Yes (scan, fix_plan, and nudge JSON payloads gain additive fields).
+- External interface changes: Additive only; existing fields and semantics stay intact.
+- STRIDE review:
+	- S (Spoofing): No identity or trust-boundary change.
+	- T (Tampering): No risk change; all new fields are derived from existing analysis data.
+	- R (Repudiation): Improved traceability through per-signal finding counts and score-delta attribution.
+	- I (Information Disclosure): No new sensitive data; fields expose pre-existing analysis metrics.
+	- D (Denial of Service): Negligible overhead (Counter aggregation, BFS depth on small task graphs).
+	- E (Elevation of Privilege): No privilege boundary change.
+
 ## 2026-04-06 - Stable signal_abbrev_map in scan/analyze JSON (Issue #183)
 
 - Scope: Additive output metadata field `signal_abbrev_map` in both `scan` and

@@ -18,18 +18,29 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 
 from drift.api_helpers import (
+    DONE_ACCEPT_CHANGE,
+    DONE_DIFF_ACCEPT,
+    DONE_NO_FINDINGS,
+    DONE_NUDGE_SAFE,
+    DONE_SAFE_TO_COMMIT,
+    DONE_STAGED_EXISTS,
+    DONE_TASK_AND_NUDGE,
     VALID_SIGNAL_IDS,
     _base_response,
     _error_response,
     _finding_concise,
     _finding_detailed,
     _fix_first_concise,
+    _next_step_contract,
     _task_to_api_dict,
     _top_signals,
     _trend_dict,
     build_drift_score_scope,
+    build_task_graph,
+    build_workflow_plan,
     resolve_signal,
     severity_rank,
+    shape_for_profile,
     signal_abbrev,
     signal_abbrev_map,
     signal_scope_label,
@@ -127,6 +138,7 @@ def scan(
     strategy: str = "diverse",
     include_non_operational: bool = False,
     on_progress: Callable[[str, int, int], None] | None = None,
+    response_profile: str | None = None,
 ) -> dict[str, Any]:
     """Run full drift analysis and return a structured result dict.
 
@@ -231,7 +243,7 @@ def scan(
             error=None,
             repo_root=repo_path,
         )
-        return result
+        return shape_for_profile(result, response_profile)
     except Exception as exc:
         _emit_api_telemetry(
             tool_name="api.scan",
@@ -461,6 +473,9 @@ def _format_scan_response(
         top_signals=top_sigs[:3] if detail == "concise" else top_sigs,
         finding_count=len(selected_findings),
         total_finding_count=len(analysis.findings),
+        finding_count_by_signal=dict(
+            Counter(signal_abbrev(f.signal_type) for f in analysis.findings)
+        ),
         critical_count=critical_count,
         high_count=high_count,
         findings_returned=len(limited),
@@ -573,11 +588,13 @@ def _format_scan_response(
             analysis,
             findings=selected_findings,
         )
-        result["agent_instruction"] = (
-            "Use drift_fix_plan to get prioritised repair tasks. "
-            "After each file change, call drift_diff(uncommitted=True) "
-            "to verify improvement before proceeding."
+        result["agent_instruction"] = _scan_agent_instruction(
+            total_finding_count=len(analysis.findings),
         )
+        result.update(_scan_next_step_contract(
+            total_finding_count=len(analysis.findings),
+            top_signal=result.get("primary_signal_for_next_step"),
+        ))
     if getattr(analysis, "skipped_files", 0) > 0:
         result["skipped_files"] = analysis.skipped_files
         result["skipped_languages"] = sorted(analysis.skipped_languages.keys())
@@ -607,6 +624,54 @@ def _scan_next_actions(
     if analysis.trend and analysis.trend.direction == "degrading":
         actions.append("drift_diff to identify recent regressions")
     return actions or ["No immediate action required"]
+
+
+# -- Batch-aware scan instruction (ADR-021) --------------------------------
+
+_BATCH_SCAN_THRESHOLD = 20  # findings above this → batch-first guidance
+
+
+def _scan_agent_instruction(*, total_finding_count: int) -> str:
+    """Build context-dependent agent_instruction for scan responses.
+
+    When the repository has many findings, the instruction steers the agent
+    toward batch-first repair via fix_plan(max_tasks=20).  For small
+    backlogs the traditional per-fix nudge loop is recommended.
+    """
+    if total_finding_count > _BATCH_SCAN_THRESHOLD:
+        return (
+            "Use drift_fix_plan(max_tasks=20) to get prioritised repair tasks. "
+            "Start with batch_eligible tasks for maximum throughput — "
+            "apply the same fix to ALL affected_files_for_pattern, then verify "
+            "the batch with a single drift_diff(uncommitted=True). "
+            "Use drift_nudge for quick directional checks between edits."
+        )
+    return (
+        "Use drift_fix_plan to get prioritised repair tasks. "
+        "After each fix, call drift_nudge for fast directional feedback. "
+        "Use drift_diff before committing for full regression analysis."
+    )
+
+
+def _scan_next_step_contract(
+    *,
+    total_finding_count: int,
+    top_signal: str | None,
+) -> dict[str, Any]:
+    """Build the next-step contract for scan responses (ADR-024)."""
+    if total_finding_count == 0:
+        return _next_step_contract(
+            next_tool=None,
+            done_when=DONE_NO_FINDINGS,
+        )
+    max_tasks = min(20, total_finding_count)
+    return _next_step_contract(
+        next_tool="drift_fix_plan",
+        next_params={"max_tasks": max_tasks},
+        done_when=DONE_ACCEPT_CHANGE,
+        fallback_tool="drift_explain" if top_signal else None,
+        fallback_params={"signal": top_signal} if top_signal else None,
+    )
 
 
 def _diff_decision_reason(
@@ -653,6 +718,7 @@ def diff(
     response_detail: str = "concise",
     signals: list[str] | None = None,
     exclude_signals: list[str] | None = None,
+    response_profile: str | None = None,
 ) -> dict[str, Any]:
     """Analyze drift changes since a git ref or baseline.
 
@@ -970,9 +1036,15 @@ def diff(
                 "Stage changes before relying on accept_change."
             )
         elif status == "improved":
-            _agent_hint = "Score is improving. Safe to continue with next task."
+            _agent_hint = (
+                "Score is improving. Continue with the next batch_eligible "
+                "group or next fix_plan task. Use drift_nudge between edits "
+                "for fast feedback."
+            )
         else:
-            _agent_hint = "No drift change detected. Safe to proceed."
+            _agent_hint = (
+                "No drift change detected. Safe to proceed to the next task."
+            )
         # Suggested next batch targets: signals with remaining new findings
         _new_by_signal: dict[str, int] = {}
         for _nf in scoped_new:
@@ -1027,6 +1099,13 @@ def diff(
             response_truncated=len(scoped_new) > max_findings,
             agent_instruction=_agent_hint,
         )
+        result.update(_diff_next_step_contract(
+            status=status,
+            accept_change=accept_change,
+            no_staged_files=no_staged_files,
+            decision_reason_code=decision_reason_code,
+            batch_targets=_batch_targets,
+        ))
         _emit_api_telemetry(
             tool_name="api.diff",
             params=params,
@@ -1036,7 +1115,7 @@ def diff(
             error=None,
             repo_root=repo_path,
         )
-        return result
+        return shape_for_profile(result, response_profile)
     except Exception as exc:
         _emit_api_telemetry(
             tool_name="api.diff",
@@ -1092,6 +1171,44 @@ def _diff_next_actions(
     return actions or ["No immediate action required"]
 
 
+def _diff_next_step_contract(
+    *,
+    status: str,
+    accept_change: bool,
+    no_staged_files: bool,
+    decision_reason_code: str,
+    batch_targets: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build the next-step contract for diff responses (ADR-024)."""
+    if no_staged_files:
+        return _next_step_contract(next_tool=None, done_when=DONE_STAGED_EXISTS)
+    if accept_change and status == "improved" and batch_targets:
+        top = batch_targets[0]
+        return _next_step_contract(
+            next_tool="drift_fix_plan",
+            next_params={"signal": top["signal"]},
+            done_when=DONE_ACCEPT_CHANGE,
+        )
+    if accept_change:
+        return _next_step_contract(next_tool=None, done_when=DONE_ACCEPT_CHANGE)
+    if decision_reason_code == "rejected_out_of_scope_noise_only":
+        return _next_step_contract(
+            next_tool="drift_diff",
+            next_params={"uncommitted": True, "baseline_file": ".drift-baseline.json"},
+            done_when=DONE_ACCEPT_CHANGE,
+            fallback_tool="drift_scan",
+            fallback_params={"response_detail": "concise"},
+        )
+    # degraded / new_critical / rejected
+    return _next_step_contract(
+        next_tool="drift_fix_plan",
+        next_params={},
+        done_when=DONE_ACCEPT_CHANGE,
+        fallback_tool="drift_scan",
+        fallback_params={"response_detail": "concise"},
+    )
+
+
 def _repo_examples_for_signal(
     signal_abbr: str,
     repo_root: Path,
@@ -1127,7 +1244,12 @@ def _repo_examples_for_signal(
         return []
 
 
-def explain(topic: str, *, repo_path: str | Path | None = None) -> dict[str, Any]:
+def explain(
+    topic: str,
+    *,
+    repo_path: str | Path | None = None,
+    response_profile: str | None = None,
+) -> dict[str, Any]:
     """Explain a signal, rule, or error code.
 
     Parameters
@@ -1259,7 +1381,7 @@ def explain(topic: str, *, repo_path: str | Path | None = None) -> dict[str, Any
             error=None,
             repo_root=Path.cwd(),
         )
-        return result
+        return shape_for_profile(result, response_profile)
     except Exception as exc:
         _emit_api_telemetry(
             tool_name="api.explain",
@@ -1297,11 +1419,32 @@ def _fix_plan_agent_instruction(tasks: list) -> str:
             "Tasks with batch_eligible=true share a fix pattern. "
             "Apply the fix to ALL affected_files_for_pattern, then verify "
             "with a single drift_diff(uncommitted=True). "
-            "For non-batch tasks, verify after each file change."
+            "For non-batch tasks, use drift_nudge after each edit for fast "
+            "directional feedback. Use drift_diff only for batch verification "
+            "or before committing."
         )
     return (
-        "After each file change, call drift_diff(uncommitted=True) "
-        "before proceeding to the next file. Do not batch changes."
+        "After each fix, call drift_nudge for fast directional feedback. "
+        "Use drift_diff for full regression analysis before committing. "
+        "Do not batch changes across unrelated findings."
+    )
+
+
+def _fix_plan_next_step_contract(tasks: list) -> dict[str, Any]:
+    """Build the next-step contract for fix_plan responses (ADR-024)."""
+    batch_count = sum(1 for t in tasks if getattr(t, "metadata", {}).get("batch_eligible"))
+    if batch_count > 0:
+        return _next_step_contract(
+            next_tool="drift_diff",
+            next_params={"uncommitted": True},
+            done_when=DONE_DIFF_ACCEPT,
+            fallback_tool="drift_nudge",
+        )
+    return _next_step_contract(
+        next_tool="drift_nudge",
+        done_when=DONE_DIFF_ACCEPT,
+        fallback_tool="drift_diff",
+        fallback_params={"uncommitted": True},
     )
 
 
@@ -1317,6 +1460,7 @@ def fix_plan(
     include_deferred: bool = False,
     include_non_operational: bool = False,
     on_progress: ProgressCallback | None = None,
+    response_profile: str | None = None,
 ) -> dict[str, Any]:
     """Generate a prioritized fix plan with constraints and success criteria.
 
@@ -1632,6 +1776,15 @@ def fix_plan(
             _sig = signal_abbrev(_rt.signal_type)
             _remaining_by_signal[_sig] = _remaining_by_signal.get(_sig, 0) + 1
 
+        # ADR-025 Phase A: build task dependency graph
+        graph = build_task_graph(limited)
+
+        # ADR-025 Phase C: build executable workflow plan
+        workflow = build_workflow_plan(
+            graph,
+            repo_path=str(repo_path) if repo_path else ".",
+        )
+
         result = _base_response(
             drift_score=round(analysis.drift_score, 3),
             drift_score_scope=build_drift_score_scope(
@@ -1639,7 +1792,7 @@ def fix_plan(
                 path=target_path,
                 signal_scope=signal_scope_label(selected=[signal] if signal else None),
             ),
-            tasks=[_task_to_api_dict(t) for t in limited],
+            tasks=[_task_to_api_dict(t) for t in graph.tasks],
             task_count=len(limited),
             total_available=len(tasks),
             remaining_by_signal=_remaining_by_signal,
@@ -1658,7 +1811,10 @@ def fix_plan(
             suggested_fix=finding_id_suggested_fix,
             recommended_next_actions=next_actions,
             agent_instruction=_fix_plan_agent_instruction(limited),
+            task_graph=graph.to_api_dict(),
+            workflow_plan=workflow.to_api_dict(),
         )
+        result.update(_fix_plan_next_step_contract(limited))
         if warnings:
             result["warnings"] = warnings
         if finding_id and finding_id_message and not finding_id_suggested_fix:
@@ -1680,7 +1836,7 @@ def fix_plan(
             error=None,
             repo_root=repo_path,
         )
-        return result
+        return shape_for_profile(result, response_profile)
     except Exception as exc:
         _emit_api_telemetry(
             tool_name="api.fix_plan",
@@ -1699,6 +1855,7 @@ def validate(
     *,
     config_file: str | None = None,
     baseline_file: str | None = None,
+    response_profile: str | None = None,
 ) -> dict[str, Any]:
     """Validate configuration and environment before analysis.
 
@@ -1902,7 +2059,7 @@ def validate(
             error=None,
             repo_root=repo_path,
         )
-        return result
+        return shape_for_profile(result, response_profile)
     except Exception as exc:
         _emit_api_telemetry(
             tool_name="api.validate",
@@ -1974,11 +2131,30 @@ def _get_changed_files_from_git(
         return None
 
 
+def _nudge_next_step_contract(*, safe_to_commit: bool) -> dict[str, Any]:
+    """Build the next-step contract for nudge responses (ADR-024)."""
+    if safe_to_commit:
+        return _next_step_contract(
+            next_tool="drift_diff",
+            next_params={"staged_only": True},
+            done_when=DONE_DIFF_ACCEPT,
+        )
+    return _next_step_contract(
+        next_tool="drift_fix_plan",
+        done_when=DONE_SAFE_TO_COMMIT,
+        fallback_tool="drift_scan",
+        fallback_params={"response_detail": "concise"},
+    )
+
+
 def nudge(
     path: str | Path = ".",
     *,
     changed_files: list[str] | None = None,
     uncommitted: bool = True,
+    signals: list[str] | None = None,
+    exclude_signals: list[str] | None = None,
+    response_profile: str | None = None,
 ) -> dict[str, Any]:
     """Incremental directional feedback after file changes.
 
@@ -1999,6 +2175,11 @@ def nudge(
     uncommitted:
         When auto-detecting, use uncommitted working-tree changes (default)
         vs. staged-only.
+    signals:
+        Optional list of signal abbreviations to include in results.
+        When set, only new/resolved findings matching these signals are returned.
+    exclude_signals:
+        Optional list of signal abbreviations to exclude from results.
 
     Returns
     -------
@@ -2252,6 +2433,20 @@ def nudge(
             )
 
         # -- Build response -------------------------------------------------
+        # Apply signal filtering to new/resolved findings if requested
+        _new = inc_result.new_findings
+        _resolved = inc_result.resolved_findings
+        if signals or exclude_signals:
+            _include = {s.upper() for s in signals} if signals else None
+            _exclude = {s.upper() for s in exclude_signals} if exclude_signals else set()
+            def _sig_match(f: Finding) -> bool:
+                abbr = signal_abbrev(f.signal_type)
+                if _include is not None and abbr not in _include:
+                    return False
+                return abbr not in _exclude
+            _new = [f for f in _new if _sig_match(f)]
+            _resolved = [f for f in _resolved if _sig_match(f)]
+
         result = _base_response(
             direction=inc_result.direction,
             delta=inc_result.delta,
@@ -2260,9 +2455,9 @@ def nudge(
             safe_to_commit=safe_to_commit,
             blocking_reasons=blocking_reasons,
             nudge=nudge_msg,
-            new_findings=[_finding_concise(f) for f in inc_result.new_findings[:5]],
+            new_findings=[_finding_concise(f) for f in _new[:5]],
             resolved_findings=[
-                _finding_concise(f) for f in inc_result.resolved_findings[:5]
+                _finding_concise(f) for f in _resolved[:5]
             ],
             confidence=inc_result.confidence,
             expected_transient=False,  # MVP: always false (Step 14)
@@ -2286,11 +2481,12 @@ def nudge(
             },
             changed_files=sorted(changed_set),
             agent_instruction=(
-                "After each file change, call drift_nudge to check impact "
-                "before proceeding. If safe_to_commit is false, address "
-                "blocking_reasons first."
+                "Use drift_nudge between edits for fast direction checks. "
+                "If safe_to_commit is false, address blocking_reasons first. "
+                "Call drift_diff after completing a batch for full verification."
             ),
         )
+        result.update(_nudge_next_step_contract(safe_to_commit=safe_to_commit))
 
         _emit_api_telemetry(
             tool_name="api.nudge",
@@ -2301,7 +2497,7 @@ def nudge(
             error=None,
             repo_root=repo_path,
         )
-        return result
+        return shape_for_profile(result, response_profile)
 
     except Exception as exc:
         _emit_api_telemetry(
@@ -2345,6 +2541,7 @@ def negative_context(
     max_items: int = 10,
     since_days: int = 90,
     disable_embeddings: bool = False,
+    response_profile: str | None = None,
 ) -> dict[str, Any]:
     """Generate anti-pattern warnings from drift findings for agent consumption.
 
@@ -2420,6 +2617,12 @@ def negative_context(
                 "After generating code, call drift_nudge to verify "
                 "you did not re-introduce any of these anti-patterns."
             ),
+            **_next_step_contract(
+                next_tool="drift_nudge",
+                done_when=DONE_NUDGE_SAFE,
+                fallback_tool="drift_scan",
+                fallback_params={"response_detail": "concise"},
+            ),
         }
 
         _emit_api_telemetry(
@@ -2431,7 +2634,7 @@ def negative_context(
             error=None,
             repo_root=repo_path,
         )
-        return result
+        return shape_for_profile(result, response_profile)
 
     except Exception as exc:
         _emit_api_telemetry(
@@ -2543,6 +2746,21 @@ _PRE_TASK_SIGNALS: set[str] = {
 }
 
 
+def _brief_next_step_contract(risk_level: str) -> dict[str, Any]:
+    """Build the next-step contract for brief responses (ADR-024)."""
+    if risk_level == "high":
+        return _next_step_contract(
+            next_tool="drift_scan",
+            done_when=DONE_TASK_AND_NUDGE,
+            fallback_tool="drift_negative_context",
+        )
+    return _next_step_contract(
+        next_tool="drift_negative_context",
+        done_when=DONE_TASK_AND_NUDGE,
+        fallback_tool="drift_nudge",
+    )
+
+
 def brief(
     path: str | Path = ".",
     *,
@@ -2552,6 +2770,7 @@ def brief(
     max_guardrails: int = 10,
     include_non_operational: bool = False,
     on_progress: ProgressCallback | None = None,
+    response_profile: str | None = None,
 ) -> dict[str, Any]:
     """Generate a pre-task structural briefing for agent delegation.
 
@@ -2736,6 +2955,7 @@ def brief(
                 "repo_path": str(repo_path),
             },
         )
+        result.update(_brief_next_step_contract(level))
 
         _emit_api_telemetry(
             tool_name="api.brief",
@@ -2746,7 +2966,7 @@ def brief(
             error=None,
             repo_root=repo_path,
         )
-        return result
+        return shape_for_profile(result, response_profile)
 
     except Exception as exc:
         _emit_api_telemetry(

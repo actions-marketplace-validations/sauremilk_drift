@@ -10,7 +10,7 @@ import click
 from rich.console import Console
 
 from drift.commands import console
-from drift.commands._io import _write_output_file
+from drift.commands._io import _emit_machine_output
 from drift.errors import EXIT_FINDINGS_ABOVE_THRESHOLD
 
 
@@ -188,12 +188,6 @@ def check(
         analysis.drift_score = composite_score(signal_scores, cfg.weights)
         analysis.module_scores = compute_module_scores(analysis.findings, cfg.weights)
 
-    def _parse_signal_ids(raw: str | None) -> list[str] | None:
-        if not raw:
-            return None
-        values = [part.strip().upper() for part in raw.split(",") if part.strip()]
-        return values or None
-
     if json_shortcut:
         output_format = "json"
 
@@ -213,7 +207,7 @@ def check(
     if embedding_model:
         cfg.embedding_model = embedding_model
     if select_signals or ignore_signals:
-        from drift.config import apply_signal_filter
+        from drift.config import apply_signal_filter, resolve_signal_names
 
         apply_signal_filter(cfg, select_signals, ignore_signals)
 
@@ -221,8 +215,8 @@ def check(
         context="diff",
         path=target_path,
         signal_scope=signal_scope_label(
-            selected=_parse_signal_ids(select_signals),
-            ignored=_parse_signal_ids(ignore_signals),
+            selected=resolve_signal_names(select_signals) if select_signals else None,
+            ignored=resolve_signal_names(ignore_signals) if ignore_signals else None,
         ),
         baseline_filtered=baseline_file is not None,
     )
@@ -281,47 +275,27 @@ def check(
             compact=compact_json,
             drift_score_scope=drift_score_scope,
         )
-        if output_file:
-            _write_output_file(json_text, output_file)
-            click.echo(f"Output written to {output_file}", err=True)
-        else:
-            click.echo(json_text)
+        _emit_machine_output(json_text, output_file)
     elif output_format == "sarif":
         from drift.output.json_output import findings_to_sarif
 
         sarif_text = findings_to_sarif(analysis)
-        if output_file:
-            _write_output_file(sarif_text, output_file)
-            click.echo(f"Output written to {output_file}", err=True)
-        else:
-            click.echo(sarif_text)
+        _emit_machine_output(sarif_text, output_file)
     elif output_format == "csv":
         from drift.output.csv_output import analysis_to_csv
 
         csv_text = analysis_to_csv(analysis)
-        if output_file:
-            _write_output_file(csv_text, output_file)
-            click.echo(f"Output written to {output_file}", err=True)
-        else:
-            click.echo(csv_text)
+        _emit_machine_output(csv_text, output_file)
     elif output_format == "agent-tasks":
         from drift.output.agent_tasks import analysis_to_agent_tasks_json
 
         tasks_text = analysis_to_agent_tasks_json(analysis)
-        if output_file:
-            _write_output_file(tasks_text, output_file)
-            click.echo(f"Output written to {output_file}", err=True)
-        else:
-            click.echo(tasks_text)
+        _emit_machine_output(tasks_text, output_file)
     elif output_format == "github":
         from drift.output.github_format import findings_to_github_annotations
 
         gh_text = findings_to_github_annotations(analysis)
-        if output_file:
-            _write_output_file(gh_text, output_file)
-            click.echo(f"Output written to {output_file}", err=True)
-        else:
-            click.echo(gh_text)
+        _emit_machine_output(gh_text, output_file)
     else:
         from drift.output.rich_output import render_full_report
 

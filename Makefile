@@ -14,7 +14,7 @@ MYPY     ?= $(PYTHON) -m mypy
 SRC      := src/
 TESTS    := tests/
 
-.PHONY: help install lint lint-fix typecheck test test-fast test-contract test-all coverage check self ci markdown-lint package-kpis-github-usage package-kpis-downloads package-kpis-real-public package-kpis-example clean
+.PHONY: help install lint lint-fix typecheck test test-fast test-contract smoke-pr smoke-nightly test-all coverage check self ci markdown-lint package-kpis-github-usage package-kpis-downloads package-kpis-real-public package-kpis-example clean
 
 help:  ## Show all available commands
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*##"}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -42,8 +42,14 @@ test-fast:  ## Fast unit tests — stop on first failure
 test-contract:  ## SARIF/JSON contract tests only
 	$(PYTEST) -v --tb=short -m contract
 
+smoke-pr:  ## Fast smoke tests on representative external repos (cached)
+	$(PYTEST) tests/test_smoke_real_repos.py -v --run-slow --smoke-profile=pr
+
+smoke-nightly:  ## Full smoke matrix on all external repos (cached)
+	$(PYTEST) tests/test_smoke_real_repos.py -v --run-slow --smoke-profile=nightly
+
 test-all:  ## All tests including slow smoke tests
-	$(PYTEST) -v --tb=short
+	$(PYTEST) -v --tb=short --run-slow --smoke-profile=nightly
 
 coverage:  ## Tests with coverage report
 	$(PYTEST) -v --tb=short --cov=drift --cov-report=term-missing --ignore=tests/test_smoke_real_repos.py

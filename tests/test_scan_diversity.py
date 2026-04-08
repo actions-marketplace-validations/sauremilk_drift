@@ -1364,3 +1364,217 @@ class TestFixPlanFindingIdDiagnostics:
         assert result["suggested_fix"] is not None
         assert "valid_task_ids_sample" in result["suggested_fix"]
         assert result["invalid_fields"][0]["field"] == "finding_id"
+
+
+# ---------------------------------------------------------------------------
+# Next-Step Contracts (ADR-024)
+# ---------------------------------------------------------------------------
+
+
+def _assert_contract_shape(result: dict, *, allow_null_next: bool = False):
+    """Validate the structural contract of next_tool_call / fallback_tool_call / done_when."""
+    assert "done_when" in result, "missing done_when"
+    assert isinstance(result["done_when"], str), "done_when must be str"
+    assert len(result["done_when"]) > 0, "done_when must not be empty"
+
+    assert "next_tool_call" in result, "missing next_tool_call"
+    ntc = result["next_tool_call"]
+    if allow_null_next:
+        if ntc is not None:
+            assert isinstance(ntc, dict)
+            assert isinstance(ntc.get("tool"), str)
+            assert isinstance(ntc.get("params"), dict)
+    else:
+        assert isinstance(ntc, dict), "next_tool_call must be dict"
+        assert isinstance(ntc["tool"], str), "next_tool_call.tool must be str"
+        assert isinstance(ntc["params"], dict), "next_tool_call.params must be dict"
+
+    assert "fallback_tool_call" in result, "missing fallback_tool_call"
+    ftc = result["fallback_tool_call"]
+    if ftc is not None:
+        assert isinstance(ftc, dict)
+        assert isinstance(ftc.get("tool"), str)
+        assert isinstance(ftc.get("params"), dict)
+
+
+class TestNextStepContract:
+    """ADR-024: machine-readable next-step contracts in API responses."""
+
+    # -- scan ---------------------------------------------------------------
+
+    def test_scan_detailed_has_contract(self, monkeypatch):
+        import drift.analyzer as analyzer_module
+        import drift.api as api_module
+        from drift.config import DriftConfig
+
+        analysis = SimpleNamespace(
+            findings=[
+                _make_finding(SignalType.PATTERN_FRAGMENTATION, 0.8, 0.5),
+            ],
+            drift_score=0.4,
+            severity=Severity.MEDIUM,
+            total_files=5,
+            total_functions=10,
+            ai_attributed_ratio=0.0,
+            trend=None,
+        )
+        monkeypatch.setattr(DriftConfig, "load", staticmethod(lambda *a, **kw: object()))
+        monkeypatch.setattr(analyzer_module, "analyze_repo", lambda *a, **kw: analysis)
+        monkeypatch.setattr(api_module, "_emit_api_telemetry", lambda **kw: None)
+        monkeypatch.setattr(api_module, "_fix_first_concise", lambda analysis, max_items=5: [])
+
+        result = scan(Path("."), response_detail="detailed")
+
+        _assert_contract_shape(result)
+        assert result["next_tool_call"]["tool"] == "drift_fix_plan"
+
+    def test_scan_concise_no_contract(self, monkeypatch):
+        import drift.analyzer as analyzer_module
+        import drift.api as api_module
+        from drift.config import DriftConfig
+
+        analysis = SimpleNamespace(
+            findings=[],
+            drift_score=0.0,
+            severity=Severity.LOW,
+            total_files=5,
+            total_functions=10,
+            ai_attributed_ratio=0.0,
+            trend=None,
+        )
+        monkeypatch.setattr(DriftConfig, "load", staticmethod(lambda *a, **kw: object()))
+        monkeypatch.setattr(analyzer_module, "analyze_repo", lambda *a, **kw: analysis)
+        monkeypatch.setattr(api_module, "_emit_api_telemetry", lambda **kw: None)
+
+        result = scan(Path("."), response_detail="concise")
+
+        assert "next_tool_call" not in result
+
+    def test_scan_zero_findings_null_next(self, monkeypatch):
+        import drift.analyzer as analyzer_module
+        import drift.api as api_module
+        from drift.config import DriftConfig
+
+        analysis = SimpleNamespace(
+            findings=[],
+            drift_score=0.0,
+            severity=Severity.LOW,
+            total_files=5,
+            total_functions=10,
+            ai_attributed_ratio=0.0,
+            trend=None,
+        )
+        monkeypatch.setattr(DriftConfig, "load", staticmethod(lambda *a, **kw: object()))
+        monkeypatch.setattr(analyzer_module, "analyze_repo", lambda *a, **kw: analysis)
+        monkeypatch.setattr(api_module, "_emit_api_telemetry", lambda **kw: None)
+        monkeypatch.setattr(api_module, "_fix_first_concise", lambda analysis, max_items=5: [])
+
+        result = scan(Path("."), response_detail="detailed")
+
+        _assert_contract_shape(result, allow_null_next=True)
+        assert result["next_tool_call"] is None
+
+    # -- fix_plan -----------------------------------------------------------
+
+    def test_fix_plan_has_contract(self, monkeypatch):
+        import drift.analyzer as analyzer_module
+        import drift.api as api_module
+        from drift.api import fix_plan
+        from drift.config import DriftConfig
+
+        analysis = SimpleNamespace(
+            findings=[],
+            drift_score=0.3,
+            severity=Severity.MEDIUM,
+            total_files=5,
+            total_functions=10,
+            ai_attributed_ratio=0.0,
+            trend=None,
+        )
+        monkeypatch.setattr(DriftConfig, "load", staticmethod(lambda *a, **kw: object()))
+        monkeypatch.setattr(analyzer_module, "analyze_repo", lambda *a, **kw: analysis)
+        monkeypatch.setattr(
+            "drift.output.agent_tasks.analysis_to_agent_tasks",
+            lambda *a, **kw: [],
+        )
+        monkeypatch.setattr(api_module, "_emit_api_telemetry", lambda **kw: None)
+
+        result = fix_plan(Path("."))
+
+        _assert_contract_shape(result)
+        assert "drift_nudge" in (result["next_tool_call"]["tool"])
+        assert result["done_when"] == "drift_diff.accept_change == true"
+
+    # -- diff ---------------------------------------------------------------
+
+    def test_diff_has_contract(self, monkeypatch):
+        import drift.analyzer as analyzer_module
+        import drift.api as api_module
+        from drift.api import diff
+        from drift.config import DriftConfig
+
+        analysis = SimpleNamespace(
+            findings=[],
+            drift_score=0.0,
+            severity=Severity.LOW,
+            total_files=10,
+            total_functions=50,
+            ai_attributed_ratio=0.1,
+            trend=SimpleNamespace(
+                direction="stable",
+                previous_score=0.0,
+                delta=0.0,
+            ),
+            is_degraded=False,
+        )
+        monkeypatch.setattr(DriftConfig, "load", staticmethod(lambda *a, **kw: object()))
+        monkeypatch.setattr(analyzer_module, "analyze_diff", lambda *a, **kw: analysis)
+        monkeypatch.setattr(api_module, "_emit_api_telemetry", lambda **kw: None)
+
+        result = diff(Path("."), uncommitted=True)
+
+        _assert_contract_shape(result, allow_null_next=True)
+        assert "accept_change" in result["done_when"]
+
+    # -- contract shape validation ------------------------------------------
+
+    def test_contract_shape_builder(self):
+        from drift.api_helpers import DONE_ACCEPT_CHANGE, _next_step_contract
+
+        c = _next_step_contract(
+            next_tool="drift_fix_plan",
+            next_params={"max_tasks": 5},
+            done_when=DONE_ACCEPT_CHANGE,
+            fallback_tool="drift_explain",
+            fallback_params={"signal": "PFS"},
+        )
+        assert c["next_tool_call"] == {"tool": "drift_fix_plan", "params": {"max_tasks": 5}}
+        assert c["fallback_tool_call"] == {"tool": "drift_explain", "params": {"signal": "PFS"}}
+        assert c["done_when"] == DONE_ACCEPT_CHANGE
+
+    def test_contract_null_next(self):
+        from drift.api_helpers import DONE_NO_FINDINGS, _next_step_contract
+
+        c = _next_step_contract(next_tool=None, done_when=DONE_NO_FINDINGS)
+        assert c["next_tool_call"] is None
+        assert c["fallback_tool_call"] is None
+        assert c["done_when"] == DONE_NO_FINDINGS
+
+    def test_error_response_recovery_tool_call(self):
+        from drift.api_helpers import _error_response, _tool_call
+
+        recovery = _tool_call("drift_validate", {"path": "."})
+        resp = _error_response(
+            "DRIFT-5001",
+            "Something went wrong",
+            recoverable=True,
+            recovery_tool_call=recovery,
+        )
+        assert resp["recovery_tool_call"]["tool"] == "drift_validate"
+        assert resp["recovery_tool_call"]["params"] == {"path": "."}
+
+    def test_error_response_no_recovery_by_default(self):
+        from drift.api_helpers import _error_response
+
+        resp = _error_response("DRIFT-5001", "oops", recoverable=True)
+        assert "recovery_tool_call" not in resp

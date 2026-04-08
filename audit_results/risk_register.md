@@ -1,5 +1,87 @@
 # Risk Register
 
+## 2026-04-11 - ADR-024: Machine-Readable Next-Step Contracts
+
+- Risk ID: RISK-OUTPUT-2026-04-11-024
+- Component: `src/drift/api.py`, `src/drift/api_helpers.py`, `src/drift/mcp_server.py`
+- Type: Output schema extension (additive, non-breaking)
+- Description: ADR-024 introduces machine-readable next-step contracts to reduce agent hallucinations in tool-call chains. Three fields added to every agent-oriented API response:
+  - `next_tool_call`: `{tool: str, params: dict}` — primary recommended action. Null when no action needed.
+  - `fallback_tool_call`: `{tool: str, params: dict}` — alternative if primary fails. Null when not applicable.
+  - `done_when`: Predicate string describing the termination condition for the current workflow step.
+  - MCP session enrichment injects `session_id` into contract params via `setdefault`.
+  - `_error_response` gains optional `recovery_tool_call` for recoverable errors.
+- Trigger: All API calls returning agent-oriented responses (scan detailed, diff, fix_plan, nudge, brief, negative_context), plus MCP session_start.
+- Impact: Additive only — `schema_version` remains "2.0". Existing `agent_instruction` and `recommended_next_actions` fields preserved. No scoring, signal, or ingestion logic affected. Backward-compatible: consumers ignoring new fields are unaffected.
+- Mitigation:
+  - 9 new tests in `TestNextStepContract` class (tests/test_scan_diversity.py)
+  - Contract shape validator `_assert_contract_shape()` enforces structural invariants
+  - Full test suite passes (2147 passed); ruff + mypy clean
+  - `done_when` is advisory text, not code — no injection or execution risk
+  - `_tool_call()` helper centralizes descriptor construction
+  - 8 `DONE_*` constants ensure predicate consistency across endpoints
+- Residual risk: Very low. All contract content is deterministic, derived from existing response state. Agents may ignore contracts — no enforcement, no side effects if misinterpreted.
+
+## 2026-04-08 - ADR-023: Canonical Examples in Agent-Output (fix_plan + brief)
+
+- Risk ID: RISK-OUTPUT-2026-04-08-023
+- Component: `src/drift/guardrails.py`, `src/drift/api_helpers.py`
+- Type: Output schema extension (additive, non-breaking)
+- Description: ADR-023 surfaces existing positive-reference data through two new additive fields:
+  - `Guardrail.preferred_pattern`: Carries `NegativeContext.canonical_alternative` through to brief guardrails and prompt block (previously lost during NC→Guardrail transformation).
+  - `canonical_refs` list in fix_plan task dicts: Extracts `canonical_exemplar` from Finding metadata (e.g. PFS file:line refs) and `canonical_alternative` from NegativeContext items. Capped at 3 refs per task.
+  - `guardrails_to_prompt_block()`: Emits optional `PREFERRED:` line after each constraint when preferred_pattern is non-empty.
+- Trigger: `brief()` and `fix_plan()` API calls; MCP `drift_brief` and `drift_fix_plan` tools (JSON passthrough).
+- Impact: Additive only — `schema_version` remains "2.0". No existing fields changed. Empty defaults (`""` / `[]`) when source data unavailable. No scoring, signal, or ingestion logic affected.
+- Mitigation:
+  - 4 new tests in `tests/test_brief.py` (28 total in class)
+  - 4 new tests in `tests/test_batch_metadata.py` (56 total)
+  - Full test suite passes; ruff + mypy clean
+  - canonical_refs capped at 3 per task (token budget)
+  - preferred_pattern truncated to 200 chars (injection prevention)
+- Residual risk: Very low. All new data is derived from existing analysis artifacts. Comment-prefix stripping is deterministic and bounded. No new computation paths or external data sources.
+
+## 2026-04-09 - ADR-021: Batch-Dominant Fix-Loop Orchestration (Agent Instruction Alignment)
+
+- Risk ID: RISK-OUTPUT-2026-04-09-021
+- Component: `src/drift/api.py`, `src/drift/mcp_server.py`
+- Type: Agent instruction text change (output channel, non-breaking)
+- Description: ADR-021 resolves contradictory `agent_instruction` texts that caused agents to fall back to per-file verification even when batch capabilities (ADR-020) exist. Changes:
+  - `_scan_agent_instruction()`: Threshold-based branching (>20 findings → batch-first guidance with max_tasks=20, ≤20 → nudge-based per-fix workflow)
+  - `_fix_plan_agent_instruction()`: Non-batch path recommends nudge (not diff) for inner loop; batch path adds nudge guidance between edits
+  - Diff `_agent_hint`: "improved" and "no change" cases now reference batch_eligible groups and nudge
+  - Nudge `agent_instruction`: References new inner-loop/outer-loop model (nudge = inner, diff = outer)
+  - MCP `_BASE_INSTRUCTIONS`: Removed "do not batch" from nudge tool description; added explicit FEEDBACK LOOP ROLES section; batch step 2 now mentions nudge between edits
+- Trigger: All API endpoints that return `agent_instruction` fields
+- Impact: Only plaintext `agent_instruction` strings changed — `schema_version` remains "2.0". No structural, scoring, or field-level changes.
+- Mitigation:
+  - 5 new tests in `tests/test_batch_metadata.py` (24 total)
+  - Full test suite passes (2083 passed, 168 skipped)
+  - ruff + mypy clean
+  - Contradictions verified eliminated via grep (zero matches for "do not batch" in MCP, zero matches for "After each file change.*drift_diff" in api.py)
+- Residual risk: Very low. Agent instruction texts are non-binding recommendations that guide but do not constrain agent behavior. No scoring, schema, or functional logic changed.
+
+## 2026-04-08 - Agent Repair Workflow Quick Wins (V-3a/V-5/V-6/V-8a/V-13)
+
+- Risk ID: RISK-OUTPUT-2026-04-08-021
+- Component: `src/drift/api.py`, `src/drift/output/agent_tasks.py`, `src/drift/api_helpers.py`, `src/drift/models.py`, `src/drift/mcp_server.py`
+- Type: Output schema extension + MCP tool parameter addition (additive, non-breaking)
+- Description: Six Quick Win improvements for agent repair workflow effectiveness:
+  - V-3c: Baseline-warming step added to Fix-Loop Protocol in MCP system prompt
+  - V-5: `finding_count_by_signal` dict added to scan response (Counter over ALL findings pre-truncation)
+  - V-6: `expected_score_delta` field added to AgentTask model, populated from `finding.score_contribution`, exposed in `_task_to_api_dict()`
+  - V-8a: Negative context `max_items` increased from 3 to 5 for richer anti-pattern guidance
+  - V-3a: `signals`/`exclude_signals` params added to `nudge()` and MCP `drift_nudge` — post-hoc result filtering (score unaffected)
+  - V-13: `dependency_depth` metadata via BFS in `_compute_dependencies()` — depth 0 = no deps, depth N = max(dep depths)+1, -1 = cycle
+- Trigger: scan, fix_plan, or nudge API calls
+- Impact: Schema additive only — `schema_version` remains "2.0". No existing fields removed or renamed.
+- Mitigation:
+  - All new fields are optional/additive (backward-compatible)
+  - 7 new tests added to `tests/test_batch_metadata.py` (19 total)
+  - Full test suite passes (2085 passed, 168 skipped)
+  - ruff + mypy clean
+- Residual risk: Low. Nudge signal filtering is display-only — score/direction always reflect full analysis.
+
 ## 2026-04-07 - ADR-020: Agent Fix-Loop Batch Metadata (Output Schema Extension)
 
 - Risk ID: RISK-OUTPUT-2026-04-07-020

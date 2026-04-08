@@ -84,6 +84,7 @@ class Guardrail:
     reason: str
     affected_files: list[str] = field(default_factory=list)
     prompt_text: str = ""
+    preferred_pattern: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-compatible dict."""
@@ -97,6 +98,7 @@ class Guardrail:
             "reason": self.reason,
             "affected_files": self.affected_files,
             "prompt_text": self.prompt_text,
+            "preferred_pattern": self.preferred_pattern,
         }
 
 
@@ -129,6 +131,14 @@ def _nc_to_guardrail(nc: NegativeContext, idx: int) -> Guardrail:
         if forbidden_short:
             prompt_line += f" Do NOT: {forbidden_short}."
 
+    # Extract canonical alternative as preferred pattern reference
+    preferred = ""
+    if nc.canonical_alternative:
+        # Strip comment prefixes for a clean, agent-readable pattern ref
+        lines = nc.canonical_alternative.strip().splitlines()
+        cleaned = [ln.lstrip("# ").strip() for ln in lines if ln.strip()]
+        preferred = " ".join(cleaned)[:200]
+
     return Guardrail(
         id=gid,
         signal=abbrev,
@@ -139,6 +149,7 @@ def _nc_to_guardrail(nc: NegativeContext, idx: int) -> Guardrail:
         reason=reason,
         affected_files=nc.affected_files,
         prompt_text=prompt_line,
+        preferred_pattern=preferred,
     )
 
 
@@ -221,5 +232,7 @@ def guardrails_to_prompt_block(guardrails: list[Guardrail]) -> str:
     ]
     for i, gr in enumerate(guardrails, start=1):
         lines.append(f"{i}. {gr.prompt_text}")
+        if gr.preferred_pattern:
+            lines.append(f"   PREFERRED: {gr.preferred_pattern}")
 
     return "\n".join(lines)

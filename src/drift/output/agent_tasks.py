@@ -635,10 +635,14 @@ def _expected_effect_for(finding: Finding) -> str:
 
 
 def _compute_dependencies(tasks: list[AgentTask]) -> None:
-    """Set intra-module depends_on edges (mutates tasks in place).
+    """Set intra-module depends_on edges and dependency_depth (mutates tasks in place).
 
     Rule: AVS circular-dependency tasks block AVS blast-radius / layer tasks
     in the same module (solving the cycle first makes other fixes feasible).
+
+    After edges are computed, a BFS pass assigns ``dependency_depth`` metadata:
+    tasks with no dependencies get depth 0; tasks that depend only on depth-0
+    tasks get depth 1, and so on.  Agents should fix depth-0 tasks first.
     """
     # Index circular-dep task IDs by their module path
     circular_ids_by_module: dict[str, list[str]] = {}
@@ -652,6 +656,9 @@ def _compute_dependencies(tasks: list[AgentTask]) -> None:
             circular_ids_by_module.setdefault(module, []).append(t.id)
 
     if not circular_ids_by_module:
+        # No dependencies → all tasks at depth 0
+        for t in tasks:
+            t.metadata["dependency_depth"] = 0
         return
 
     for t in tasks:
@@ -664,6 +671,28 @@ def _compute_dependencies(tasks: list[AgentTask]) -> None:
             deps = circular_ids_by_module.get(module, [])
             if deps:
                 t.depends_on = [d for d in deps if d != t.id]
+
+    # BFS depth computation
+    depth: dict[str, int] = {}
+    # Seed: tasks with no dependencies are depth 0
+    queue = [t.id for t in tasks if not t.depends_on]
+    for tid in queue:
+        depth[tid] = 0
+    visited = set(queue)
+    while queue:
+        current_id = queue.pop(0)
+        for t in tasks:
+            if (
+                current_id in t.depends_on
+                and t.id not in visited
+                and all(d in depth for d in t.depends_on)
+            ):
+                depth[t.id] = max(depth[d] for d in t.depends_on) + 1
+                visited.add(t.id)
+                queue.append(t.id)
+    # Assign depth metadata (unresolvable cycles get depth -1)
+    for t in tasks:
+        t.metadata["dependency_depth"] = depth.get(t.id, -1)
 
 
 # ---------------------------------------------------------------------------
@@ -729,8 +758,9 @@ def _finding_to_task(
         constraints=_generate_constraints(finding),
         repair_maturity=maturity,
         negative_context=findings_to_negative_context(
-            [finding], max_items=3,
+            [finding], max_items=5,
         ),
+        expected_score_delta=round(finding.score_contribution, 4),
     )
 
     # Apply automation fitness classification (mutates task in place)

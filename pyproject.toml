@@ -209,3 +209,42 @@ exclude_commit_patterns = [
 
 [tool.semantic_release.remote]
 type = "github"
+
+[tool.drift]
+# Repo-spezifische Scope-Hygiene: Nicht-operative und externe Korpuspfade
+# werden aus der Standardanalyse ausgeschlossen, um handlungsrelevante
+# Produktionsbefunde zu priorisieren.
+exclude = [
+    "benchmarks/corpus/**",
+    "work_artifacts/**",
+    "hooks/**",
+    "tests/**",
+    "examples/**",
+    "docs/**",
+    "docs-site/**",
+    "site/**",
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/venv/**",
+    "**/.venv/**",
+    "**/.tmp_*venv*/**",
+    "**/.env/**",
+    "**/.conda/**",
+    "**/.git/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.tox/**",
+    "**/.nox/**",
+    "**/site-packages/**",
+    "**/.pixi/**",
+    "**/*.egg-info/**",
+    "**/docs/**",
+    "**/docs_src/**",
+    "**/examples/**",
+    "**/tests/**",
+    "**/scripts/**",
+    "**/site/**",
+    "**/benchmarks/corpus/**",
+    "**/work_artifacts/**",
+    "**/hooks/**",
+]

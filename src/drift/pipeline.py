@@ -214,6 +214,13 @@ class IngestionPhase:
         degradation: DegradationInfo,
         progress: ProgressCallback | None = None,
     ) -> ParsedInputs:
+        """Parse source files and collect git context for downstream signal phases.
+
+        The method first attempts content-hash cache hits, then parses only the
+        remaining files in parallel while git history is fetched concurrently.
+        On git failures, parsing results are preserved and degradation metadata is
+        recorded so later stages can continue with reduced context.
+        """
         known_files = {f.path.as_posix() for f in files}
         cache = self._cache_factory(repo_path / config.cache_dir)
 
@@ -392,6 +399,13 @@ class SignalPhase:
         workers: int = DEFAULT_WORKERS,
         active_signals: set[str] | None = None,
     ) -> SignalOutput:
+        """Execute enabled signals with optional embedding support and result caching.
+
+        Signals are filtered by ``active_signals`` when provided, then executed
+        through a cache-aware wrapper that reuses stable results based on config
+        and parsed-content fingerprints. Failures are captured in degradation
+        metadata instead of aborting the whole analysis pipeline.
+        """
         ctx = AnalysisContext(
             repo_path=repo_path,
             config=config,

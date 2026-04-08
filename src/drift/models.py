@@ -340,6 +340,13 @@ class AgentTask:
     repair_maturity: str = "experimental"  # "verified" | "experimental" | "indirect-only"
     # Negative context: anti-patterns the agent must NOT reproduce
     negative_context: list[NegativeContext] = field(default_factory=list)
+    # Expected score reduction when this task is resolved
+    expected_score_delta: float = 0.0
+    # ADR-025 Phase A: Task-graph fields for orchestration
+    blocks: list[str] = field(default_factory=list)  # inverse of depends_on
+    batch_group: str | None = None  # cluster ID for co-fixable tasks
+    preferred_order: int = 0  # topological sort index within session
+    parallel_with: list[str] = field(default_factory=list)  # task IDs safe to run concurrently
 
 
 # ---------------------------------------------------------------------------

@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add machine-readable next-step contracts (`next_tool_call`, `fallback_tool_call`, `done_when`) to all agent-oriented API responses (scan detailed, diff, fix_plan, nudge, brief, negative_context), plus `recovery_tool_call` on error responses, reducing agent hallucinations in tool-call chains (ADR-024).
+- Add `preferred_pattern` field to guardrails and `canonical_refs` list to fix_plan tasks, surfacing positive code references (canonical exemplars, preferred patterns) from existing analysis data so coding agents receive concrete "do this" guidance alongside anti-patterns (ADR-023).
 - Add `--exclude-signals` / `--exclude` option to `drift scan` CLI, `exclude_signals` parameter to the API, and MCP `drift_scan` tool to let callers explicitly exclude dominant or noisy signals (e.g. `MDS`) from returned findings (#173).
 
 ### Fixed

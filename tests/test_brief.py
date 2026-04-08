@@ -208,6 +208,65 @@ class TestGuardrails:
         assert d["signal"] == "PFS"
         assert isinstance(d["affected_files"], list)
 
+    def test_guardrail_preferred_pattern_in_dict(self) -> None:
+        gr = Guardrail(
+            id="GR-PFS-002",
+            signal="PFS",
+            constraint_class="PATTERN",
+            severity="MEDIUM",
+            constraint="Use consistent error handling.",
+            forbidden="bare except",
+            reason="Pattern fragmentation.",
+            affected_files=["services/payment_service.py"],
+            prompt_text="CONSTRAINT [PFS]: Use consistent error handling.",
+            preferred_pattern="Follow the canonical pattern: return_dict",
+        )
+        d = gr.to_dict()
+        assert d["preferred_pattern"] == "Follow the canonical pattern: return_dict"
+
+    def test_guardrail_preferred_pattern_default_empty(self) -> None:
+        gr = Guardrail(
+            id="GR-AVS-001",
+            signal="AVS",
+            constraint_class="ARCHITECTURE",
+            severity="HIGH",
+            constraint="Do not cross layer boundaries.",
+            forbidden="Import db from api",
+            reason="Violates layer architecture.",
+        )
+        assert gr.preferred_pattern == ""
+        assert gr.to_dict()["preferred_pattern"] == ""
+
+    def test_prompt_block_includes_preferred_pattern(self) -> None:
+        gr = Guardrail(
+            id="GR-PFS-001",
+            signal="PFS",
+            constraint_class="PATTERN",
+            severity="MEDIUM",
+            constraint="Use consistent error handling.",
+            forbidden="bare except",
+            reason="Pattern fragmentation.",
+            prompt_text="CONSTRAINT [PFS]: Use consistent error handling.",
+            preferred_pattern="Follow the canonical pattern: return_dict",
+        )
+        block = guardrails_to_prompt_block([gr])
+        assert "PREFERRED: Follow the canonical pattern: return_dict" in block
+
+    def test_prompt_block_omits_preferred_when_empty(self) -> None:
+        gr = Guardrail(
+            id="GR-AVS-001",
+            signal="AVS",
+            constraint_class="ARCHITECTURE",
+            severity="HIGH",
+            constraint="Do not cross layer boundaries.",
+            forbidden="Import db from api",
+            reason="Violates layer architecture.",
+            prompt_text="CONSTRAINT [AVS]: Do not cross layer boundaries.",
+            preferred_pattern="",
+        )
+        block = guardrails_to_prompt_block([gr])
+        assert "PREFERRED" not in block
+
 
 # ---------------------------------------------------------------------------
 # Config: BriefConfig
