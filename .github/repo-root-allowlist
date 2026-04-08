@@ -12,6 +12,7 @@
 .markdownlint-cli2.jsonc
 .secrets.baseline
 .detect-secrets.cfg
+.drift-baseline.json
 .shellcheckrc
 .vscode
 CHANGELOG.md
