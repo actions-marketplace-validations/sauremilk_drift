@@ -339,3 +339,117 @@ class TestMcpSessionIntegration:
         assert "session" not in result
         assert result["drift_score"] == 40.0
 
+
+class TestMcpStrictGuardrails:
+    """Regression tests for opt-in strict MCP orchestration guardrails (#202)."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_sessions(self):
+        from drift.session import SessionManager
+
+        SessionManager.reset_instance()
+        yield
+        SessionManager.reset_instance()
+
+    @staticmethod
+    def _write_agent_config(repo_path: Path, *, strict: bool) -> None:
+        strict_value = "true" if strict else "false"
+        (repo_path / "drift.yaml").write_text(
+            "agent:\n"
+            "  goal: \"strict orchestration test\"\n"
+            f"  strict_guardrails: {strict_value}\n",
+            encoding="utf-8",
+        )
+
+    @pytest.mark.parametrize(
+        ("tool_name", "expected_recovery_tool", "expected_reason"),
+        [
+            ("drift_fix_plan", "drift_brief", "missing_diagnosis"),
+            ("drift_diff", "drift_scan", "missing_scan_baseline"),
+            ("drift_nudge", "drift_scan", "missing_scan_baseline"),
+        ],
+    )
+    def test_strict_mode_blocks_unsafe_orchestration_paths(
+        self,
+        tmp_path: Path,
+        tool_name: str,
+        expected_recovery_tool: str,
+        expected_reason: str,
+    ) -> None:
+        from drift import mcp_server
+        from drift.session import SessionManager
+
+        self._write_agent_config(tmp_path, strict=True)
+        start = json.loads(_run_tool(mcp_server.drift_session_start(path=str(tmp_path))))
+        sid = start["session_id"]
+
+        if tool_name == "drift_fix_plan":
+            raw = _run_tool(mcp_server.drift_fix_plan(session_id=sid))
+        elif tool_name == "drift_diff":
+            raw = _run_tool(mcp_server.drift_diff(session_id=sid))
+        else:
+            raw = _run_tool(mcp_server.drift_nudge(session_id=sid))
+
+        result = json.loads(raw)
+        assert result["type"] == "error"
+        assert result["error_code"] == "DRIFT-6002"
+        assert result["blocked_tool"] == tool_name
+        assert result["session_id"] == sid
+        assert isinstance(result["block_reasons"], list)
+        assert result["block_reasons"]
+
+        reasons = {r["reason"] for r in result["block_reasons"]}
+        assert expected_reason in reasons
+        assert "recovery_tool_call" in result
+        assert result["recovery_tool_call"]["tool"] == expected_recovery_tool
+        assert result["recovery_tool_call"]["params"]["session_id"] == sid
+
+        session = SessionManager.instance().get(sid)
+        assert session is not None
+        assert any(
+            t.get("tool") == tool_name
+            and "strict_guardrail_block" in str(t.get("advisory", ""))
+            for t in session.trace
+        )
+
+    def test_soft_mode_keeps_backwards_compatible_behavior(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        from drift import mcp_server
+
+        self._write_agent_config(tmp_path, strict=False)
+        monkeypatch.setattr(
+            "drift.api.diff",
+            lambda *_a, **_kw: {"status": "ok", "drift_detected": False},
+        )
+
+        start = json.loads(_run_tool(mcp_server.drift_session_start(path=str(tmp_path))))
+        sid = start["session_id"]
+
+        result = json.loads(_run_tool(mcp_server.drift_diff(session_id=sid)))
+
+        assert result.get("error_code") != "DRIFT-6002"
+        assert result.get("status") == "ok"
+
+    def test_strict_mode_blocks_session_end_with_open_tasks(self, tmp_path: Path) -> None:
+        from drift import mcp_server
+        from drift.session import SessionManager
+
+        self._write_agent_config(tmp_path, strict=True)
+        start = json.loads(_run_tool(mcp_server.drift_session_start(path=str(tmp_path))))
+        sid = start["session_id"]
+
+        session = SessionManager.instance().get(sid)
+        assert session is not None
+        session.selected_tasks = [{"id": "T-1", "title": "dummy"}]
+
+        result = json.loads(_run_tool(mcp_server.drift_session_end(session_id=sid)))
+
+        assert result["type"] == "error"
+        assert result["error_code"] == "DRIFT-6002"
+        assert result["blocked_tool"] == "drift_session_end"
+        assert any(r["reason"] == "open_tasks_remaining" for r in result["block_reasons"])
+        assert result["recovery_tool_call"]["tool"] == "drift_task_status"
+

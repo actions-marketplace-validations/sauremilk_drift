@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import functools
+import hashlib
 import inspect
 import io
 import json
@@ -369,7 +370,7 @@ async def drift_scan(
         if session:
             with contextlib.suppress(json.JSONDecodeError, TypeError):
                 _update_session_from_scan(session, json.loads(raw))
-        return _enrich_response_with_session(raw, session)
+        return _enrich_response_with_session(raw, session, "drift_scan")
     except Exception as exc:
         from drift.api_helpers import _error_response
 
@@ -424,6 +425,25 @@ async def drift_diff(
             ),
         ),
     ] = None,
+    hypothesis_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Diagnostic hypothesis ID to link this verification result "
+                "to the underlying cause/change hypothesis."
+            ),
+        ),
+    ] = None,
+    diagnostic_hypothesis: Annotated[
+        dict[str, Any] | None,
+        Field(
+            description=(
+                "Optional full diagnostic hypothesis payload. Required in batch-fix "
+                "context if no hypothesis_id is provided. Must include: "
+                "affected_files, suspected_root_cause, minimal_intended_change, non_goals."
+            ),
+        ),
+    ] = None,
     session_id: Annotated[
         str,
         Field(description="Optional session ID from drift_session_start for stateful workflows."),
@@ -445,12 +465,25 @@ async def drift_diff(
         signals: Comma-separated signal abbreviations to include.
         exclude_signals: Comma-separated signal abbreviations to exclude.
         response_profile: Response profile (planner, coder, verifier, merge_readiness).
+        hypothesis_id: Existing diagnostic hypothesis ID for trace linkage.
+        diagnostic_hypothesis: Full hypothesis payload (cause/change/non-goals).
         session_id: Optional session ID for stateful workflows.
     """
 
     from drift.api import diff
 
     session = _resolve_session(session_id)
+    blocked = _strict_guardrail_block_response("drift_diff", session)
+    if blocked is not None:
+        return blocked
+    hypothesis_ctx = _resolve_diagnostic_hypothesis_context(
+        tool_name="drift_diff",
+        session=session,
+        hypothesis_id=hypothesis_id,
+        diagnostic_hypothesis=diagnostic_hypothesis,
+    )
+    if hypothesis_ctx.get("blocked_response"):
+        return cast(str, hypothesis_ctx["blocked_response"])
     kwargs = _session_defaults(session, {
         "path": path,
         "signals": _parse_csv_ids(signals),
@@ -477,7 +510,24 @@ async def drift_diff(
     if session:
         with contextlib.suppress(json.JSONDecodeError, TypeError):
             _update_session_from_diff(session, json.loads(raw))
-    return _enrich_response_with_session(raw, session)
+    with contextlib.suppress(json.JSONDecodeError, TypeError):
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            h_id = cast(str | None, hypothesis_ctx.get("hypothesis_id"))
+            if h_id:
+                parsed["hypothesis_id"] = h_id
+                parsed["verification_evidence"] = {
+                    "tool": "drift_diff",
+                    "accept_change": parsed.get("accept_change"),
+                    "blocking_reasons": parsed.get("blocking_reasons", []),
+                }
+                raw = json.dumps(parsed, default=str)
+    return _enrich_response_with_session(
+        raw,
+        session,
+        "drift_diff",
+        trace_meta=_trace_meta_from_hypothesis_result("drift_diff", raw),
+    )
 
 
 @mcp.tool()
@@ -526,7 +576,7 @@ async def drift_explain(
     )
     if session:
         session.touch()
-    return _enrich_response_with_session(raw, session)
+    return _enrich_response_with_session(raw, session, "drift_explain")
 
 
 @mcp.tool()
@@ -605,6 +655,9 @@ async def drift_fix_plan(
     from drift.api import fix_plan
 
     session = _resolve_session(session_id)
+    blocked = _strict_guardrail_block_response("drift_fix_plan", session)
+    if blocked is not None:
+        return blocked
     kwargs = _session_defaults(session, {
         "path": path,
         "target_path": target_path,
@@ -628,7 +681,7 @@ async def drift_fix_plan(
     if session:
         with contextlib.suppress(json.JSONDecodeError, TypeError):
             _update_session_from_fix_plan(session, json.loads(raw))
-    return _enrich_response_with_session(raw, session)
+    return _enrich_response_with_session(raw, session, "drift_fix_plan")
 
 
 @mcp.tool()
@@ -697,7 +750,7 @@ async def drift_validate(
                 raw = json.dumps(parsed, indent=2)
             except (json.JSONDecodeError, TypeError):
                 pass  # non-JSON response, skip enrichment
-    return _enrich_response_with_session(raw, session)
+    return _enrich_response_with_session(raw, session, "drift_validate")
 
 
 @mcp.tool()
@@ -732,6 +785,25 @@ async def drift_nudge(
             ),
         ),
     ] = None,
+    hypothesis_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Diagnostic hypothesis ID to link this nudge result "
+                "to the underlying cause/change hypothesis."
+            ),
+        ),
+    ] = None,
+    diagnostic_hypothesis: Annotated[
+        dict[str, Any] | None,
+        Field(
+            description=(
+                "Optional full diagnostic hypothesis payload. Required in batch-fix "
+                "context if no hypothesis_id is provided. Must include: "
+                "affected_files, suspected_root_cause, minimal_intended_change, non_goals."
+            ),
+        ),
+    ] = None,
     session_id: Annotated[
         str,
         Field(description="Optional session ID from drift_session_start for stateful workflows."),
@@ -753,12 +825,25 @@ async def drift_nudge(
             (posix, relative to repo root).  Auto-detected via git if omitted.
         uncommitted: When auto-detecting, use uncommitted working-tree
             changes (default) vs. staged-only.
+        hypothesis_id: Existing diagnostic hypothesis ID for trace linkage.
+        diagnostic_hypothesis: Full hypothesis payload (cause/change/non-goals).
         session_id: Optional session ID for stateful workflows.
     """
 
     from drift.api import nudge
 
     session = _resolve_session(session_id)
+    blocked = _strict_guardrail_block_response("drift_nudge", session)
+    if blocked is not None:
+        return blocked
+    hypothesis_ctx = _resolve_diagnostic_hypothesis_context(
+        tool_name="drift_nudge",
+        session=session,
+        hypothesis_id=hypothesis_id,
+        diagnostic_hypothesis=diagnostic_hypothesis,
+    )
+    if hypothesis_ctx.get("blocked_response"):
+        return cast(str, hypothesis_ctx["blocked_response"])
     resolved_path = path
     if session and (not path or path == "."):
         resolved_path = session.repo_path
@@ -780,7 +865,25 @@ async def drift_nudge(
         except (json.JSONDecodeError, TypeError):
             pass
         session.touch()
-    return _enrich_response_with_session(raw, session)
+    with contextlib.suppress(json.JSONDecodeError, TypeError):
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            h_id = cast(str | None, hypothesis_ctx.get("hypothesis_id"))
+            if h_id:
+                parsed["hypothesis_id"] = h_id
+                parsed["verification_evidence"] = {
+                    "tool": "drift_nudge",
+                    "safe_to_commit": parsed.get("safe_to_commit"),
+                    "blocking_reasons": parsed.get("blocking_reasons", []),
+                    "changed_files": parsed.get("changed_files", []),
+                }
+                raw = json.dumps(parsed, default=str)
+    return _enrich_response_with_session(
+        raw,
+        session,
+        "drift_nudge",
+        trace_meta=_trace_meta_from_hypothesis_result("drift_nudge", raw),
+    )
 
 
 @mcp.tool()
@@ -986,7 +1089,7 @@ async def drift_negative_context(
         )
         if session:
             session.touch()
-        return _enrich_response_with_session(raw, session)
+        return _enrich_response_with_session(raw, session, "drift_negative_context")
     except TimeoutError:
         timeout_response = _negative_context_timeout_response(
             path=path,
@@ -1093,6 +1196,13 @@ def _update_session_from_scan(session: Any, result: dict[str, Any]) -> None:
     session.last_scan_finding_count = finding_count
     if session.score_at_start is None:
         session.score_at_start = result.get("drift_score")
+    # Agent-effectiveness: record snapshot for quality-drift detection
+    score = result.get("drift_score")
+    if score is not None and finding_count is not None:
+        session.snapshot_run(score, finding_count)
+    # Auto-advance phase from init → scan
+    if session.phase == "init":
+        session.advance_phase("scan")
     session.touch()
 
 
@@ -1103,6 +1213,9 @@ def _update_session_from_fix_plan(session: Any, result: dict[str, Any]) -> None:
     tasks = result.get("tasks")
     if tasks:
         session.selected_tasks = tasks
+    # Auto-advance phase from scan → fix
+    if session.phase in ("init", "scan"):
+        session.advance_phase("fix")
     session.touch()
 
 
@@ -1122,15 +1235,474 @@ def _update_session_from_diff(session: Any, result: dict[str, Any]) -> None:
     score_after = result.get("score_after")
     if score_after is not None:
         session.last_scan_score = score_after
+    # Auto-advance phase to verify
+    if session.phase in ("fix",):
+        session.advance_phase("verify")
+    # Record snapshot for quality-drift detection
+    finding_count = result.get("findings_after_count")
+    if score_after is not None and finding_count is not None:
+        session.snapshot_run(score_after, finding_count)
     session.touch()
 
 
+def _session_called_tools(session: Any) -> set[str]:
+    """Return tools already executed or inferable from session state."""
+    if session is None:
+        return set()
+
+    called = {
+        str(item.get("tool"))
+        for item in (session.trace or [])
+        if isinstance(item, dict) and item.get("tool")
+    }
+
+    # Inference fallback for sessions where not all steps are traced
+    # (e.g. session_start autopilot or out-of-band updates).
+    if session.phase != "init":
+        called.add("drift_validate")
+    if session.guardrails is not None:
+        called.add("drift_brief")
+    if session.last_scan_score is not None or session.last_scan_finding_count is not None:
+        called.add("drift_scan")
+    if session.selected_tasks:
+        called.add("drift_fix_plan")
+
+    return called
+
+
+_DIAGNOSTIC_REQUIRED_FIELDS = (
+    "affected_files",
+    "suspected_root_cause",
+    "minimal_intended_change",
+    "non_goals",
+)
+
+
+def _requires_diagnostic_hypothesis(session: Any) -> bool:
+    """Return True when the session is in a batch-fix verification context."""
+    if session is None:
+        return False
+    return bool(session.selected_tasks) or session.phase in {"fix", "verify"}
+
+
+def _validate_diagnostic_hypothesis_payload(payload: Any) -> list[str]:
+    """Validate diagnostic hypothesis payload contract and return field errors."""
+    if not isinstance(payload, dict):
+        return ["diagnostic_hypothesis must be an object"]
+
+    errors: list[str] = []
+    affected_files = payload.get("affected_files")
+    if not isinstance(affected_files, list) or not affected_files:
+        errors.append("affected_files (non-empty list[str])")
+    elif not all(isinstance(item, str) and item.strip() for item in affected_files):
+        errors.append("affected_files items must be non-empty strings")
+
+    root_cause = payload.get("suspected_root_cause")
+    if not isinstance(root_cause, str) or not root_cause.strip():
+        errors.append("suspected_root_cause (non-empty string)")
+
+    intended_change = payload.get("minimal_intended_change")
+    if not isinstance(intended_change, str) or not intended_change.strip():
+        errors.append("minimal_intended_change (non-empty string)")
+
+    non_goals = payload.get("non_goals")
+    if not isinstance(non_goals, list) or not non_goals:
+        errors.append("non_goals (non-empty list[str])")
+    elif not all(isinstance(item, str) and item.strip() for item in non_goals):
+        errors.append("non_goals items must be non-empty strings")
+
+    return errors
+
+
+def _derive_diagnostic_hypothesis_id(payload: dict[str, Any]) -> str:
+    """Create a stable hypothesis ID from normalized payload content."""
+    normalized = {
+        "affected_files": sorted(
+            [str(item).strip() for item in payload.get("affected_files", [])]
+        ),
+        "suspected_root_cause": str(payload.get("suspected_root_cause", "")).strip(),
+        "minimal_intended_change": str(
+            payload.get("minimal_intended_change", "")
+        ).strip(),
+        "non_goals": sorted([str(item).strip() for item in payload.get("non_goals", [])]),
+    }
+    digest = hashlib.sha1(
+        json.dumps(normalized, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:12]
+    return f"hyp-{digest}"
+
+
+def _diagnostic_hypothesis_block_response(
+    *,
+    tool_name: str,
+    session: Any,
+    reason: str,
+    details: list[str] | None = None,
+    missing_hypothesis_id: str | None = None,
+) -> str:
+    """Build a structured MCP error envelope for missing/invalid hypotheses."""
+    from drift.api_helpers import _error_response
+
+    message = (
+        f"{tool_name} requires a linked diagnostic hypothesis in batch-fix context."
+    )
+    if reason == "unknown_hypothesis_id":
+        message = (
+            f"{tool_name} received unknown hypothesis_id '{missing_hypothesis_id}'. "
+            "Register the full diagnostic_hypothesis first."
+        )
+
+    payload: dict[str, Any] = {
+        "blocked_tool": tool_name,
+        "reason": reason,
+        "required_fields": list(_DIAGNOSTIC_REQUIRED_FIELDS),
+    }
+    if details:
+        payload["validation_errors"] = details
+    if missing_hypothesis_id:
+        payload["hypothesis_id"] = missing_hypothesis_id
+
+    response = _error_response(
+        "DRIFT-6003",
+        message,
+        recoverable=True,
+        suggested_fix=payload,
+        recovery_tool_call={
+            "tool": tool_name,
+            "params": {
+                "session_id": session.session_id if session is not None else "",
+                "diagnostic_hypothesis": {
+                    "affected_files": ["src/example.py"],
+                    "suspected_root_cause": "Short root-cause hypothesis",
+                    "minimal_intended_change": "Minimal, bounded code change",
+                    "non_goals": ["No unrelated refactor", "No scoring changes"],
+                },
+            },
+        },
+    )
+    if session is not None:
+        response["session_id"] = session.session_id
+        session.record_trace(
+            tool_name,
+            advisory=f"diagnostic_hypothesis_block:{reason}",
+            metadata={"diagnostic_hypothesis_reason": reason},
+        )
+        session.touch()
+    response["blocked_tool"] = tool_name
+    response["diagnostic_hypothesis_reason"] = reason
+    response["agent_instruction"] = (
+        "Provide diagnostic_hypothesis with required fields or a known hypothesis_id, "
+        "then retry the blocked tool."
+    )
+    return json.dumps(response, default=str)
+
+
+def _resolve_diagnostic_hypothesis_context(
+    *,
+    tool_name: str,
+    session: Any,
+    hypothesis_id: str | None,
+    diagnostic_hypothesis: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Resolve and validate hypothesis context for nudge/diff tools."""
+    requires_hypothesis = _requires_diagnostic_hypothesis(session)
+
+    # Register payload-based hypothesis when provided.
+    if diagnostic_hypothesis is not None:
+        errors = _validate_diagnostic_hypothesis_payload(diagnostic_hypothesis)
+        if errors:
+            return {
+                "blocked_response": _diagnostic_hypothesis_block_response(
+                    tool_name=tool_name,
+                    session=session,
+                    reason="invalid_diagnostic_hypothesis",
+                    details=errors,
+                )
+            }
+
+        resolved_id = (hypothesis_id or diagnostic_hypothesis.get("hypothesis_id") or "").strip()
+        if not resolved_id:
+            resolved_id = _derive_diagnostic_hypothesis_id(diagnostic_hypothesis)
+
+        if session is not None:
+            session.register_diagnostic_hypothesis(resolved_id, diagnostic_hypothesis)
+
+        return {
+            "required": requires_hypothesis,
+            "hypothesis_id": resolved_id,
+            "hypothesis": diagnostic_hypothesis,
+        }
+
+    # Resolve ID-only reference against session state.
+    if hypothesis_id:
+        stored = session.get_diagnostic_hypothesis(hypothesis_id) if session is not None else None
+        if stored is None and requires_hypothesis:
+            return {
+                "blocked_response": _diagnostic_hypothesis_block_response(
+                    tool_name=tool_name,
+                    session=session,
+                    reason="unknown_hypothesis_id",
+                    missing_hypothesis_id=hypothesis_id,
+                )
+            }
+        return {
+            "required": requires_hypothesis,
+            "hypothesis_id": hypothesis_id,
+            "hypothesis": stored,
+        }
+
+    if requires_hypothesis:
+        return {
+            "blocked_response": _diagnostic_hypothesis_block_response(
+                tool_name=tool_name,
+                session=session,
+                reason="missing_diagnostic_hypothesis",
+            )
+        }
+
+    return {"required": False, "hypothesis_id": None, "hypothesis": None}
+
+
+def _trace_meta_from_hypothesis_result(
+    tool_name: str,
+    raw_json: str,
+) -> dict[str, Any] | None:
+    """Extract hypothesis and verification evidence for trace entries."""
+    try:
+        parsed = json.loads(raw_json)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(parsed, dict):
+        return None
+
+    hypothesis_id = parsed.get("hypothesis_id")
+    verification = parsed.get("verification_evidence")
+    if not hypothesis_id and not verification:
+        return None
+
+    trace_meta: dict[str, Any] = {"tool": tool_name}
+    if hypothesis_id:
+        trace_meta["hypothesis_id"] = hypothesis_id
+    if verification and isinstance(verification, dict):
+        trace_meta["verification_evidence"] = verification
+    return trace_meta
+
+
+def _strict_guardrails_enabled(session: Any) -> bool:
+    """Return True when agent.strict_guardrails is enabled in drift config."""
+    if session is None:
+        return False
+
+    cached = getattr(session, "_strict_guardrails_enabled_cache", None)
+    if isinstance(cached, bool):
+        return cached
+
+    from drift.config import DriftConfig
+
+    enabled = False
+    try:
+        cfg = DriftConfig.load(Path(session.repo_path))
+    except Exception:
+        enabled = False
+    else:
+        agent_cfg = getattr(cfg, "agent", None)
+        enabled = bool(getattr(agent_cfg, "strict_guardrails", False))
+
+    # Cache once per session to avoid repeated config parsing on every tool call.
+    session._strict_guardrails_enabled_cache = enabled
+    return enabled
+
+
+def _strict_guardrail_violations(tool_name: str, session: Any) -> list[dict[str, Any]]:
+    """Return deterministic strict-guardrail violations for a tool transition."""
+    if session is None:
+        return []
+
+    called_tools = _session_called_tools(session)
+    violations: list[dict[str, Any]] = []
+
+    if tool_name == "drift_fix_plan":
+        if "drift_brief" not in called_tools:
+            violations.append({
+                "rule_id": "SG-001",
+                "reason": "missing_brief",
+                "message": "drift_fix_plan requires drift_brief in strict mode.",
+                "required": ["drift_brief"],
+                "observed": sorted(called_tools),
+            })
+        if "drift_scan" not in called_tools:
+            violations.append({
+                "rule_id": "SG-002",
+                "reason": "missing_diagnosis",
+                "message": "drift_fix_plan requires drift_scan diagnosis in strict mode.",
+                "required": ["drift_scan"],
+                "observed": sorted(called_tools),
+            })
+
+    if tool_name in {"drift_nudge", "drift_diff"} and "drift_scan" not in called_tools:
+        violations.append({
+            "rule_id": "SG-003",
+            "reason": "missing_scan_baseline",
+            "message": f"{tool_name} requires a prior drift_scan baseline in strict mode.",
+            "required": ["drift_scan"],
+            "observed": sorted(called_tools),
+        })
+
+    if tool_name == "drift_session_end" and session.tasks_remaining() > 0:
+        violations.append({
+            "rule_id": "SG-004",
+            "reason": "open_tasks_remaining",
+            "message": "drift_session_end is blocked while fix-plan tasks remain open.",
+            "required": ["session.tasks_remaining == 0"],
+            "observed": {"tasks_remaining": session.tasks_remaining()},
+        })
+
+    return violations
+
+
+def _strict_guardrail_recovery_tool_call(
+    violations: list[dict[str, Any]],
+    session: Any,
+) -> dict[str, Any]:
+    """Return deterministic next-step hint for strict-guardrail blocks."""
+    reason_ids = {v.get("reason") for v in violations}
+    session_id = session.session_id
+
+    if "missing_brief" in reason_ids:
+        return {
+            "tool": "drift_brief",
+            "params": {
+                "session_id": session_id,
+                "task": "continue strict orchestration workflow",
+            },
+        }
+    if "missing_diagnosis" in reason_ids or "missing_scan_baseline" in reason_ids:
+        return {
+            "tool": "drift_scan",
+            "params": {"session_id": session_id},
+        }
+    if "open_tasks_remaining" in reason_ids:
+        return {
+            "tool": "drift_task_status",
+            "params": {"session_id": session_id},
+        }
+    return {
+        "tool": "drift_session_status",
+        "params": {"session_id": session_id},
+    }
+
+
+def _strict_guardrail_block_response(tool_name: str, session: Any) -> str | None:
+    """Return an MCP error envelope when strict guardrails block a transition."""
+    if session is None or not _strict_guardrails_enabled(session):
+        return None
+
+    violations = _strict_guardrail_violations(tool_name, session)
+    if not violations:
+        return None
+
+    from drift.api_helpers import _error_response
+
+    recovery = _strict_guardrail_recovery_tool_call(violations, session)
+    message = (
+        f"Strict guardrails blocked '{tool_name}' because required orchestration "
+        "preconditions were not met."
+    )
+    response = _error_response(
+        "DRIFT-6002",
+        message,
+        recoverable=True,
+        suggested_fix={
+            "strict_guardrails": True,
+            "blocked_tool": tool_name,
+            "block_reasons": violations,
+        },
+        recovery_tool_call=recovery,
+    )
+    response["session_id"] = session.session_id
+    response["blocked_tool"] = tool_name
+    response["block_reasons"] = violations
+    response["agent_instruction"] = (
+        "Follow recovery_tool_call exactly, then retry the blocked tool."
+    )
+
+    advisory = (
+        f"strict_guardrail_block:{tool_name};"
+        + ",".join(str(v.get("reason")) for v in violations)
+    )
+    session.record_trace(tool_name, advisory=advisory)
+    session.touch()
+    return json.dumps(response, default=str)
+
+
+def _pre_call_advisory(tool_name: str, session: Any) -> str:
+    """Generate a lightweight pre-call advisory for the given tool.
+
+    Returns an advisory string (empty if no concerns). This does NOT
+    block the call — it provides soft guidance to the consuming agent.
+    """
+    if session is None:
+        return ""
+
+    from drift.tool_metadata import TOOL_CATALOG
+
+    entry = TOOL_CATALOG.get(tool_name)
+    if entry is None:
+        return ""
+
+    parts: list[str] = []
+
+    # Phase mismatch — tool not recommended for current phase
+    if entry.phases and session.phase not in entry.phases:
+        parts.append(
+            f"'{tool_name}' is typically used in phase(s) {', '.join(entry.phases)}"
+            f" but session is in phase '{session.phase}'."
+        )
+
+    # Redundancy check — warn if this exact tool was called recently
+    recent_tools = [t["tool"] for t in session.trace[-3:]] if session.trace else []
+    recent_count = recent_tools.count(tool_name)
+    if recent_count >= 2:
+        parts.append(
+            f"'{tool_name}' was called {recent_count} times in last 3 calls."
+            " Consider a different tool."
+        )
+
+    # Prerequisite check
+    if entry.context.prerequisite_tools:
+        called_tools = _session_called_tools(session)
+        missing = [p for p in entry.context.prerequisite_tools if p not in called_tools]
+        if missing:
+            parts.append(
+                f"Prerequisite tool(s) not yet called: {', '.join(missing)}."
+            )
+
+    if _strict_guardrails_enabled(session):
+        violations = _strict_guardrail_violations(tool_name, session)
+        if violations:
+            reason_ids = ", ".join(str(v.get("reason")) for v in violations)
+            parts.append(
+                "Strict guardrails are enabled; this transition requires hard"
+                f" preconditions ({reason_ids})."
+            )
+
+    return " ".join(parts)
+
+
 def _enrich_response_with_session(
-    raw_json: str, session: Any
+    raw_json: str,
+    session: Any,
+    tool_name: str = "",
+    trace_meta: dict[str, Any] | None = None,
 ) -> str:
     """Inject session metadata into a tool response JSON string."""
     if session is None:
         return raw_json
+
+    # Record trace entry + pre-call advisory
+    advisory = _pre_call_advisory(tool_name, session) if tool_name else ""
+    if tool_name:
+        session.record_trace(tool_name, advisory=advisory, metadata=trace_meta)
     try:
         result = json.loads(raw_json)
     except (json.JSONDecodeError, TypeError):
@@ -1139,10 +1711,11 @@ def _enrich_response_with_session(
     if not isinstance(result, dict):
         return raw_json
 
-    result["session"] = {
+    session_block: dict[str, Any] = {
         "session_id": session.session_id,
         "scope": session.scope_label(),
         "tasks_remaining": session.tasks_remaining(),
+        "phase": session.phase,
         "score_delta_since_start": (
             round(session.last_scan_score - session.score_at_start, 2)
             if session.last_scan_score is not None
@@ -1151,10 +1724,45 @@ def _enrich_response_with_session(
         ),
     }
 
+    # Quality-drift detection
+    from drift.quality_gate import quality_drift_from_history
+
+    qd = quality_drift_from_history(session.run_history)
+    if qd is not None:
+        session_block["quality_drift"] = {
+            "direction": qd.direction,
+            "score_delta": qd.score_delta,
+            "finding_delta": qd.finding_delta,
+            "advisory": qd.advisory,
+        }
+
+    # Progressive tool disclosure — recommend tools for current phase
+    from drift.tool_metadata import tools_for_phase
+
+    session_block["available_tools"] = tools_for_phase(session.phase)
+
+    # Pre-call advisory (soft guidance)
+    if advisory:
+        session_block["advisory"] = advisory
+
+    # Tool context hint for the current tool
+    if tool_name:
+        from drift.tool_metadata import TOOL_CATALOG
+
+        tool_entry = TOOL_CATALOG.get(tool_name)
+        if tool_entry:
+            session_block["context_hint"] = {
+                "when_to_use": tool_entry.context.when_to_use,
+                "follow_up_tools": list(tool_entry.context.follow_up_tools),
+            }
+
+    result["session"] = session_block
+
     # Enrich agent_instruction with session hint
     hint = (
         f"Session {session.session_id[:8]} active"
-        f" ({session.tasks_remaining()} tasks remaining)."
+        f" (phase={session.phase},"
+        f" {session.tasks_remaining()} tasks remaining)."
         " Use drift_session_status for full state."
     )
     existing = result.get("agent_instruction", "")
@@ -1485,6 +2093,12 @@ async def drift_session_end(
         session_id: The session ID to end.
     """
     from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is not None:
+        blocked = _strict_guardrail_block_response("drift_session_end", session)
+        if blocked is not None:
+            return blocked
 
     summary = SessionManager.instance().destroy(session_id)
     if summary is None:
@@ -1844,6 +2458,49 @@ async def drift_task_status(
     return json.dumps(status, default=str)
 
 
+@mcp.tool()
+async def drift_session_trace(
+    session_id: Annotated[
+        str, Field(description="Active session ID from drift_session_start.")
+    ],
+    last_n: Annotated[
+        int, Field(description="Number of most recent trace entries to return.")
+    ] = 20,
+) -> str:
+    """Return the session trace log — a chronological record of tool calls.
+
+    Use this to review the sequence of actions taken during the session,
+    including phase transitions, advisories, and timing.
+
+    Args:
+        session_id: Active session ID from drift_session_start.
+        last_n: Number of recent entries (default: 20).
+    """
+    from drift.session import SessionManager
+
+    session = SessionManager.instance().get(session_id)
+    if session is None:
+        return _session_error_response(
+            "DRIFT-6001",
+            f"Session {session_id[:8]} not found or expired.",
+            session_id,
+        )
+
+    entries = session.trace[-last_n:] if last_n > 0 else session.trace
+    result: dict[str, Any] = {
+        "session_id": session_id,
+        "total_entries": len(session.trace),
+        "returned_entries": len(entries),
+        "trace": entries,
+        "current_phase": session.phase,
+        "agent_instruction": (
+            f"Trace contains {len(session.trace)} entries."
+            f" Session phase: {session.phase}."
+        ),
+    }
+    return json.dumps(result, default=str)
+
+
 _EXPORTED_MCP_TOOLS = (
     drift_scan,
     drift_diff,
@@ -1862,6 +2519,7 @@ _EXPORTED_MCP_TOOLS = (
     drift_task_release,
     drift_task_complete,
     drift_task_status,
+    drift_session_trace,
 )
 
 
@@ -2008,6 +2666,14 @@ def get_tool_catalog() -> list[dict[str, Any]]:
             }
         )
 
+    # Enrich catalog entries with cost metadata
+    from drift.tool_metadata import TOOL_CATALOG, metadata_as_dict
+
+    for entry in catalog:
+        meta = TOOL_CATALOG.get(entry["name"])
+        if meta is not None:
+            entry["cost_metadata"] = metadata_as_dict(meta)
+
     return catalog
 
 
@@ -2032,8 +2698,15 @@ def _eager_imports() -> None:
 
 def main() -> None:
     """Run the drift MCP server on stdio transport."""
+    from pathlib import Path
+
+    from drift.plugins import load_all_plugins
+
     if not _MCP_AVAILABLE:
         msg = "MCP server requires optional dependency 'mcp'."
         raise RuntimeError(msg)
+
+    # Ensure plugin signals are registered before API tools are exercised.
+    load_all_plugins(repo_path=Path.cwd())
     _eager_imports()
     mcp.run(transport="stdio")

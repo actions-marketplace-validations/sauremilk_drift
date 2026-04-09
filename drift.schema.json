@@ -1,5 +1,41 @@
 {
   "$defs": {
+    "AgentObjective": {
+      "additionalProperties": false,
+      "description": "Declarative agent objective for drift.yaml.\n\nAllows agents to declare their goal, out-of-scope areas,\nand success criteria so drift can provide targeted feedback.\n\nExample drift.yaml::\n\n    agent:\n      goal: \"Migrate payment module to Stripe API\"\n      out_of_scope:\n        - \"legacy/\"\n        - \"tests/fixtures/\"\n      success_criteria:\n        - \"No new AVS findings in src/billing/\"",
+      "properties": {
+        "goal": {
+          "default": "",
+          "description": "Natural-language description of the agent's current task.",
+          "title": "Goal",
+          "type": "string"
+        },
+        "out_of_scope": {
+          "description": "Glob patterns or paths the agent should not modify or analyze.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Out Of Scope",
+          "type": "array"
+        },
+        "strict_guardrails": {
+          "default": false,
+          "description": "When true, MCP orchestration enforces strict preconditions and blocks unsafe tool transitions with recovery hints.",
+          "title": "Strict Guardrails",
+          "type": "boolean"
+        },
+        "success_criteria": {
+          "description": "Conditions that define task completion (human-readable).",
+          "items": {
+            "type": "string"
+          },
+          "title": "Success Criteria",
+          "type": "array"
+        }
+      },
+      "title": "AgentObjective",
+      "type": "object"
+    },
     "BriefConfig": {
       "additionalProperties": false,
       "description": "Configuration for ``drift brief`` pre-task briefings.",
@@ -8,7 +44,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Keyword → path mapping for scope resolution. Example: {payment: src/billing/, auth: src/auth/}",
+          "description": "Keyword \u2192 path mapping for scope resolution. Example: {payment: src/billing/, auth: src/auth/}",
           "title": "Scope Aliases",
           "type": "object"
         }
@@ -52,12 +88,10 @@
       "additionalProperties": false,
       "description": "Policy for finding-context classification and triage behavior.",
       "properties": {
-        "rules": {
-          "items": {
-            "$ref": "#/$defs/FindingContextRule"
-          },
-          "title": "Rules",
-          "type": "array"
+        "default_context": {
+          "default": "production",
+          "title": "Default Context",
+          "type": "string"
         },
         "non_operational_contexts": {
           "items": {
@@ -66,10 +100,12 @@
           "title": "Non Operational Contexts",
           "type": "array"
         },
-        "default_context": {
-          "default": "production",
-          "title": "Default Context",
-          "type": "string"
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/FindingContextRule"
+          },
+          "title": "Rules",
+          "type": "array"
         }
       },
       "title": "FindingContextPolicy",
@@ -79,12 +115,12 @@
       "additionalProperties": false,
       "description": "Classify findings by file path using glob patterns.",
       "properties": {
-        "pattern": {
-          "title": "Pattern",
-          "type": "string"
-        },
         "context": {
           "title": "Context",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "Pattern",
           "type": "string"
         },
         "precedence": {
@@ -104,14 +140,6 @@
       "additionalProperties": false,
       "description": "A single layer boundary rule.",
       "properties": {
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "from": {
-          "title": "From",
-          "type": "string"
-        },
         "deny_import": {
           "default": [],
           "items": {
@@ -119,6 +147,14 @@
           },
           "title": "Deny Import",
           "type": "array"
+        },
+        "from": {
+          "title": "From",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
         }
       },
       "required": [
@@ -132,13 +168,14 @@
       "additionalProperties": false,
       "description": "Policy rule for enforcing lazy imports of selected modules.",
       "properties": {
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
         "from": {
           "title": "From",
           "type": "string"
+        },
+        "module_level_only": {
+          "default": true,
+          "title": "Module Level Only",
+          "type": "boolean"
         },
         "modules": {
           "items": {
@@ -147,10 +184,9 @@
           "title": "Modules",
           "type": "array"
         },
-        "module_level_only": {
-          "default": true,
-          "title": "Module Level Only",
-          "type": "boolean"
+        "name": {
+          "title": "Name",
+          "type": "string"
         }
       },
       "required": [
@@ -164,17 +200,6 @@
       "additionalProperties": false,
       "description": "Per-path configuration overrides.\n\nMatch paths using glob patterns (e.g. ``tests/**``, ``legacy/``).\nMore specific patterns take precedence over broader ones.",
       "properties": {
-        "weights": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SignalWeights"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
         "exclude_signals": {
           "items": {
             "type": "string"
@@ -193,6 +218,17 @@
           ],
           "default": null,
           "title": "Severity Gate"
+        },
+        "weights": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SignalWeights"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "title": "PathOverride",
@@ -218,25 +254,6 @@
       "additionalProperties": false,
       "description": "Policy configuration for enforcement rules.",
       "properties": {
-        "error_handling": {
-          "additionalProperties": true,
-          "title": "Error Handling",
-          "type": "object"
-        },
-        "layer_boundaries": {
-          "items": {
-            "$ref": "#/$defs/LayerBoundary"
-          },
-          "title": "Layer Boundaries",
-          "type": "array"
-        },
-        "max_pattern_variants": {
-          "additionalProperties": {
-            "type": "integer"
-          },
-          "title": "Max Pattern Variants",
-          "type": "object"
-        },
         "ai_attribution": {
           "additionalProperties": true,
           "title": "Ai Attribution",
@@ -249,12 +266,31 @@
           "title": "Allowed Cross Layer",
           "type": "array"
         },
+        "error_handling": {
+          "additionalProperties": true,
+          "title": "Error Handling",
+          "type": "object"
+        },
+        "layer_boundaries": {
+          "items": {
+            "$ref": "#/$defs/LayerBoundary"
+          },
+          "title": "Layer Boundaries",
+          "type": "array"
+        },
         "lazy_import_rules": {
           "items": {
             "$ref": "#/$defs/LazyImportRule"
           },
           "title": "Lazy Import Rules",
           "type": "array"
+        },
+        "max_pattern_variants": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Max Pattern Variants",
+          "type": "object"
         }
       },
       "title": "PolicyConfig",
@@ -262,41 +298,11 @@
     },
     "SignalWeights": {
       "additionalProperties": true,
-      "description": "Weights for each detection signal in composite scoring.\n\nWeights are normalised internally — they don't need to sum to 1.0,\nbut a warning is emitted if they deviate significantly.\n\nSignals can be run in report-only mode by assigning weight 0.0.\nThis keeps detection visible while removing score impact until\nprecision/recall is sufficiently validated.",
+      "description": "Weights for each detection signal in composite scoring.\n\nWeights are normalised internally \u2014 they don't need to sum to 1.0,\nbut a warning is emitted if they deviate significantly.\n\nSignals can be run in report-only mode by assigning weight 0.0.\nThis keeps detection visible while removing score impact until\nprecision/recall is sufficiently validated.",
       "properties": {
-        "pattern_fragmentation": {
-          "default": 0.16,
-          "title": "Pattern Fragmentation",
-          "type": "number"
-        },
         "architecture_violation": {
           "default": 0.16,
           "title": "Architecture Violation",
-          "type": "number"
-        },
-        "mutant_duplicate": {
-          "default": 0.13,
-          "title": "Mutant Duplicate",
-          "type": "number"
-        },
-        "explainability_deficit": {
-          "default": 0.09,
-          "title": "Explainability Deficit",
-          "type": "number"
-        },
-        "temporal_volatility": {
-          "default": 0.0,
-          "title": "Temporal Volatility",
-          "type": "number"
-        },
-        "system_misalignment": {
-          "default": 0.08,
-          "title": "System Misalignment",
-          "type": "number"
-        },
-        "doc_impl_drift": {
-          "default": 0.04,
-          "title": "Doc Impl Drift",
           "type": "number"
         },
         "broad_exception_monoculture": {
@@ -304,54 +310,9 @@
           "title": "Broad Exception Monoculture",
           "type": "number"
         },
-        "test_polarity_deficit": {
-          "default": 0.04,
-          "title": "Test Polarity Deficit",
-          "type": "number"
-        },
-        "guard_clause_deficit": {
-          "default": 0.03,
-          "title": "Guard Clause Deficit",
-          "type": "number"
-        },
-        "cohesion_deficit": {
-          "default": 0.01,
-          "title": "Cohesion Deficit",
-          "type": "number"
-        },
-        "naming_contract_violation": {
-          "default": 0.04,
-          "title": "Naming Contract Violation",
-          "type": "number"
-        },
         "bypass_accumulation": {
           "default": 0.03,
           "title": "Bypass Accumulation",
-          "type": "number"
-        },
-        "exception_contract_drift": {
-          "default": 0.03,
-          "title": "Exception Contract Drift",
-          "type": "number"
-        },
-        "co_change_coupling": {
-          "default": 0.005,
-          "title": "Co Change Coupling",
-          "type": "number"
-        },
-        "ts_architecture": {
-          "default": 0.0,
-          "title": "Ts Architecture",
-          "type": "number"
-        },
-        "cognitive_complexity": {
-          "default": 0.0,
-          "title": "Cognitive Complexity",
-          "type": "number"
-        },
-        "fan_out_explosion": {
-          "default": 0.0,
-          "title": "Fan Out Explosion",
           "type": "number"
         },
         "circular_import": {
@@ -359,14 +320,54 @@
           "title": "Circular Import",
           "type": "number"
         },
+        "co_change_coupling": {
+          "default": 0.005,
+          "title": "Co Change Coupling",
+          "type": "number"
+        },
+        "cognitive_complexity": {
+          "default": 0.0,
+          "title": "Cognitive Complexity",
+          "type": "number"
+        },
+        "cohesion_deficit": {
+          "default": 0.01,
+          "title": "Cohesion Deficit",
+          "type": "number"
+        },
         "dead_code_accumulation": {
           "default": 0.0,
           "title": "Dead Code Accumulation",
           "type": "number"
         },
-        "missing_authorization": {
+        "doc_impl_drift": {
+          "default": 0.04,
+          "title": "Doc Impl Drift",
+          "type": "number"
+        },
+        "exception_contract_drift": {
+          "default": 0.03,
+          "title": "Exception Contract Drift",
+          "type": "number"
+        },
+        "explainability_deficit": {
+          "default": 0.09,
+          "title": "Explainability Deficit",
+          "type": "number"
+        },
+        "fan_out_explosion": {
           "default": 0.0,
-          "title": "Missing Authorization",
+          "title": "Fan Out Explosion",
+          "type": "number"
+        },
+        "guard_clause_deficit": {
+          "default": 0.03,
+          "title": "Guard Clause Deficit",
+          "type": "number"
+        },
+        "hardcoded_secret": {
+          "default": 0.0,
+          "title": "Hardcoded Secret",
           "type": "number"
         },
         "insecure_default": {
@@ -374,9 +375,44 @@
           "title": "Insecure Default",
           "type": "number"
         },
-        "hardcoded_secret": {
+        "missing_authorization": {
           "default": 0.0,
-          "title": "Hardcoded Secret",
+          "title": "Missing Authorization",
+          "type": "number"
+        },
+        "mutant_duplicate": {
+          "default": 0.13,
+          "title": "Mutant Duplicate",
+          "type": "number"
+        },
+        "naming_contract_violation": {
+          "default": 0.04,
+          "title": "Naming Contract Violation",
+          "type": "number"
+        },
+        "pattern_fragmentation": {
+          "default": 0.16,
+          "title": "Pattern Fragmentation",
+          "type": "number"
+        },
+        "system_misalignment": {
+          "default": 0.08,
+          "title": "System Misalignment",
+          "type": "number"
+        },
+        "temporal_volatility": {
+          "default": 0.0,
+          "title": "Temporal Volatility",
+          "type": "number"
+        },
+        "test_polarity_deficit": {
+          "default": 0.04,
+          "title": "Test Polarity Deficit",
+          "type": "number"
+        },
+        "ts_architecture": {
+          "default": 0.0,
+          "title": "Ts Architecture",
           "type": "number"
         }
       },
@@ -387,75 +423,10 @@
       "additionalProperties": false,
       "description": "Tunable thresholds for detection signals.",
       "properties": {
-        "high_complexity": {
-          "default": 10,
-          "title": "High Complexity",
-          "type": "integer"
-        },
-        "medium_complexity": {
-          "default": 5,
-          "title": "Medium Complexity",
-          "type": "integer"
-        },
-        "min_function_loc": {
-          "default": 10,
-          "title": "Min Function Loc",
-          "type": "integer"
-        },
-        "min_complexity": {
-          "default": 5,
-          "title": "Min Complexity",
-          "type": "integer"
-        },
-        "similarity_threshold": {
-          "default": 0.8,
-          "title": "Similarity Threshold",
-          "type": "number"
-        },
-        "recency_days": {
-          "default": 14,
-          "title": "Recency Days",
-          "type": "integer"
-        },
-        "volatility_z_threshold": {
-          "default": 1.5,
-          "title": "Volatility Z Threshold",
-          "type": "number"
-        },
         "ai_confidence_threshold": {
           "default": 0.5,
           "title": "Ai Confidence Threshold",
           "type": "number"
-        },
-        "bem_min_handlers": {
-          "default": 3,
-          "title": "Bem Min Handlers",
-          "type": "integer"
-        },
-        "tpd_min_test_functions": {
-          "default": 5,
-          "title": "Tpd Min Test Functions",
-          "type": "integer"
-        },
-        "tpd_min_assertions_per_test": {
-          "default": 1,
-          "title": "Tpd Min Assertions Per Test",
-          "type": "integer"
-        },
-        "gcd_min_public_functions": {
-          "default": 3,
-          "title": "Gcd Min Public Functions",
-          "type": "integer"
-        },
-        "gcd_max_nesting_depth": {
-          "default": 4,
-          "title": "Gcd Max Nesting Depth",
-          "type": "integer"
-        },
-        "nbv_min_function_loc": {
-          "default": 3,
-          "title": "Nbv Min Function Loc",
-          "type": "integer"
         },
         "bat_density_threshold": {
           "default": 0.05,
@@ -467,14 +438,9 @@
           "title": "Bat Min Loc",
           "type": "integer"
         },
-        "ecm_max_files": {
-          "default": 50,
-          "title": "Ecm Max Files",
-          "type": "integer"
-        },
-        "ecm_lookback_commits": {
-          "default": 20,
-          "title": "Ecm Lookback Commits",
+        "bem_min_handlers": {
+          "default": 3,
+          "title": "Bem Min Handlers",
           "type": "integer"
         },
         "cxs_max_complexity": {
@@ -482,30 +448,10 @@
           "title": "Cxs Max Complexity",
           "type": "integer"
         },
-        "foe_max_imports": {
-          "default": 15,
-          "title": "Foe Max Imports",
-          "type": "integer"
-        },
         "dca_ignore_re_exports": {
           "default": true,
           "title": "Dca Ignore Re Exports",
           "type": "boolean"
-        },
-        "max_discovery_files": {
-          "default": 10000,
-          "title": "Max Discovery Files",
-          "type": "integer"
-        },
-        "small_repo_module_threshold": {
-          "default": 15,
-          "title": "Small Repo Module Threshold",
-          "type": "integer"
-        },
-        "small_repo_min_findings": {
-          "default": 2,
-          "title": "Small Repo Min Findings",
-          "type": "integer"
         },
         "diff_baseline_recommend_max_changed_files": {
           "default": 50,
@@ -522,6 +468,36 @@
           "title": "Diff Baseline Recommend Max Out Of Scope Findings",
           "type": "integer"
         },
+        "ecm_lookback_commits": {
+          "default": 20,
+          "title": "Ecm Lookback Commits",
+          "type": "integer"
+        },
+        "ecm_max_files": {
+          "default": 50,
+          "title": "Ecm Max Files",
+          "type": "integer"
+        },
+        "foe_max_imports": {
+          "default": 15,
+          "title": "Foe Max Imports",
+          "type": "integer"
+        },
+        "gcd_max_nesting_depth": {
+          "default": 4,
+          "title": "Gcd Max Nesting Depth",
+          "type": "integer"
+        },
+        "gcd_min_public_functions": {
+          "default": 3,
+          "title": "Gcd Min Public Functions",
+          "type": "integer"
+        },
+        "high_complexity": {
+          "default": 10,
+          "title": "High Complexity",
+          "type": "integer"
+        },
         "hsc_min_entropy": {
           "default": 3.5,
           "title": "Hsc Min Entropy",
@@ -532,12 +508,10 @@
           "title": "Hsc Min Length",
           "type": "integer"
         },
-        "maz_public_endpoint_allowlist": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Maz Public Endpoint Allowlist",
-          "type": "array"
+        "max_discovery_files": {
+          "default": 10000,
+          "title": "Max Discovery Files",
+          "type": "integer"
         },
         "maz_dev_tool_paths": {
           "items": {
@@ -545,21 +519,129 @@
           },
           "title": "Maz Dev Tool Paths",
           "type": "array"
+        },
+        "maz_public_endpoint_allowlist": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Maz Public Endpoint Allowlist",
+          "type": "array"
+        },
+        "medium_complexity": {
+          "default": 5,
+          "title": "Medium Complexity",
+          "type": "integer"
+        },
+        "min_complexity": {
+          "default": 8,
+          "title": "Min Complexity",
+          "type": "integer"
+        },
+        "min_function_loc": {
+          "default": 15,
+          "title": "Min Function Loc",
+          "type": "integer"
+        },
+        "nbv_min_function_loc": {
+          "default": 3,
+          "title": "Nbv Min Function Loc",
+          "type": "integer"
+        },
+        "recency_days": {
+          "default": 14,
+          "title": "Recency Days",
+          "type": "integer"
+        },
+        "similarity_threshold": {
+          "default": 0.8,
+          "title": "Similarity Threshold",
+          "type": "number"
+        },
+        "small_repo_min_findings": {
+          "default": 2,
+          "title": "Small Repo Min Findings",
+          "type": "integer"
+        },
+        "small_repo_module_threshold": {
+          "default": 15,
+          "title": "Small Repo Module Threshold",
+          "type": "integer"
+        },
+        "tpd_min_assertions_per_test": {
+          "default": 1,
+          "title": "Tpd Min Assertions Per Test",
+          "type": "integer"
+        },
+        "tpd_min_test_functions": {
+          "default": 5,
+          "title": "Tpd Min Test Functions",
+          "type": "integer"
+        },
+        "volatility_z_threshold": {
+          "default": 1.5,
+          "title": "Volatility Z Threshold",
+          "type": "number"
         }
       },
       "title": "ThresholdsConfig",
       "type": "object"
     }
   },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Main drift configuration, loaded from drift.yaml.",
   "properties": {
-    "include": {
+    "agent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AgentObjective"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional agent objective declaration. Helps drift provide targeted feedback aligned with the agent's task."
+    },
+    "auto_calibrate": {
+      "default": true,
+      "title": "Auto Calibrate",
+      "type": "boolean"
+    },
+    "brief": {
+      "$ref": "#/$defs/BriefConfig"
+    },
+    "cache_dir": {
+      "default": ".drift-cache",
+      "title": "Cache Dir",
+      "type": "string"
+    },
+    "context_dampening": {
+      "default": 0.5,
+      "title": "Context Dampening",
+      "type": "number"
+    },
+    "deferred": {
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/DeferredArea"
       },
-      "title": "Include",
+      "title": "Deferred",
       "type": "array"
+    },
+    "embedding_batch_size": {
+      "default": 64,
+      "title": "Embedding Batch Size",
+      "type": "integer"
+    },
+    "embedding_model": {
+      "default": "all-MiniLM-L6-v2",
+      "title": "Embedding Model",
+      "type": "string"
+    },
+    "embeddings_enabled": {
+      "default": true,
+      "title": "Embeddings Enabled",
+      "type": "boolean"
     },
     "exclude": {
       "items": {
@@ -568,29 +650,10 @@
       "title": "Exclude",
       "type": "array"
     },
-    "policies": {
-      "$ref": "#/$defs/PolicyConfig"
-    },
-    "weights": {
-      "$ref": "#/$defs/SignalWeights"
-    },
-    "thresholds": {
-      "$ref": "#/$defs/ThresholdsConfig"
-    },
-    "cache_dir": {
-      "default": ".drift-cache",
-      "title": "Cache Dir",
-      "type": "string"
-    },
     "fail_on": {
       "default": "high",
       "title": "Fail On",
       "type": "string"
-    },
-    "context_dampening": {
-      "default": 0.5,
-      "title": "Context Dampening",
-      "type": "number"
     },
     "fail_on_delta": {
       "anyOf": [
@@ -609,25 +672,15 @@
       "title": "Fail On Delta Window",
       "type": "integer"
     },
-    "auto_calibrate": {
-      "default": true,
-      "title": "Auto Calibrate",
-      "type": "boolean"
+    "finding_context": {
+      "$ref": "#/$defs/FindingContextPolicy"
     },
-    "embeddings_enabled": {
-      "default": true,
-      "title": "Embeddings Enabled",
-      "type": "boolean"
-    },
-    "embedding_model": {
-      "default": "all-MiniLM-L6-v2",
-      "title": "Embedding Model",
-      "type": "string"
-    },
-    "embedding_batch_size": {
-      "default": 64,
-      "title": "Embedding Batch Size",
-      "type": "integer"
+    "include": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Include",
+      "type": "array"
     },
     "path_overrides": {
       "additionalProperties": {
@@ -636,24 +689,19 @@
       "title": "Path Overrides",
       "type": "object"
     },
-    "deferred": {
-      "items": {
-        "$ref": "#/$defs/DeferredArea"
-      },
-      "title": "Deferred",
-      "type": "array"
-    },
-    "finding_context": {
-      "$ref": "#/$defs/FindingContextPolicy"
-    },
-    "brief": {
-      "$ref": "#/$defs/BriefConfig"
-    },
     "plugins": {
       "$ref": "#/$defs/PluginConfig"
+    },
+    "policies": {
+      "$ref": "#/$defs/PolicyConfig"
+    },
+    "thresholds": {
+      "$ref": "#/$defs/ThresholdsConfig"
+    },
+    "weights": {
+      "$ref": "#/$defs/SignalWeights"
     }
   },
   "title": "DriftConfig",
-  "type": "object",
-  "$schema": "https://json-schema.org/draft/2020-12/schema"
+  "type": "object"
 }

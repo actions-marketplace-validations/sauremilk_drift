@@ -51,8 +51,8 @@ class ThresholdsConfig(BaseModel):
 
     high_complexity: int = 10
     medium_complexity: int = 5
-    min_function_loc: int = 10
-    min_complexity: int = 5
+    min_function_loc: int = 15
+    min_complexity: int = 8
     similarity_threshold: float = 0.80
     recency_days: int = 14
     volatility_z_threshold: float = 1.5
@@ -255,6 +255,46 @@ class FindingContextPolicy(BaseModel):
     default_context: str = "production"
 
 
+class AgentObjective(BaseModel):
+    """Declarative agent objective for drift.yaml.
+
+    Allows agents to declare their goal, out-of-scope areas,
+    and success criteria so drift can provide targeted feedback.
+
+    Example drift.yaml::
+
+        agent:
+          goal: "Migrate payment module to Stripe API"
+          out_of_scope:
+            - "legacy/"
+            - "tests/fixtures/"
+          success_criteria:
+            - "No new AVS findings in src/billing/"
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    goal: str = Field(
+        default="",
+        description="Natural-language description of the agent's current task.",
+    )
+    strict_guardrails: bool = Field(
+        default=False,
+        description=(
+            "When true, MCP orchestration enforces strict preconditions and "
+            "blocks unsafe tool transitions with recovery hints."
+        ),
+    )
+    out_of_scope: list[str] = Field(
+        default_factory=list,
+        description="Glob patterns or paths the agent should not modify or analyze.",
+    )
+    success_criteria: list[str] = Field(
+        default_factory=list,
+        description="Conditions that define task completion (human-readable).",
+    )
+
+
 class BriefConfig(BaseModel):
     """Configuration for ``drift brief`` pre-task briefings."""
 
@@ -350,6 +390,13 @@ class DriftConfig(BaseModel):
     finding_context: FindingContextPolicy = Field(default_factory=FindingContextPolicy)
     brief: BriefConfig = Field(default_factory=BriefConfig)
     plugins: PluginConfig = Field(default_factory=PluginConfig)
+    agent: AgentObjective | None = Field(
+        default=None,
+        description=(
+            "Optional agent objective declaration. "
+            "Helps drift provide targeted feedback aligned with the agent's task."
+        ),
+    )
 
     @staticmethod
     def _find_config_file(repo_path: Path) -> Path | None:
