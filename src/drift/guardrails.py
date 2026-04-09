@@ -103,7 +103,7 @@ class Guardrail:
 
 
 def pre_task_relevance(signal_type: str) -> float:
-    """Return the pre-task relevance factor for a signal type."""
+    """Return the pre-task relevance factor for a signal identifier string."""
     return _PRE_TASK_RELEVANCE.get(str(signal_type), 0.0)
 
 
