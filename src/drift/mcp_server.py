@@ -2486,16 +2486,18 @@ async def drift_session_trace(
             session_id,
         )
 
-    entries = session.trace[-last_n:] if last_n > 0 else session.trace
+    session_trace = getattr(session, "trace", [])
+    session_phase = getattr(session, "phase", "unknown")
+    entries = session_trace[-last_n:] if last_n > 0 else session_trace
     result: dict[str, Any] = {
         "session_id": session_id,
-        "total_entries": len(session.trace),
+        "total_entries": len(session_trace),
         "returned_entries": len(entries),
         "trace": entries,
-        "current_phase": session.phase,
+        "current_phase": session_phase,
         "agent_instruction": (
-            f"Trace contains {len(session.trace)} entries."
-            f" Session phase: {session.phase}."
+            f"Trace contains {len(session_trace)} entries."
+            f" Session phase: {session_phase}."
         ),
     }
     return json.dumps(result, default=str)
@@ -2698,8 +2700,6 @@ def _eager_imports() -> None:
 
 def main() -> None:
     """Run the drift MCP server on stdio transport."""
-    from pathlib import Path
-
     from drift.plugins import load_all_plugins
 
     if not _MCP_AVAILABLE:
@@ -2707,6 +2707,6 @@ def main() -> None:
         raise RuntimeError(msg)
 
     # Ensure plugin signals are registered before API tools are exercised.
-    load_all_plugins(repo_path=Path.cwd())
+    load_all_plugins()
     _eager_imports()
     mcp.run(transport="stdio")

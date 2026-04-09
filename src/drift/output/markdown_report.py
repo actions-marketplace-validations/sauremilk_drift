@@ -95,7 +95,7 @@ def analysis_to_markdown(
         lines.append("")
 
     # Preflight
-    pf = analysis.preflight
+    pf = getattr(analysis, "preflight", None)
     if include_preflight and pf is not None:
         lines.append("## Preflight Diagnostics")
         lines.append("")
@@ -169,7 +169,8 @@ def analysis_to_markdown(
         lines.append("")
 
     # Analyzer warnings (signal-level)
-    skip_warnings = [w for w in analysis.analyzer_warnings if w.skipped]
+    analyzer_warnings = getattr(analysis, "analyzer_warnings", [])
+    skip_warnings = [w for w in analyzer_warnings if getattr(w, "skipped", False)]
     if skip_warnings:
         lines.append("## Analyzer Warnings")
         lines.append("")
