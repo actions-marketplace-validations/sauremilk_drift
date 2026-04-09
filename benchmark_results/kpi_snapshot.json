@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-04-09T12:30:27.753759+00:00",
+  "timestamp": "2026-04-09T16:28:09.229569+00:00",
   "version": "2.7.0",
-  "git_sha": "e0e4b70be",
+  "git_sha": "875897f76",
   "precision_recall": {
     "aggregate_f1": 1.0,
-    "total_fixtures": 118,
+    "total_fixtures": 115,
     "signals": {
       "architecture_violation": {
         "precision": 1.0,
@@ -49,7 +49,7 @@
         "tp": 2,
         "fp": 0,
         "fn": 0,
-        "tn": 4
+        "tn": 3
       },
       "doc_impl_drift": {
         "precision": 1.0,
@@ -64,7 +64,7 @@
         "precision": 1.0,
         "recall": 1.0,
         "f1": 1.0,
-        "tp": 3,
+        "tp": 1,
         "fp": 0,
         "fn": 0,
         "tn": 2
@@ -76,7 +76,7 @@
         "tp": 4,
         "fp": 0,
         "fn": 0,
-        "tn": 7
+        "tn": 6
       },
       "guard_clause_deficit": {
         "precision": 1.0,
@@ -163,8 +163,8 @@
   },
   "mutation": {
     "overall_recall": 1.0,
-    "total_injected": 17,
-    "total_detected": 17,
+    "total_injected": 25,
+    "total_detected": 25,
     "signals": {
       "mutant_duplicate": {
         "injected": 3,
@@ -212,6 +212,31 @@
         "recall": 1.0
       },
       "guard_clause_deficit": {
+        "injected": 1,
+        "detected": 1,
+        "recall": 1.0
+      },
+      "naming_contract_violation": {
+        "injected": 3,
+        "detected": 3,
+        "recall": 1.0
+      },
+      "bypass_accumulation": {
+        "injected": 1,
+        "detected": 1,
+        "recall": 1.0
+      },
+      "cohesion_deficit": {
+        "injected": 1,
+        "detected": 1,
+        "recall": 1.0
+      },
+      "exception_contract_drift": {
+        "injected": 2,
+        "detected": 2,
+        "recall": 1.0
+      },
+      "co_change_coupling": {
         "injected": 1,
         "detected": 1,
         "recall": 1.0

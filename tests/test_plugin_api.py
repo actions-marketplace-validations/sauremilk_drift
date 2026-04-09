@@ -40,9 +40,9 @@ def _clean_registry():
 
 
 class TestSignalRegistryCore:
-    def test_all_meta_returns_23_core_signals(self):
+    def test_all_meta_returns_24_core_signals(self):
         meta = get_all_meta()
-        assert len(meta) == 23
+        assert len(meta) == 24
 
     def test_all_abbrevs_are_unique(self):
         abbrevs = [m.abbrev for m in get_all_meta()]
@@ -59,8 +59,8 @@ class TestSignalRegistryCore:
         assert m["MDS"] == "mutant_duplicate"
         assert m["HSC"] == "hardcoded_secret"
 
-    def test_get_abbrev_map_has_23_entries(self):
-        assert len(get_abbrev_map()) == 23
+    def test_get_abbrev_map_has_24_entries(self):
+        assert len(get_abbrev_map()) == 24
 
     def test_get_signal_to_abbrev_reverses_abbrev_map(self):
         abbrev_map = get_abbrev_map()
@@ -100,7 +100,7 @@ class TestSignalRegistryCore:
         assert "hardcoded_secret" in ids
 
     def test_all_categories_are_known(self):
-        known = {"structural_risk", "architecture_boundary", "style_hygiene", "security"}
+        known = {"structural_risk", "architecture_boundary", "style_hygiene", "security", "ai_quality"}
         for m in get_all_meta():
             assert m.category in known, f"{m.signal_id} has unknown category {m.category!r}"
 
@@ -124,7 +124,7 @@ class TestPluginRegistration:
 
         assert get_meta("my_custom_signal") is plugin_meta
         assert get_abbrev_map()["MCS"] == "my_custom_signal"
-        assert len(get_all_meta()) == 24  # 23 core + 1 plugin
+        assert len(get_all_meta()) == 25  # 24 core + 1 plugin
 
     def test_duplicate_registration_is_idempotent(self):
         plugin_meta = SignalMeta(
@@ -138,7 +138,7 @@ class TestPluginRegistration:
         register_signal_meta(plugin_meta)
         register_signal_meta(plugin_meta)  # Second call — must not duplicate
 
-        assert len(get_all_meta()) == 24
+        assert len(get_all_meta()) == 25
         assert list(get_all_meta()).count(plugin_meta) == 1
 
     def test_reset_removes_plugin_signal(self):
@@ -151,11 +151,11 @@ class TestPluginRegistration:
             is_core=False,
         )
         register_signal_meta(plugin_meta)
-        assert len(get_all_meta()) == 24
+        assert len(get_all_meta()) == 25
 
         _reset_registry()
 
-        assert len(get_all_meta()) == 23
+        assert len(get_all_meta()) == 24
         assert get_meta("temp_signal") is None
 
 

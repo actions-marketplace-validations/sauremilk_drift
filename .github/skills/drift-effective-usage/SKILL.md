@@ -181,6 +181,40 @@ Key rules:
 - Follow `agent_instruction` and `next_tool_call` fields in responses
 - Run `drift_diff` only as final verification, not after every edit
 
+### Test-Aware Fix-Loop
+
+After each `drift_nudge` call (when `direction` is not degrading), run targeted tests for the changed file **before** requesting the next task.
+
+**Why:** `fix_plan`, `nudge`, and `AgentTask` contain no test awareness. The `safe_to_commit` field only evaluates drift delta — not pytest results. Test failures are otherwise only caught at push time by CI Gate 8.
+
+**Path-to-test mapping (first match wins):**
+
+| Changed file pattern | Run these tests |
+|---|---|
+| `src/drift/signals/architecture_violation*` | `pytest tests/test_avs_*.py -q --tb=short` |
+| `src/drift/signals/doc_impl_drift*` | `pytest tests/test_dia_*.py -q --tb=short` |
+| `src/drift/signals/explainability_deficit*` | `pytest tests/test_eds_*.py -q --tb=short` |
+| `src/drift/signals/mutant_duplicates*` | `pytest tests/test_mutant_duplicates*.py -q --tb=short` |
+| `src/drift/signals/dead_code_accumulation*` | `pytest tests/test_dead_code*.py -q --tb=short` |
+| `src/drift/signals/pattern_fragmentation*` | `pytest tests/test_pattern_fragmentation*.py -q --tb=short` |
+| `src/drift/signals/*` (other) | `pytest tests/test_precision_recall.py tests/test_mirofish_signal_improvements.py -q --tb=short` |
+| `src/drift/api.py` | `pytest tests/test_brief.py tests/test_integration.py tests/test_nudge.py -q --tb=short` |
+| `src/drift/mcp_server.py` | `pytest tests/test_mcp_copilot.py tests/test_mcp_hardening.py tests/test_tool_metadata.py -q --tb=short` |
+| `src/drift/output/*` | `pytest tests/test_json_output.py tests/test_agent_tasks.py tests/test_output_golden.py -q --tb=short` |
+| `src/drift/ingestion/*` | `pytest tests/test_ast_parser.py tests/test_file_discovery.py -q --tb=short` |
+| `src/drift/config.py` | `pytest tests/test_config.py tests/test_config_validate.py -q --tb=short` |
+| `src/drift/session.py` | `pytest tests/test_session.py -q --tb=short` |
+| `src/drift/incremental.py` | `pytest tests/test_incremental.py tests/test_nudge.py -q --tb=short` |
+| Fallback | `pytest tests/ -q --tb=short --ignore=tests/test_smoke_real_repos.py --maxfail=5` |
+
+**On test failure — decision tree:**
+
+- `AttributeError: has no attribute X` or `TypeError: N arguments expected` → test checks implementation details → **adapt the test**
+- Test expects an old drift pattern that was intentionally removed → **adapt the test**
+- `AssertionError` on documented public API behavior or return value contract → **reconsider or revert the production fix**
+
+No hard block: the workflow continues after the decision is applied. Full mapping and decision rules: `.github/prompts/drift-fix-loop.prompt.md` (Schritt 3b).
+
 See `.github/prompts/drift-fix-loop.prompt.md` for the detailed workflow.
 
 ## False Positive Reduction Playbook

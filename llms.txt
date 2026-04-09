@@ -40,7 +40,7 @@ Command: drift analyze --repo .
 - COD: Cohesion Deficit (weight 0.01)
 - CCC: Co-Change Coupling (weight 0.005)
 
-### Report-only (8, weight 0.0, pending validation)
+### Report-only (9, weight 0.0, pending validation)
 - TSA: TypeScript Architecture — TS/JS layer leaks, cycles, cross-package imports
 - CXS: Cognitive Complexity — deeply nested control flow
 - FOE: Fan-Out Explosion — high dependency fan-out
@@ -49,6 +49,7 @@ Command: drift analyze --repo .
 - MAZ: Missing Authorization — API endpoints lacking auth checks (CWE-862)
 - ISD: Insecure Default — unsafe default config patterns (CWE-1188)
 - HSC: Hardcoded Secret — embedded secrets/credentials (CWE-798)
+- PHR: Phantom Reference — unresolvable function/class references (AI hallucination indicator)
 
 ## Docs
 
@@ -61,7 +62,7 @@ Command: drift analyze --repo .
 
 ## Optional
 
-- [Full Benchmark Study](https://github.com/mick-gsk/drift/blob/main/docs/STUDY.md): 97.3% precision (strict, v0.5 model) on 263 ground-truth-labeled findings across 15 repositories — not revalidated for the current v2.5.x 23-signal model
+- [Full Benchmark Study](https://github.com/mick-gsk/drift/blob/main/docs/STUDY.md): 97.3% precision (strict, v0.5 model) on 263 ground-truth-labeled findings across 15 repositories — not revalidated for the current v2.5.x 24-signal model
 - [Changelog](https://github.com/mick-gsk/drift/blob/main/CHANGELOG.md): version history and signal improvements
 - [Case Studies](https://mick-gsk.github.io/drift/case-studies/): FastAPI, Pydantic, Django
 - [GitHub Action](https://github.com/mick-gsk/drift/blob/main/action.yml): CI integration with SARIF upload

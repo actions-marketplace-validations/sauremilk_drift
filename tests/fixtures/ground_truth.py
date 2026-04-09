@@ -63,6 +63,7 @@ class GroundTruthFixture:
     expected: list[ExpectedFinding] = field(default_factory=list)
     file_history_overrides: dict[str, FileHistoryOverride] = field(default_factory=dict)
     commits: list[CommitInfo] = field(default_factory=list)
+    old_sources: dict[str, str] = field(default_factory=dict)  # prior file contents for git-backed signals
 
     def materialize(self, root: Path) -> Path:
         """Write all files to disk under *root* and return the fixture dir."""
@@ -4471,11 +4472,92 @@ CCC_CONFOUNDER_TN = GroundTruthFixture(
     ],
 )
 
+CCC_BOUNDARY_TP = GroundTruthFixture(
+    name="ccc_boundary_min_commits_tp",
+    description="Co-change pair with exactly 8 commits (minimum threshold) → should fire CCC",
+    kind=FixtureKind.BOUNDARY,
+    files={
+        "inventory/__init__.py": "",
+        "inventory/stock.py": """\
+            def update_stock(item_id: int, delta: int) -> dict:
+                return {"item": item_id, "change": delta}
 
-# ── Exception Contract Drift (ECM) — TN only ─────────────────────────────
-# ECM requires actual git history (git show HEAD~N); only TN fixtures
-# are feasible without a real git repo. TP coverage requires a git-backed
-# integration test (see benchmark_results/ for oracle-based evidence).
+            def get_stock_level(item_id: int) -> int:
+                return 100
+        """,
+        "shipping/__init__.py": "",
+        "shipping/dispatch.py": """\
+            def schedule_delivery(order_id: int, address: str) -> dict:
+                return {"order": order_id, "address": address}
+
+            def cancel_delivery(order_id: int) -> bool:
+                return True
+        """,
+    },
+    commits=[
+        CommitInfo(
+            hash=f"bnd{i:04d}",
+            author="dev",
+            email="dev@example.com",
+            timestamp=_dt.datetime(2026, 4, 1 + i, tzinfo=_dt.UTC),
+            message=f"feat: sync stock and shipping #{i}",
+            files_changed=["inventory/stock.py", "shipping/dispatch.py"],
+        )
+        for i in range(8)
+    ],
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.CO_CHANGE_COUPLING,
+            file_path="inventory/stock.py",
+            should_detect=True,
+            description="At minimum 8-commit threshold — hidden coupling between inventory and shipping",
+        ),
+    ],
+)
+
+CCC_LARGE_COMMIT_TN = GroundTruthFixture(
+    name="ccc_large_commit_tn",
+    description="Files co-change in bulk commits (>20 files each) → should NOT fire CCC",
+    kind=FixtureKind.CONFOUNDER,
+    files={
+        "pkg/__init__.py": "",
+        "pkg/alpha.py": """\
+            def alpha():
+                return "a"
+        """,
+        "pkg/beta.py": """\
+            def beta():
+                return "b"
+        """,
+        **{f"pkg/mod_{j}.py": f"VAL = {j}\n" for j in range(25)},
+    },
+    commits=[
+        CommitInfo(
+            hash=f"bulk{i:04d}",
+            author="dev",
+            email="dev@example.com",
+            timestamp=_dt.datetime(2026, 5, 1 + i, tzinfo=_dt.UTC),
+            message=f"chore: bulk refactor #{i}",
+            files_changed=["pkg/alpha.py", "pkg/beta.py"]
+            + [f"pkg/mod_{j}.py" for j in range(25)],
+        )
+        for i in range(12)
+    ],
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.CO_CHANGE_COUPLING,
+            file_path="pkg/alpha.py",
+            should_detect=False,
+            description="Large commits (>20 known files) are filtered out — no coupling signal",
+        ),
+    ],
+)
+
+
+# ── Exception Contract Drift (ECM) ────────────────────────────────────────
+# ECM requires actual git history (git show HEAD~N). Fixtures with
+# old_sources create a 2-commit git repo so HEAD~1 provides the prior
+# exception profile.
 
 ECM_TRUE_NEGATIVE = GroundTruthFixture(
     name="ecm_tn_stable_contract",
@@ -4517,8 +4599,280 @@ ECM_TRUE_NEGATIVE = GroundTruthFixture(
     ],
 )
 
+ECM_TRUE_POSITIVE = GroundTruthFixture(
+    name="ecm_tp_contract_changed",
+    description="Function whose exception contract changed between commits → should fire ECM",
+    kind=FixtureKind.POSITIVE,
+    files={
+        "orders/__init__.py": "",
+        "orders/processing.py": """\
+            def process_order(order_id: int, items: list) -> dict:
+                \"\"\"Process an order.\"\"\"
+                result = {"id": order_id, "items": items}
+                if order_id <= 0:
+                    result["error"] = "invalid"
+                    return result
+                result["status"] = "processed"
+                return result
+        """,
+    },
+    old_sources={
+        "orders/__init__.py": "",
+        "orders/processing.py": """\
+            def process_order(order_id: int, items: list) -> dict:
+                \"\"\"Process an order.
 
-# Append NBV + BAT fixtures to ALL_FIXTURES
+                Raises:
+                    ValueError: If order_id is invalid.
+                    RuntimeError: If processing fails.
+                \"\"\"
+                if order_id <= 0:
+                    raise ValueError("Invalid order ID")
+                if not items:
+                    raise RuntimeError("Empty order")
+                return {"id": order_id, "items": items, "status": "processed"}
+        """,
+    },
+    file_history_overrides={
+        "orders/processing.py": FileHistoryOverride(total_commits=15),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.EXCEPTION_CONTRACT_DRIFT,
+            file_path="orders/processing.py",
+            should_detect=True,
+            description="Raises removed between commits — exception contract silently changed",
+        ),
+    ],
+)
+
+ECM_CONFOUNDER_TN = GroundTruthFixture(
+    name="ecm_confounder_refactored_body_tn",
+    description="Function body refactored but exception profile unchanged → should NOT fire ECM",
+    kind=FixtureKind.CONFOUNDER,
+    files={
+        "auth/__init__.py": "",
+        "auth/login.py": """\
+            class AuthError(Exception):
+                pass
+
+            def authenticate(username: str, password: str) -> dict:
+                \"\"\"Authenticate a user.\"\"\"
+                credentials = {"user": username, "pass": password}
+                if not credentials["user"]:
+                    raise AuthError("Username required")
+                if not credentials["pass"]:
+                    raise AuthError("Password required")
+                # Refactored: uses dict-based credential check
+                return {"user": credentials["user"], "status": "ok"}
+        """,
+    },
+    old_sources={
+        "auth/__init__.py": "",
+        "auth/login.py": """\
+            class AuthError(Exception):
+                pass
+
+            def authenticate(username: str, password: str) -> dict:
+                \"\"\"Authenticate a user.\"\"\"
+                if not username:
+                    raise AuthError("Username required")
+                if not password:
+                    raise AuthError("Password required")
+                return {"user": username, "status": "ok"}
+        """,
+    },
+    file_history_overrides={
+        "auth/login.py": FileHistoryOverride(total_commits=12),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.EXCEPTION_CONTRACT_DRIFT,
+            file_path="auth/login.py",
+            should_detect=False,
+            description="Same raises (AuthError) in both versions — body change, contract unchanged",
+        ),
+    ],
+)
+
+
+# ── Phantom Reference (PHR) ──────────────────────────────────────────────
+
+PHR_TRUE_POSITIVE = GroundTruthFixture(
+    name="phr_tp",
+    description="Function calls hallucinated helper that does not exist anywhere → should fire PHR",
+    files={
+        "services/__init__.py": "",
+        "services/auth.py": textwrap.dedent("""\
+            from services.utils import hash_password
+
+            def authenticate(username: str, password: str) -> bool:
+                hashed = hash_password(password)
+                token = sanitize_input(username)
+                validated = validate_token(token)
+                return validated is not None
+        """),
+        "services/utils.py": textwrap.dedent("""\
+            import hashlib
+
+            def hash_password(password: str) -> str:
+                return hashlib.sha256(password.encode()).hexdigest()
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="services/auth.py",
+            should_detect=True,
+            description="sanitize_input and validate_token are called but never defined or imported",
+        ),
+    ],
+)
+
+PHR_TRUE_NEGATIVE = GroundTruthFixture(
+    name="phr_tn",
+    description="All references properly imported/defined → should NOT fire PHR",
+    files={
+        "core/__init__.py": "",
+        "core/helpers.py": textwrap.dedent("""\
+            def clean_input(value: str) -> str:
+                return value.strip().lower()
+
+            def format_output(data: dict) -> str:
+                return str(data)
+        """),
+        "core/main.py": textwrap.dedent("""\
+            from core.helpers import clean_input, format_output
+
+            def process(raw: str) -> str:
+                cleaned = clean_input(raw)
+                result = {"value": cleaned}
+                return format_output(result)
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="core/main.py",
+            should_detect=False,
+            description="All names resolve — no phantoms expected",
+        ),
+    ],
+)
+
+PHR_STAR_IMPORT_TN = GroundTruthFixture(
+    name="phr_star_import_tn",
+    kind=FixtureKind.CONFOUNDER,
+    description="Star import means we cannot verify names → should NOT fire PHR (conservative skip)",
+    files={
+        "lib/__init__.py": textwrap.dedent("""\
+            def secret_helper():
+                pass
+        """),
+        "lib/consumer.py": textwrap.dedent("""\
+            from lib import *
+
+            def run():
+                result = secret_helper()
+                return result
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="lib/consumer.py",
+            should_detect=False,
+            description="Star import → conservatively skip file",
+        ),
+    ],
+)
+
+PHR_BUILTIN_TN = GroundTruthFixture(
+    name="phr_builtin_tn",
+    description="Only builtins used → should NOT fire PHR",
+    files={
+        "utils/__init__.py": "",
+        "utils/basics.py": textwrap.dedent("""\
+            def summarize(items):
+                count = len(items)
+                total = sum(items)
+                types = set(type(i).__name__ for i in items)
+                output = dict(count=count, total=total, types=sorted(types))
+                return str(output)
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="utils/basics.py",
+            should_detect=False,
+            description="All names are builtins — no phantoms",
+        ),
+    ],
+)
+
+PHR_CROSS_FILE_TP = GroundTruthFixture(
+    name="phr_cross_file_tp",
+    kind=FixtureKind.POSITIVE,
+    description="Imports module but calls function that does not exist in it → should fire PHR",
+    files={
+        "app/__init__.py": "",
+        "app/models.py": textwrap.dedent("""\
+            class User:
+                def __init__(self, name: str):
+                    self.name = name
+        """),
+        "app/views.py": textwrap.dedent("""\
+            from app.models import User
+
+            def get_dashboard(user_id: int):
+                user = User("test")
+                perms = check_permissions(user, "admin")
+                data = build_dashboard_data(user, perms)
+                return data
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="app/views.py",
+            should_detect=True,
+            description="check_permissions and build_dashboard_data are never defined or imported",
+        ),
+    ],
+)
+
+PHR_DYNAMIC_GETATTR_TN = GroundTruthFixture(
+    name="phr_dynamic_tn",
+    kind=FixtureKind.CONFOUNDER,
+    description="Module has __getattr__ → dynamic namespace, skip → should NOT fire PHR",
+    files={
+        "plugins/__init__.py": "",
+        "plugins/loader.py": textwrap.dedent("""\
+            _registry = {}
+
+            def __getattr__(name):
+                if name in _registry:
+                    return _registry[name]
+                raise AttributeError(name)
+
+            def load_all():
+                result = process_plugins()
+                return result
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="plugins/loader.py",
+            should_detect=False,
+            description="Module __getattr__ → dynamic namespace, conservatively skip",
+        ),
+    ],
+)
+
+
+# Append NBV + BAT + PHR fixtures to ALL_FIXTURES
 ALL_FIXTURES.extend([
     NBV_VALIDATE_TP,
     NBV_ENSURE_TP,
@@ -4585,7 +4939,18 @@ ALL_FIXTURES.extend([
     CCC_TRUE_POSITIVE,
     CCC_TRUE_NEGATIVE,
     CCC_CONFOUNDER_TN,
+    CCC_BOUNDARY_TP,
+    CCC_LARGE_COMMIT_TN,
     ECM_TRUE_NEGATIVE,
+    ECM_TRUE_POSITIVE,
+    ECM_CONFOUNDER_TN,
+    # ── Phantom Reference (PHR) fixtures ──
+    PHR_TRUE_POSITIVE,
+    PHR_TRUE_NEGATIVE,
+    PHR_STAR_IMPORT_TN,
+    PHR_BUILTIN_TN,
+    PHR_CROSS_FILE_TP,
+    PHR_DYNAMIC_GETATTR_TN,
 ])
 
 

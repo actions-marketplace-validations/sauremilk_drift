@@ -186,6 +186,9 @@ class SignalWeights(BaseModel):
     insecure_default: float = 0.0
     hardcoded_secret: float = 0.0
 
+    # AI-hallucination detection (report-only until precision validated)
+    phantom_reference: float = 0.0
+
     def as_dict(self) -> dict[str, float]:
         return self.model_dump()
 
@@ -578,6 +581,7 @@ def _build_signal_abbrev() -> dict[str, str]:
         "MAZ": "missing_authorization",
         "ISD": "insecure_default",
         "HSC": "hardcoded_secret",
+        "PHR": "phantom_reference",
     }
 
 

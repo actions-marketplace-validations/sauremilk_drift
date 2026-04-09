@@ -199,14 +199,16 @@ Wenn ein Agent Drift-Findings über MCP-Tools beheben soll, **muss** dieser Abla
 
 1. **`drift_session_start(path=".", autopilot=true)`** — ein Aufruf statt vier (bündelt validate + brief + scan + fix_plan)
 2. **`drift_nudge(session_id=..., changed_files=...)`** — nach jeder Dateiänderung als schneller Inner-Loop (~0.2 s statt ~3 s für scan)
-3. **`drift_fix_plan(session_id=..., max_tasks=1)`** — nächsten Task holen (immer `max_tasks=1`)
-4. **`drift_diff(session_id=..., uncommitted=true)`** — nur einmal am Ende als Abschluss-Verifikation
+3. **Test-Checkpoint nach `nudge`** — gezielte Tests per Pfad-Matrix ausführen (Tabelle in `.github/prompts/drift-fix-loop.prompt.md`, Schritt 3b); bei Fehlschlag Entscheidungsbaum anwenden: Test anpassen (Implementation-Details) oder Fix reverten (Vertrags-Regression) — kein Hard-Block
+4. **`drift_fix_plan(session_id=..., max_tasks=1)`** — nächsten Task holen (immer `max_tasks=1`)
+5. **`drift_diff(session_id=..., uncommitted=true)`** — nur einmal am Ende als Abschluss-Verifikation
 
 **Verboten im Fix-Loop:**
 - `drift_scan` nach jeder Dateiänderung (zu teuer, nutze `nudge`)
 - `session_start` ohne `autopilot=true` (verschenkt 4 Roundtrips)
 - `fix_plan` ohne `max_tasks=1` (unnötig große Responses)
 - Tool-Aufrufe ohne `session_id` (verliert Kontext)
+- Commit ohne Test-Checkpoint (Tests fallen sonst erst bei Gate 8 CI auf)
 
 **Immer:** `agent_instruction` und `next_tool_call` aus Responses befolgen.
 
@@ -232,8 +234,8 @@ Vollständiger Developer Guide: **[DEVELOPER.md](../DEVELOPER.md)**
 
 ```
 ingestion/ → signals/ → scoring/ → output/
-  AST + Git     23 Detektoren  Score+Severity   Rich/JSON/SARIF
-              (15 scoring-aktiv, 8 report-only)
+  AST + Git     24 Detektoren  Score+Severity   Rich/JSON/SARIF
+              (15 scoring-aktiv, 9 report-only)
 ```
 
 ### Wichtigste Kommandos
@@ -288,7 +290,7 @@ DRIFT_SKIP_HOOKS=1 git push          # ALLE Gates (äußerster Notfall)
 
 | Pfad | Inhalt |
 |------|--------|
-| `src/drift/signals/` | 23 Signale — 15 scoring-aktiv (PFS, AVS, MDS, EDS, TVS, SMS, DIA, BEM, TPD, GCD, NBV, BAT, ECM, COD, CCC) + 8 report-only (TSA, CXS, FOE, CIR, DCA, MAZ, ISD, HSC) |
+| `src/drift/signals/` | 24 Signale — 15 scoring-aktiv (PFS, AVS, MDS, EDS, TVS, SMS, DIA, BEM, TPD, GCD, NBV, BAT, ECM, COD, CCC) + 9 report-only (TSA, CXS, FOE, CIR, DCA, MAZ, ISD, HSC, PHR) |
 | `src/drift/ingestion/` | AST-Parsing, Git-History, File-Discovery |
 | `src/drift/scoring/` | Composite-Score, Module-Scores, Severity |
 | `src/drift/output/` | Rich-Terminal, JSON, SARIF |

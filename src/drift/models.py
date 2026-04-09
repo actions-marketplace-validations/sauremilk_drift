@@ -53,6 +53,7 @@ class SignalType(StrEnum):
     MISSING_AUTHORIZATION = "missing_authorization"
     INSECURE_DEFAULT = "insecure_default"
     HARDCODED_SECRET = "hardcoded_secret"
+    PHANTOM_REFERENCE = "phantom_reference"
 
 
 class PatternCategory(StrEnum):

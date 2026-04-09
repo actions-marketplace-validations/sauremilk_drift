@@ -280,3 +280,25 @@
 |---|---|---|---|---|---|---:|---:|---:|---:|
 | DIA | FP: Generic prose tokens (e.g. async/, scan/, connectors/) reported as missing directories | Slash-token extraction without structural context in markdown prose | Trust erosion, noisy findings, reduced actionability | User report + regression test in tests/test_dia_enhanced.py | Context-aware extraction: accept only backticked refs or nearby structural keywords; keep code-span refs | 5 | 6 | 4 | 120 |
 | DIA | FN: Real directory mention in plain prose filtered too aggressively | Context window misses valid wording | Missed drift signal | DIA regression tests for context-positive phrases | Structural keyword list + explicit backtick acceptance | 4 | 3 | 5 | 60 |
+
+## 2026-04-09 - PHR Signal: Phantom Reference (ADR-033)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN | Status |
+|---|---|---|---|---|---|---:|---:|---:|---:|---|
+| PHR | FP: star-import file references name provided by star | Star imports (`from X import *`) inject unknown names into scope | False phantom finding for names actually available via star import | `phr_star_import_tn` fixture | Conservative skip: files with star imports are excluded from PHR analysis | 4 | 3 | 2 | 24 | **Mitigated** |
+| PHR | FP: module __getattr__ provides dynamic names | Module-level `__getattr__` makes any attribute access valid | False phantom finding for dynamically provided names | `phr_dynamic_tn` fixture | Conservative skip: files with module-level `__getattr__` are excluded | 4 | 2 | 2 | 16 | **Mitigated** |
+| PHR | FP: plugin/extension names resolved at runtime | Plugin systems register names dynamically via entry points or registries | False positive for intentionally late-bound names | Manual review | `_FRAMEWORK_GLOBALS` allowlist covers common framework names; further refinement via config | 3 | 3 | 5 | 45 | Accepted |
+| PHR | FN: exec/eval introduce names not visible to AST | `exec()` or `eval()` can inject names into scope at runtime | Phantom names created by exec/eval not detected as defined | `_has_exec_eval` detection flag (logged, not yet used for suppression) | Accept: static analysis limitation; exec/eval usage is rare in well-structured code | 3 | 2 | 8 | 48 | Accepted |
+| PHR | FN: getattr-based access not tracked | `getattr(obj, "name")` resolves names at runtime | Under-reporting for highly dynamic codebases | N/A — static analysis limitation | Accept: getattr patterns are intentionally dynamic | 2 | 3 | 8 | 48 | Accepted |
+| PHR | FP: third-party library names not in project symbol table | Names from installed packages (e.g. `requests.get`) not tracked | False positive for external dependency calls | Project-wide symbol table includes import-resolved names | Import-tracked names are added to available set; root name resolution covers `import X; X.call()` | 5 | 4 | 3 | 60 | **Mitigated** |
+
+## 2026-04-09 - PHR Signal: Phantom Reference (ADR-033)
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN | Status |
+|---|---|---|---|---|---|---:|---:|---:|---:|---|
+| PHR | FP: star-import file references name provided by star | Star imports (`from X import *`) inject unknown names into scope | False phantom finding for names actually available via star import | `phr_star_import_tn` fixture | Conservative skip: files with star imports are excluded from PHR analysis | 4 | 3 | 2 | 24 | **Mitigated** |
+| PHR | FP: module __getattr__ provides dynamic names | Module-level `__getattr__` makes any attribute access valid | False phantom finding for dynamically provided names | `phr_dynamic_tn` fixture | Conservative skip: files with module-level `__getattr__` are excluded | 4 | 2 | 2 | 16 | **Mitigated** |
+| PHR | FP: plugin/extension names resolved at runtime | Plugin systems register names dynamically via entry points or registries | False positive for intentionally late-bound names | Manual review | `_FRAMEWORK_GLOBALS` allowlist covers common framework names; further refinement via config | 3 | 3 | 5 | 45 | Accepted |
+| PHR | FN: exec/eval introduce names not visible to AST | `exec()` or `eval()` can inject names into scope at runtime | Phantom names created by exec/eval not detected as defined | `_has_exec_eval` detection flag (logged, not yet used for suppression) | Accept: static analysis limitation; exec/eval usage is rare in well-structured code | 3 | 2 | 8 | 48 | Accepted |
+| PHR | FN: getattr-based access not tracked | `getattr(obj, "name")` resolves names at runtime | Under-reporting for highly dynamic codebases | N/A — static analysis limitation | Accept: getattr patterns are intentionally dynamic | 2 | 3 | 8 | 48 | Accepted |
+| PHR | FP: third-party library names not in project symbol table | Names from installed packages (e.g. `requests.get`) not tracked | False positive for external dependency calls | Project-wide symbol table includes import-resolved names | Import-tracked names are added to available set; root name resolution covers `import X; X.call()` | 5 | 4 | 3 | 60 | **Mitigated** |

@@ -914,3 +914,23 @@
 - Mitigation: Context-aware extraction with structural-keyword window and backtick-preserved refs.
 - Verification: tests/test_dia_enhanced.py (new regression cases) + quick no-smoke suite pass.
 - Residual risk: Low; uncommon prose phrasing without structural terms may still be filtered.
+
+## 2026-04-09 - PHR Signal: Phantom Reference (ADR-033)
+
+- Risk ID: RISK-PHR-2026-04-09-033
+- Component: src/drift/signals/phantom_reference.py
+- Type: New signal (report-only, weight 0.0)
+- Description: PHR detects unresolvable function/class references in Python files — names used in call expressions that cannot be resolved against local definitions, imports, builtins, or the project-wide symbol table. Primary use case: detecting AI-hallucinated function references.
+- FP mitigations:
+  - Star-import files conservatively skipped (complete exclusion)
+  - Module-level `__getattr__` files conservatively skipped
+  - `_FRAMEWORK_GLOBALS` allowlist for common framework-injected names
+  - Import-resolved names added to available set (root-name resolution)
+  - Private names (`_prefix`) and dunder names excluded from flagging
+  - TYPE_CHECKING blocks excluded from name collection
+- FN acceptance:
+  - `exec()`/`eval()` introduced names: static analysis limitation
+  - `getattr(obj, "name")`: dynamic access invisible to AST
+  - Decorator-only references: partially covered via _ScopeCollector
+- Verification: 22 targeted tests (test_phantom_reference.py) + 6 ground-truth fixtures (2 TP, 4 TN/confounder) all passing. P=1.00 R=1.00 on fixture suite.
+- Residual risk: Medium; report-only status (weight 0.0) prevents false positives from affecting composite scores. Real-world precision validation pending on external repos.

@@ -170,6 +170,12 @@ _CORE_SIGNALS: Final[list[SignalMeta]] = [
         "security", 0.0,
         "Detects hardcoded secrets and credentials (report-only).",
     ),
+    # ── ai_quality ────────────────────────────────────────────────────────
+    SignalMeta(
+        "phantom_reference", "PHR", "Phantom Reference",
+        "ai_quality", 0.0,
+        "Detects unresolvable function/class references (AI hallucination indicator, report-only).",
+    ),
 ]
 
 # ---------------------------------------------------------------------------

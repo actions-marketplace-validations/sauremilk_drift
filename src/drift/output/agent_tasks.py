@@ -585,6 +585,16 @@ def _success_criteria_for(finding: Finding) -> list[str]:
             *base,
         ]
 
+    if st == SignalType.PHANTOM_REFERENCE:
+        phantoms = meta.get("phantom_names", [])
+        phantoms_str = ", ".join(f"'{p}'" for p in phantoms[:5]) if phantoms else "phantom names"
+        return [
+            f"Phantom references ({phantoms_str}) in {path_str} resolved: "
+            "either import added, function defined, or dead call removed",
+            "`drift scan` reports no phantom_reference finding for this file",
+            *base,
+        ]
+
     return base
 
 

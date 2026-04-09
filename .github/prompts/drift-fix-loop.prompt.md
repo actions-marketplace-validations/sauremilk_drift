@@ -65,7 +65,56 @@ drift_nudge(
 - `confidence`: pro Signal
 
 **Wenn `direction=degrading`:** Änderung rückgängig machen, anders lösen.
-**Wenn `safe_to_commit=true`:** Weiter mit nächstem Task oder Abschluss.
+**Wenn `safe_to_commit=true`:** Weiter mit Test-Checkpoint (Schritt 3b).
+
+### Schritt 3b — Test-Checkpoint nach jeder Änderung
+
+Nachdem `nudge` kein Degrading meldet, **gezielte Tests** für die geänderte Datei ausführen.
+
+**Pfad-zu-Test-Mapping** (kürzeste Match-Regel, oben zuerst):
+
+| Geänderte Datei (Pattern) | Gezielte Tests |
+|---|---|
+| `src/drift/signals/architecture_violation*` | `pytest tests/test_avs_*.py -q --tb=short` |
+| `src/drift/signals/doc_impl_drift*` | `pytest tests/test_dia_*.py -q --tb=short` |
+| `src/drift/signals/explainability_deficit*` | `pytest tests/test_eds_*.py -q --tb=short` |
+| `src/drift/signals/mutant_duplicates*` | `pytest tests/test_mutant_duplicates*.py -q --tb=short` |
+| `src/drift/signals/dead_code_accumulation*` | `pytest tests/test_dead_code*.py -q --tb=short` |
+| `src/drift/signals/pattern_fragmentation*` | `pytest tests/test_pattern_fragmentation*.py -q --tb=short` |
+| `src/drift/signals/naming_contract*` | `pytest tests/test_naming_contract*.py -q --tb=short` |
+| `src/drift/signals/test_polarity_deficit*` | `pytest tests/test_test_polarity_deficit*.py -q --tb=short` |
+| `src/drift/signals/cognitive_complexity*` | `pytest tests/test_cognitive_complexity*.py -q --tb=short` |
+| `src/drift/signals/circular_import*` | `pytest tests/test_circular_import*.py -q --tb=short` |
+| `src/drift/signals/guard_clause*` | `pytest tests/test_guard_clause*.py -q --tb=short` |
+| `src/drift/signals/insecure_default*` | `pytest tests/test_insecure_default*.py -q --tb=short` |
+| `src/drift/signals/missing_authorization*` | `pytest tests/test_missing_authorization*.py -q --tb=short` |
+| `src/drift/signals/hardcoded_secret*` | `pytest tests/test_hardcoded_secret*.py -q --tb=short` |
+| `src/drift/signals/exception_contract*` | `pytest tests/test_exception_contract*.py -q --tb=short` |
+| `src/drift/signals/fan_out_explosion*` | `pytest tests/test_fan_out_explosion*.py -q --tb=short` |
+| `src/drift/signals/cohesion_deficit*` | `pytest tests/test_cohesion_deficit*.py -q --tb=short` |
+| `src/drift/signals/bypass_accumulation*` | `pytest tests/test_bypass_accumulation*.py -q --tb=short` |
+| `src/drift/signals/*` (andere) | `pytest tests/test_precision_recall.py tests/test_mirofish_signal_improvements.py -q --tb=short` |
+| `src/drift/api.py` | `pytest tests/test_brief.py tests/test_integration.py tests/test_incremental.py tests/test_fix_actionability.py tests/test_nudge.py -q --tb=short` |
+| `src/drift/mcp_server.py` | `pytest tests/test_mcp_copilot.py tests/test_mcp_hardening.py tests/test_tool_metadata.py tests/test_negative_context_export.py -q --tb=short` |
+| `src/drift/output/*` | `pytest tests/test_json_output.py tests/test_csv_output.py tests/test_sarif_contract.py tests/test_output_golden.py tests/test_agent_tasks.py -q --tb=short` |
+| `src/drift/ingestion/*` | `pytest tests/test_ast_parser.py tests/test_file_discovery.py tests/test_scope_resolver.py tests/test_typescript_parser.py -q --tb=short` |
+| `src/drift/config.py` | `pytest tests/test_config.py tests/test_config_validate.py tests/test_model_consistency.py -q --tb=short` |
+| `src/drift/commands/*` | `pytest tests/test_self_command.py tests/test_patterns_command.py tests/test_ci_reality.py -q --tb=short` |
+| `src/drift/session.py` | `pytest tests/test_session.py -q --tb=short` |
+| `src/drift/incremental.py` | `pytest tests/test_incremental.py tests/test_nudge.py -q --tb=short` |
+| Fallback (kein Treffer) | `pytest tests/ -q --tb=short --ignore=tests/test_smoke_real_repos.py --maxfail=5` |
+
+**Bei Testfehlschlag — Entscheidungsbaum:**
+
+| Fehlerbild | Ursache | Reaktion |
+|---|---|---|
+| `AttributeError: has no attribute X` | Test prüft Implementation-Details | **Test anpassen** |
+| `TypeError: N arguments expected` | Signatur wurde geändert | **Test anpassen** |
+| Test erwartet altes Drift-Pattern, das absichtlich entfernt wurde | Finding war Ziel des Fixes | **Test anpassen** |
+| `AssertionError` auf dokumentiertes Public-API-Verhalten | Vertrag verletzt | **Production-Fix überdenken oder reverten** |
+| `AssertionError` auf Rückgabewert eines öffentlichen Contracts | Semantische Regression | **Production-Fix überdenken oder reverten** |
+
+**Kein Hard-Block:** Der Workflow wird nicht abgebrochen. Der Agent wendet den Entscheidungsbaum an und setzt mit dem bereinigten Zustand fort.
 
 ### Schritt 4 — Nächsten Task holen (falls nötig)
 
@@ -105,14 +154,16 @@ session_start(autopilot=true)       ← 1 Aufruf statt 4
     ↓
 fix_plan (in Autopilot enthalten)
     ↓
-┌───────────────────────────┐
-│  Task N bearbeiten        │
-│  Datei editieren          │
-│  nudge(changed_files=...) │ ← schnell (~0.2 s)
-│  direction prüfen         │
-│  ggf. korrigieren         │
-└─────────┬─────────────────┘
-          │ safe_to_commit?
+┌──────────────────────────────────────────┐
+│  Task N bearbeiten                       │
+│  Datei editieren                         │
+│  nudge(changed_files=...)  ← ~0.2 s      │
+│  direction prüfen                        │
+│  ggf. korrigieren                        │
+│  pytest <gezielte Tests> --tb=short  ← 3b│
+│  bei rot: Test anpassen oder reverten    │
+└─────────┬────────────────────────────────┘
+          │ safe_to_commit + Tests grün?
           ↓
     fix_plan(max_tasks=1)    ← nächster Task
           │ keine Tasks mehr?

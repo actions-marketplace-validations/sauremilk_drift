@@ -811,3 +811,29 @@ Weil kein `PatternInstance` mit `category=PatternCategory.RETURN_PATTERN` erzeug
 - Branch A: Mention not backticked.
 - Branch B: Structural cue absent from local context window.
 - Mitigation implemented: Add keyword-based structural context and targeted tests for positive prose context.
+
+---
+
+## PHR — Phantom Reference (ADR-033)
+
+### FT-1: False Positive — name flagged as phantom but actually available
+- Top event: PHR emits finding for a name that IS available at runtime.
+- Branch A: Name provided by star import (`from X import *`).
+  - Mitigation: Conservative skip — files with star imports excluded entirely.
+- Branch B: Name provided by module-level `__getattr__`.
+  - Mitigation: Conservative skip — files with `__getattr__` at module level excluded.
+- Branch C: Name is a third-party library name not in project symbol table.
+  - Mitigation: Import-resolved names added to available set; root-name resolution covers `import X; X.call()`.
+- Branch D: Name is a framework-injected global (e.g. pytest fixtures).
+  - Mitigation: `_FRAMEWORK_GLOBALS` allowlist for common framework names.
+- Branch E: Name introduced by `exec()`/`eval()` at runtime.
+  - Mitigation: `_has_exec_eval` flag detected (logged); accept as static analysis limitation.
+
+### FT-2: False Negative — phantom name not detected
+- Top event: PHR misses a genuinely unresolvable reference.
+- Branch A: Name retrieved via `getattr(obj, "name")` — dynamic access invisible to AST.
+  - Accept: static analysis cannot resolve runtime string-based attribute access.
+- Branch B: Name used in decorator context but not in call expression.
+  - Accept: current heuristic focuses on call targets; decorator names tracked via _ScopeCollector.
+- Branch C: Name used only in type annotations (not at runtime).
+  - Mitigation: TYPE_CHECKING blocks skipped; annotation-only names not collected.

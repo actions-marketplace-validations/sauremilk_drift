@@ -427,6 +427,11 @@
           "title": "Pattern Fragmentation",
           "type": "number"
         },
+        "phantom_reference": {
+          "default": 0.0,
+          "title": "Phantom Reference",
+          "type": "number"
+        },
         "system_misalignment": {
           "default": 0.08,
           "title": "System Misalignment",

@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import datetime
 import json
+import subprocess
+import textwrap
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -62,19 +64,67 @@ __all__ = [
 ]
 
 
+def _run_git(cwd: Path, *args: str) -> None:
+    """Run a git command silently in *cwd*."""
+    subprocess.run(  # noqa: S603, S607
+        ["git", *args],
+        cwd=str(cwd),
+        capture_output=True,
+        check=True,
+        stdin=subprocess.DEVNULL,
+    )
+
+
+def _setup_git_history(
+    fixture_dir: Path,
+    old_sources: dict[str, str],
+    current_files: dict[str, str],
+) -> None:
+    """Create a minimal git repo with two commits: old_sources → current_files."""
+    _run_git(fixture_dir, "init")
+    _run_git(fixture_dir, "config", "user.email", "fixture@test")
+    _run_git(fixture_dir, "config", "user.name", "fixture")
+
+    # Commit 1: old sources
+    for rel_path, content in old_sources.items():
+        full = fixture_dir / rel_path
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(textwrap.dedent(content), encoding="utf-8")
+    _run_git(fixture_dir, "add", ".")
+    _run_git(fixture_dir, "commit", "-m", "initial")
+
+    # Commit 2: current files (overwrites old sources)
+    for rel_path, content in current_files.items():
+        full = fixture_dir / rel_path
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(textwrap.dedent(content), encoding="utf-8")
+    _run_git(fixture_dir, "add", ".")
+    _run_git(fixture_dir, "commit", "-m", "current", "--allow-empty")
+
+
 def run_fixture(
     fixture: GroundTruthFixture,
     tmp_path: Path,
     signal_filter: set[SignalType] | None = None,
 ) -> tuple[list[Finding], list[AnalyzerWarning]]:
     """Materialize a fixture, parse it, run signals, return findings and warnings."""
-    fixture_dir = fixture.materialize(tmp_path)
+    has_old_sources = bool(getattr(fixture, "old_sources", None))
+
+    if has_old_sources:
+        # Create git repo with old sources first, then overwrite with current
+        fixture_dir = tmp_path / fixture.name
+        fixture_dir.mkdir(parents=True, exist_ok=True)
+        _setup_git_history(fixture_dir, fixture.old_sources, fixture.files)
+    else:
+        fixture_dir = fixture.materialize(tmp_path)
 
     config = DriftConfig(
         include=["**/*.py"],
         exclude=["**/__pycache__/**"],
         embeddings_enabled=False,
     )
+    if has_old_sources:
+        config.thresholds.ecm_lookback_commits = 1
 
     files = discover_files(fixture_dir, config.include, config.exclude)
     parse_results: list[ParseResult] = []

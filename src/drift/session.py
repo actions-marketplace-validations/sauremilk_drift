@@ -11,6 +11,10 @@ Sessions complement the ``BaselineManager`` (ADR-020) — baselines handle
 analysis-level persistence while sessions handle orchestration-level state.
 The API layer (``drift.api``) remains stateless.
 
+Architectural invariant (Phase-5 boundary contract):
+    session.py   → stateful, multi-call orchestration context
+    pipeline.py  → stateless, single-run transformation graph
+
 Decision: ADR-022
 """
 

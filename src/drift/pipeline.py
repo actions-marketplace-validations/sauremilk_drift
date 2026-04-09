@@ -1,4 +1,13 @@
-"""Composable analysis pipeline phases for repository and diff analysis."""
+"""Composable analysis pipeline phases for repository and diff analysis.
+
+This module is **stateless**: every function receives its inputs explicitly
+and returns results without mutating shared state.  It does not import or
+manage session state — that responsibility belongs to ``drift.session``.
+
+Architectural invariant (Phase-5 boundary contract):
+    pipeline.py  → stateless, single-run transformation graph
+    session.py   → stateful, multi-call orchestration context
+"""
 
 from __future__ import annotations
 
