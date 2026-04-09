@@ -88,7 +88,7 @@ def resolve_signal(name: str) -> SignalType | None:
 
 
 def signal_abbrev(signal_type: str) -> str:
-    """Return the short abbreviation for a signal type."""
+    """Return the short abbreviation for a signal type string."""
     return _SIGNAL_TO_ABBREV.get(str(signal_type), str(signal_type)[:3].upper())
 
 
