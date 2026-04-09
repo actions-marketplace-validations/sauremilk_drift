@@ -111,6 +111,8 @@ class TestEDSThresholds:
         lines.append("    x = result * 2")
         lines.append("    y = x + 1")
         lines.append("    z = y - 1")
+        lines.append("    m = z * 2")
+        lines.append("    n = m - 2")
         lines.append("    return z")
         return "\n".join(lines)
 

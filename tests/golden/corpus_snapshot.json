@@ -3899,8 +3899,7 @@
   "negative_context": [
     {
       "affected_files": [
-        "src/myapp/service_a.py",
-        "src/myapp/service_b.py"
+        "src/myapp/service_a.py"
       ],
       "anti_pattern_id": "neg-mut-fbe92f1c93",
       "canonical_alternative": "# REQUIRED: Reuse 'function_a' or extract shared logic\n# Parameterize differences instead of copy-pasting",
@@ -3916,8 +3915,7 @@
     },
     {
       "affected_files": [
-        "src/myapp/service_a.py",
-        "src/myapp/service_b.py"
+        "src/myapp/service_a.py"
       ],
       "anti_pattern_id": "neg-mut-62660bd259",
       "canonical_alternative": "# REQUIRED: Reuse 'function_a' or extract shared logic\n# Parameterize differences instead of copy-pasting",

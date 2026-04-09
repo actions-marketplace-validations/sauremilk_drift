@@ -280,6 +280,8 @@ class DriftSession:
     effectiveness_thresholds: dict[str, float] = field(
         default_factory=lambda: dict(_DEFAULT_EFFECTIVENESS_THRESHOLDS)
     )
+    diagnostic_hypotheses: dict[str, dict[str, Any]] = field(default_factory=dict)
+    git_head_at_plan: str | None = None
 
     # -- queries -------------------------------------------------------------
 
@@ -336,17 +338,23 @@ class DriftSession:
         self.phase = new_phase
         return old
 
-    def record_trace(self, tool: str, advisory: str = "") -> None:
+    def record_trace(
+        self,
+        tool: str,
+        advisory: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
         """Append one trace entry for chronological workflow diagnostics."""
-        self.trace.append(
-            {
-                "tool": tool,
-                "ts": time.time(),
-                "phase": self.phase,
-                "advisory": advisory,
-                "tool_calls_so_far": self.tool_calls,
-            }
-        )
+        entry: dict[str, Any] = {
+            "tool": tool,
+            "ts": time.time(),
+            "phase": self.phase,
+            "advisory": advisory,
+            "tool_calls_so_far": self.tool_calls,
+        }
+        if metadata:
+            entry.update(metadata)
+        self.trace.append(entry)
 
     def snapshot_run(self, score: float, finding_count: int) -> None:
         """Record a score/finding snapshot for trend-aware session guidance."""
@@ -357,6 +365,39 @@ class DriftSession:
                 "ts": time.time(),
                 "tool_calls_at": self.tool_calls,
             }
+        )
+
+    def register_diagnostic_hypothesis(self, hypothesis_id: str, payload: dict[str, Any]) -> None:
+        """Store diagnostic hypothesis payload by ID for later trace linkage."""
+        self.diagnostic_hypotheses[hypothesis_id] = dict(payload)
+
+    def get_diagnostic_hypothesis(self, hypothesis_id: str) -> dict[str, Any] | None:
+        """Fetch a previously registered diagnostic hypothesis by ID."""
+        value = self.diagnostic_hypotheses.get(hypothesis_id)
+        if isinstance(value, dict):
+            return value
+        return None
+
+    def consecutive_nudge_degradations(self) -> int:
+        """Return count of consecutive degrading drift_nudge entries from trace tail."""
+        count = 0
+        for entry in reversed(self.trace):
+            if not isinstance(entry, dict) or entry.get("tool") != "drift_nudge":
+                continue
+            if entry.get("direction") == "degrading":
+                count += 1
+                continue
+            break
+        return count
+
+    def plan_stale_count(self) -> int:
+        """Return number of trace entries flagged with plan_stale=True."""
+        return sum(
+            1
+            for entry in self.trace
+            if isinstance(entry, dict)
+            and entry.get("tool") == "drift_fix_plan"
+            and bool(entry.get("plan_stale"))
         )
 
     def _effectiveness_warnings(self) -> list[dict[str, Any]]:
@@ -820,6 +861,8 @@ class DriftSession:
             "trace": self.trace,
             "run_history": self.run_history,
             "effectiveness_thresholds": self.effectiveness_thresholds,
+            "diagnostic_hypotheses": self.diagnostic_hypotheses,
+            "git_head_at_plan": self.git_head_at_plan,
         }
 
     @classmethod
@@ -862,6 +905,8 @@ class DriftSession:
             effectiveness_thresholds=data.get(
                 "effectiveness_thresholds", dict(_DEFAULT_EFFECTIVENESS_THRESHOLDS)
             ),
+            diagnostic_hypotheses=data.get("diagnostic_hypotheses", {}),
+            git_head_at_plan=data.get("git_head_at_plan"),
         )
 
 

@@ -305,6 +305,8 @@ class RepoAnalysis:
     ai_tools_detected: list[str] = field(default_factory=list)
     skipped_files: int = 0
     skipped_languages: dict[str, int] = field(default_factory=dict)
+    preflight: Any | None = None
+    analyzer_warnings: list[AnalyzerWarning] = field(default_factory=list)
 
     @property
     def severity(self) -> Severity:

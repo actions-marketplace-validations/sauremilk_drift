@@ -435,7 +435,7 @@ async def drift_diff(
         ),
     ] = None,
     diagnostic_hypothesis: Annotated[
-        dict[str, Any] | None,
+        Any,
         Field(
             description=(
                 "Optional full diagnostic hypothesis payload. Required in batch-fix "
@@ -795,7 +795,7 @@ async def drift_nudge(
         ),
     ] = None,
     diagnostic_hypothesis: Annotated[
-        dict[str, Any] | None,
+        Any,
         Field(
             description=(
                 "Optional full diagnostic hypothesis payload. Required in batch-fix "
@@ -1319,6 +1319,104 @@ def _session_called_tools(session: Any) -> set[str]:
     return called
 
 
+def _effective_profile(session: Any, explicit_profile: str | None) -> str | None:
+    """Resolve response profile from explicit input or session phase."""
+    if explicit_profile:
+        return explicit_profile
+    if session is None:
+        return None
+
+    phase = getattr(session, "phase", None)
+    if not isinstance(phase, str):
+        return None
+    phase_map: dict[str, str] = {
+        "init": "planner",
+        "scan": "planner",
+        "fix": "coder",
+        "verify": "verifier",
+        "done": "merge_readiness",
+    }
+    return phase_map.get(phase)
+
+
+def _semantic_pre_call_advisory(tool_name: str, session: Any) -> str:
+    """Return semantic, workflow-aware advisory hints (SA-001..SA-004)."""
+    selected_tasks = getattr(session, "selected_tasks", None) or []
+    completed_task_ids = set(getattr(session, "completed_task_ids", []) or [])
+
+    # SA-001: blocker-awareness for unresolved dependencies.
+    if tool_name in {"drift_nudge", "drift_task_complete"} and selected_tasks:
+        unresolved: list[str] = []
+        for task in selected_tasks:
+            for dep in task.get("depends_on", []) or []:
+                if dep not in completed_task_ids:
+                    unresolved.append(str(dep))
+        if unresolved:
+            uniq = sorted(set(unresolved))
+            return f"Unresolved dependency detected: {', '.join(uniq)}."
+
+    trace = getattr(session, "trace", None) or []
+
+    # SA-002: repeated scan in fix phase deviates from canonical flow.
+    if tool_name == "drift_scan" and getattr(session, "phase", "") == "fix":
+        repeated_fix_scan = any(
+            isinstance(entry, dict)
+            and entry.get("tool") == "drift_scan"
+            and entry.get("phase") == "fix"
+            for entry in trace
+        )
+        if repeated_fix_scan:
+            return (
+                "Canonical-pattern deviation: repeated scan in fix phase. "
+                "Prefer drift_nudge for inner-loop feedback."
+            )
+
+    # SA-003: changed files outside diagnostic hypotheses.
+    if tool_name == "drift_nudge":
+        hypotheses = getattr(session, "diagnostic_hypotheses", {}) or {}
+        if hypotheses:
+            allowed_files: set[str] = set()
+            for hyp in hypotheses.values():
+                if isinstance(hyp, dict):
+                    for path in hyp.get("affected_files", []) or []:
+                        allowed_files.add(str(path))
+
+            changed_files: set[str] = set()
+            for entry in reversed(trace):
+                if not isinstance(entry, dict):
+                    continue
+                raw_changed = entry.get("changed_files")
+                if isinstance(raw_changed, str) and raw_changed:
+                    changed_files.add(raw_changed)
+                elif isinstance(raw_changed, list):
+                    changed_files.update(str(item) for item in raw_changed)
+                if changed_files:
+                    break
+
+            if changed_files and allowed_files and any(
+                changed not in allowed_files for changed in changed_files
+            ):
+                return (
+                    "Hypothesis scope creep detected: changed file outside "
+                    "diagnostic hypothesis."
+                )
+
+    # SA-004: warn on potential rework against completed task files.
+    if tool_name == "drift_nudge" and completed_task_ids and selected_tasks:
+        completed_files: set[str] = set()
+        for task in selected_tasks:
+            task_id = task.get("id", task.get("task_id", ""))
+            if task_id in completed_task_ids:
+                if task.get("file"):
+                    completed_files.add(str(task["file"]))
+                for path in task.get("affected_files_for_pattern", []) or []:
+                    completed_files.add(str(path))
+        if completed_files:
+            return "Potential rework on completed task files detected."
+
+    return ""
+
+
 _DIAGNOSTIC_REQUIRED_FIELDS = (
     "affected_files",
     "suspected_root_cause",
@@ -1331,7 +1429,8 @@ def _requires_diagnostic_hypothesis(session: Any) -> bool:
     """Return True when the session is in a batch-fix verification context."""
     if session is None:
         return False
-    return bool(session.selected_tasks) or session.phase in {"fix", "verify"}
+    selected_tasks = getattr(session, "selected_tasks", None) or []
+    return any(bool(task.get("batch_eligible")) for task in selected_tasks)
 
 
 def _validate_diagnostic_hypothesis_payload(payload: Any) -> list[str]:
@@ -1701,6 +1800,10 @@ def _pre_call_advisory(tool_name: str, session: Any) -> str:
 
     parts: list[str] = []
 
+    semantic_advisory = _semantic_pre_call_advisory(tool_name, session)
+    if semantic_advisory:
+        parts.append(semantic_advisory)
+
     # Phase mismatch — tool not recommended for current phase
     if entry.phases and session.phase not in entry.phases:
         parts.append(
@@ -1718,7 +1821,7 @@ def _pre_call_advisory(tool_name: str, session: Any) -> str:
         )
 
     # Prerequisite check
-    if entry.context.prerequisite_tools:
+    if entry.context.prerequisite_tools and not semantic_advisory:
         called_tools = _session_called_tools(session)
         missing = [p for p in entry.context.prerequisite_tools if p not in called_tools]
         if missing:
@@ -1772,6 +1875,21 @@ def _enrich_response_with_session(
             else None
         ),
     }
+
+    if session.git_head_at_plan:
+        try:
+            from drift.pipeline import _current_git_head
+
+            current_head = _current_git_head(Path(session.repo_path))
+        except Exception:  # noqa: BLE001
+            current_head = None
+
+        if current_head and current_head != session.git_head_at_plan:
+            session_block["plan_stale"] = True
+            session_block["plan_stale_reason"] = (
+                "Plan baseline head "
+                f"{session.git_head_at_plan} differs from current head {current_head}."
+            )
 
     # Quality-drift detection
     from drift.quality_gate import quality_drift_from_history
@@ -2552,6 +2670,59 @@ async def drift_session_trace(
     return json.dumps(result, default=str)
 
 
+@mcp.tool()
+async def drift_map(
+    path: Annotated[str, Field(description="Repository path to map.")] = ".",
+    target_path: Annotated[
+        str | None,
+        Field(description="Optional subpath scope inside repository."),
+    ] = None,
+    max_modules: Annotated[
+        int,
+        Field(description="Maximum number of modules to return."),
+    ] = 50,
+    session_id: Annotated[
+        str | None,
+        Field(description="Optional session ID for context enrichment."),
+    ] = None,
+) -> str:
+    """Return a lightweight module/dependency architecture map.
+
+    Args:
+        path: Repository path to map.
+        target_path: Optional subpath scope inside repository.
+        max_modules: Maximum number of modules to return.
+        session_id: Optional session ID for context enrichment.
+    """
+    from drift.api import drift_map as api_drift_map
+
+    session = _resolve_session(session_id)
+    kwargs = _session_defaults(session, {"path": path, "target_path": target_path})
+
+    try:
+        result = await _run_sync_in_thread(
+            lambda: api_drift_map(
+                kwargs.get("path", path),
+                target_path=kwargs.get("target_path"),
+                max_modules=max_modules,
+            )
+        )
+        raw = json.dumps(result, default=str)
+        if session is not None:
+            raw = _enrich_response_with_session(raw, session, "drift_map")
+        return raw
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps(
+            {
+                "type": "error",
+                "error_code": "DRIFT-7001",
+                "message": str(exc),
+                "recoverable": True,
+            },
+            default=str,
+        )
+
+
 _EXPORTED_MCP_TOOLS = (
     drift_scan,
     drift_diff,
@@ -2571,6 +2742,7 @@ _EXPORTED_MCP_TOOLS = (
     drift_task_complete,
     drift_task_status,
     drift_session_trace,
+    drift_map,
 )
 
 

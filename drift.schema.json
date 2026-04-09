@@ -1,9 +1,41 @@
 {
   "$defs": {
+    "AgentEffectivenessThresholds": {
+      "additionalProperties": false,
+      "description": "Thresholds for deterministic low-effect/high-churn warnings.",
+      "properties": {
+        "high_churn_min_changed_files": {
+          "default": 5,
+          "title": "High Churn Min Changed Files",
+          "type": "integer"
+        },
+        "high_churn_min_loc_changed": {
+          "default": 200,
+          "title": "High Churn Min Loc Changed",
+          "type": "integer"
+        },
+        "low_effect_resolved_per_100_loc_changed": {
+          "default": 0.5,
+          "title": "Low Effect Resolved Per 100 Loc Changed",
+          "type": "number"
+        },
+        "low_effect_resolved_per_changed_file": {
+          "default": 0.25,
+          "title": "Low Effect Resolved Per Changed File",
+          "type": "number"
+        }
+      },
+      "title": "AgentEffectivenessThresholds",
+      "type": "object"
+    },
     "AgentObjective": {
       "additionalProperties": false,
       "description": "Declarative agent objective for drift.yaml.\n\nAllows agents to declare their goal, out-of-scope areas,\nand success criteria so drift can provide targeted feedback.\n\nExample drift.yaml::\n\n    agent:\n      goal: \"Migrate payment module to Stripe API\"\n      out_of_scope:\n        - \"legacy/\"\n        - \"tests/fixtures/\"\n      success_criteria:\n        - \"No new AVS findings in src/billing/\"",
       "properties": {
+        "effectiveness_thresholds": {
+          "$ref": "#/$defs/AgentEffectivenessThresholds",
+          "description": "Thresholds used for deterministic effectiveness warnings (e.g. low_effect_high_churn)."
+        },
         "goal": {
           "default": "",
           "description": "Natural-language description of the agent's current task.",
