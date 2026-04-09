@@ -129,6 +129,7 @@ class TestJsonOutputGolden:
             "symbol",
             "related_files",
             "ai_attributed",
+            "attribution",
             "deferred",
             "finding_context",
             "metadata",

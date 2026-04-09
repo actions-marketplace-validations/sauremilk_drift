@@ -12,12 +12,12 @@ from drift.api import (
     _format_scan_response,
     scan,
 )
+from drift.config import DriftConfig
+from drift.models import AgentTask, Severity, SignalType
 
 # Resolve the *module* drift.api.scan — drift.api.__init__ shadows the
 # submodule name with the re-exported ``scan`` function.
 _scan_mod = sys.modules["drift.api.scan"]
-from drift.config import DriftConfig
-from drift.models import AgentTask, Severity, SignalType
 
 
 def _make_finding(
@@ -399,7 +399,6 @@ class TestScanCrossValidationFields:
 class TestNonOperationalContextFiltering:
     def test_scan_excludes_fixture_from_findings_by_default(self, monkeypatch):
         import drift.analyzer as analyzer_module
-        import drift.api as api_module
 
         findings = [
             _make_finding(PFS, 0.95, 0.95, file="benchmarks/corpus/src/app.py", line=10),
@@ -439,7 +438,6 @@ class TestNonOperationalContextFiltering:
 
     def test_scan_includes_fixture_in_findings_with_opt_in(self, monkeypatch):
         import drift.analyzer as analyzer_module
-        import drift.api as api_module
 
         findings = [
             _make_finding(PFS, 0.95, 0.95, file="benchmarks/corpus/src/app.py", line=10),
@@ -480,7 +478,6 @@ class TestNonOperationalContextFiltering:
 
     def test_scan_detailed_excludes_fixture_from_fix_first_by_default(self, monkeypatch):
         import drift.analyzer as analyzer_module
-        import drift.api as api_module
 
         findings = [
             _make_finding(PFS, 0.9, 0.9, file="benchmarks/corpus/src/app.py", line=10),
@@ -512,7 +509,6 @@ class TestNonOperationalContextFiltering:
 
     def test_scan_detailed_includes_fixture_with_opt_in(self, monkeypatch):
         import drift.analyzer as analyzer_module
-        import drift.api as api_module
 
         findings = [
             _make_finding(PFS, 0.9, 0.9, file="benchmarks/corpus/src/app.py", line=10),

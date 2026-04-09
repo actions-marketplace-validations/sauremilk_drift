@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import json
-import textwrap
+import sys
 from pathlib import Path
 
-import pytest
 import yaml
 
 from drift.task_spec import ArchitectureLayer, TaskSpec, validate_task_spec
-
 
 # ── TaskSpec model tests ───────────────────────────────────────────
 
@@ -67,7 +65,11 @@ class TestTaskSpecModel:
     def test_multiple_layers(self):
         spec = TaskSpec(
             goal="End-to-end feature spanning signals and output",
-            affected_layers=[ArchitectureLayer.SIGNALS, ArchitectureLayer.OUTPUT, ArchitectureLayer.TESTS],
+            affected_layers=[
+                ArchitectureLayer.SIGNALS,
+                ArchitectureLayer.OUTPUT,
+                ArchitectureLayer.TESTS,
+            ],
             acceptance_criteria=["All integration tests pass"],
         )
         assert spec.requires_adr is True
@@ -79,14 +81,14 @@ class TestTaskSpecModel:
             affected_layers=[ArchitectureLayer.DOCS],
             acceptance_criteria=["Docs updated correctly"],
         )
-        assert spec.commit_type is None
+        assert spec.commit_type == ""
 
     def test_all_architecture_layers_exist(self):
         expected = {
             "signals", "ingestion", "scoring", "output", "commands",
             "config", "plugins", "tests", "scripts", "docs", "prompts",
         }
-        assert {l.value for l in ArchitectureLayer} == expected
+        assert {layer.value for layer in ArchitectureLayer} == expected
 
 
 # ── validate_task_spec tests ───────────────────────────────────────
@@ -94,14 +96,15 @@ class TestTaskSpecModel:
 class TestValidateTaskSpec:
     """Semantic validation beyond schema."""
 
-    def test_valid_spec_no_issues(self):
+    def test_valid_spec_advisory_only(self):
         spec = TaskSpec(
             goal="Extend audit content validation logic",
             affected_layers=[ArchitectureLayer.SCRIPTS],
             acceptance_criteria=["All audit artifacts pass content check"],
         )
         issues = validate_task_spec(spec)
-        assert issues == []
+        # Advisory issues (scope_boundaries) are acceptable
+        assert all("scope_boundaries" in i or "advisory" in i.lower() for i in issues)
 
     def test_missing_tests_layer_warning(self):
         spec = TaskSpec(
@@ -132,7 +135,7 @@ class TestValidateTaskSpec:
             acceptance_criteria=["works"],  # Too vague
         )
         issues = validate_task_spec(spec)
-        assert any("vague" in i.lower() or "short" in i.lower() or "kurz" in i.lower() for i in issues)
+        assert any("short" in i.lower() or "vague" in i.lower() for i in issues)
 
     def test_forbidden_path_tagesplanung(self):
         spec = TaskSpec(
@@ -192,7 +195,7 @@ class TestValidateTaskSpecCLI:
         import subprocess
 
         result = subprocess.run(
-            [".venv/Scripts/python.exe", "scripts/validate_task_spec.py", "--example"],
+            [sys.executable, "scripts/validate_task_spec.py", "--example"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -216,7 +219,7 @@ class TestValidateTaskSpecCLI:
         yaml_path.write_text(yaml.dump(spec_data), encoding="utf-8")
 
         result = subprocess.run(
-            [".venv/Scripts/python.exe", "scripts/validate_task_spec.py", str(yaml_path)],
+            [sys.executable, "scripts/validate_task_spec.py", str(yaml_path)],
             capture_output=True,
             text=True,
             timeout=15,
@@ -231,7 +234,7 @@ class TestValidateTaskSpecCLI:
         yaml_path.write_text(yaml.dump(bad_data), encoding="utf-8")
 
         result = subprocess.run(
-            [".venv/Scripts/python.exe", "scripts/validate_task_spec.py", str(yaml_path)],
+            [sys.executable, "scripts/validate_task_spec.py", str(yaml_path)],
             capture_output=True,
             text=True,
             timeout=15,

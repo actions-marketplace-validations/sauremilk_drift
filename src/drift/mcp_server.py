@@ -32,6 +32,8 @@ import os
 from pathlib import Path
 from typing import Annotated, Any, cast
 
+from drift.mcp_catalog import get_tool_catalog  # noqa: F401
+
 try:
     import anyio
 
@@ -1155,6 +1157,8 @@ from drift.mcp_enrichment import (  # noqa: E402
     _session_error_response,
 )
 from drift.mcp_orchestration import (  # noqa: E402
+    _effective_profile,  # noqa: F401
+    _pre_call_advisory,  # noqa: F401
     _resolve_diagnostic_hypothesis_context,
     _resolve_session,
     _session_defaults,
@@ -1164,6 +1168,7 @@ from drift.mcp_orchestration import (  # noqa: E402
     _update_session_from_diff,
     _update_session_from_fix_plan,
     _update_session_from_scan,
+    _update_session_from_verification_result,  # noqa: F401
 )
 
 # ---------------------------------------------------------------------------
@@ -1274,7 +1279,13 @@ async def drift_session_start(
 
     # ADR-025 Phase D: Session autopilot
     if autopilot:
-        from drift.api import brief, fix_plan, scan, validate
+        from drift.analyzer import analyze_repo
+        from drift.api import brief, validate
+        from drift.api._config import _load_config_cached, _warn_config_issues
+        from drift.api.fix_plan import _build_fix_plan_response_from_analysis
+        from drift.api.scan import _format_scan_response
+        from drift.api_helpers import build_drift_score_scope, shape_for_profile, signal_scope_label
+        from drift.config import apply_signal_filter, resolve_signal_names
 
         loop = asyncio.get_event_loop()
         resolved = str(Path(path).resolve())
@@ -1298,24 +1309,73 @@ async def drift_session_start(
                 response_profile=response_profile,
             ),
         )
-        scan_result = await loop.run_in_executor(
-            None,
-            lambda: scan(
-                path=resolved,
-                signals=sig_list,
-                exclude_signals=excl_sig_list,
+        def _scan_and_fixplan_from_shared_analysis() -> tuple[dict[str, Any], dict[str, Any]]:
+            repo_path = Path(resolved)
+            cfg = _load_config_cached(repo_path)
+            cfg_warnings = _warn_config_issues(cfg)
+
+            warnings: list[str] = list(cfg_warnings)
+            if target_path and not (repo_path / target_path).exists():
+                warnings.append(
+                    f"target_path '{target_path}' does not exist in repository"
+                )
+
+            active_signals: set[str] | None = None
+            select_csv = ",".join(sig_list) if sig_list else None
+            ignore_csv = ",".join(excl_sig_list) if excl_sig_list else None
+            if select_csv or ignore_csv:
+                apply_signal_filter(cfg, select_csv, ignore_csv)
+                if select_csv:
+                    active_signals = set(resolve_signal_names(select_csv))
+
+            analysis = analyze_repo(
+                repo_path,
+                config=cfg,
+                since_days=90,
                 target_path=target_path,
-                response_profile=response_profile,
-            ),
-        )
-        fp_result = await loop.run_in_executor(
-            None,
-            lambda: fix_plan(
-                path=resolved,
+                active_signals=active_signals,
+            )
+
+            scan_result = _format_scan_response(
+                analysis,
+                config=cfg,
+                max_findings=10,
+                max_per_signal=None,
+                detail="concise",
+                strategy="diverse",
+                signal_filter=set(s.upper() for s in sig_list) if sig_list else None,
+                include_non_operational=False,
+                drift_score_scope=build_drift_score_scope(
+                    context="repo",
+                    path=target_path,
+                    signal_scope=signal_scope_label(selected=sig_list),
+                ),
+            )
+            if warnings:
+                scan_result["warnings"] = list(warnings)
+
+            fix_plan_result = _build_fix_plan_response_from_analysis(
+                analysis=analysis,
+                cfg=cfg,
+                repo_path=repo_path,
+                finding_id=None,
+                signal=None,
+                max_tasks=5,
+                automation_fit_min=None,
                 target_path=target_path,
                 exclude_paths=excl_paths,
-                response_profile=response_profile,
-            ),
+                include_deferred=False,
+                include_non_operational=False,
+                warnings=list(warnings),
+            )
+            return (
+                shape_for_profile(scan_result, response_profile),
+                shape_for_profile(fix_plan_result, response_profile),
+            )
+
+        scan_result, fp_result = await loop.run_in_executor(
+            None,
+            _scan_and_fixplan_from_shared_analysis,
         )
         result["autopilot"] = {
             "validate": val_result,
@@ -1930,6 +1990,188 @@ async def drift_map(
         )
 
 
+# ---------------------------------------------------------------------------
+# Calibration tools
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+async def drift_feedback(
+    signal: Annotated[
+        str,
+        Field(description="Signal type or abbreviation (e.g. 'PFS', 'pattern_fragmentation')."),
+    ],
+    file_path: Annotated[
+        str,
+        Field(description="File path the finding relates to."),
+    ],
+    verdict: Annotated[
+        str,
+        Field(
+            description=(
+                "Feedback verdict: 'tp' (true positive),"
+                " 'fp' (false positive), or 'fn' (false negative)."
+            ),
+        ),
+    ],
+    reason: Annotated[
+        str,
+        Field(description="Optional reason for the verdict."),
+    ] = "",
+    path: Annotated[
+        str,
+        Field(description="Repository path."),
+    ] = ".",
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start."),
+    ] = "",
+) -> str:
+    """Record TP/FP/FN feedback for a finding to improve signal calibration.
+
+    Use when you or an agent determines that a drift finding was correct (tp),
+    incorrect (fp), or missed (fn). Feedback accumulates and can be used by
+    ``drift_calibrate`` to adjust signal weights per repository.
+
+    Args:
+        signal: Signal type or abbreviation (e.g. 'PFS').
+        file_path: File path the finding relates to.
+        verdict: 'tp', 'fp', or 'fn'.
+        reason: Optional reason for the verdict.
+        path: Repository path.
+        session_id: Optional session ID for stateful workflows.
+    """
+    from pathlib import Path as _Path
+
+    from drift.calibration.feedback import FeedbackEvent, record_feedback
+    from drift.config import SIGNAL_ABBREV, DriftConfig
+
+    session = _resolve_session(session_id)
+
+    def _sync() -> str:
+        repo = _Path(path).resolve()
+        cfg = DriftConfig.load(repo)
+        resolved = SIGNAL_ABBREV.get(signal.upper(), signal)
+        v = verdict.lower().strip()
+        if v not in ("tp", "fp", "fn"):
+            return json.dumps({"error": f"Invalid verdict '{verdict}'. Use tp, fp, or fn."})
+        event = FeedbackEvent(
+            signal_type=resolved,
+            file_path=file_path,
+            verdict=v,  # type: ignore[arg-type]
+            source="user",
+            evidence={"reason": reason} if reason else {},
+        )
+        feedback_path = repo / cfg.calibration.feedback_path
+        record_feedback(feedback_path, event)
+        return json.dumps({
+            "status": "recorded",
+            "signal": resolved,
+            "file": file_path,
+            "verdict": v,
+            "finding_id": event.finding_id,
+        })
+
+    raw = await _run_sync_in_thread(_sync)
+    if session:
+        session.touch()
+    return _enrich_response_with_session(raw, session, "drift_feedback")
+
+
+@mcp.tool()
+async def drift_calibrate(
+    path: Annotated[
+        str,
+        Field(description="Repository path to calibrate."),
+    ] = ".",
+    dry_run: Annotated[
+        bool,
+        Field(description="If true, show proposed changes without writing to config."),
+    ] = True,
+    session_id: Annotated[
+        str,
+        Field(description="Optional session ID from drift_session_start."),
+    ] = "",
+) -> str:
+    """Compute calibrated signal weights from accumulated feedback evidence.
+
+    Reads all feedback (user verdicts, git correlation, GitHub issues) and
+    computes a per-signal weight adjustment using Bayesian confidence weighting.
+    In dry-run mode (default), only shows proposed changes.
+
+    Args:
+        path: Repository path to calibrate.
+        dry_run: If true, show proposed changes without writing.
+        session_id: Optional session ID for stateful workflows.
+    """
+    from pathlib import Path as _Path
+
+    from drift.calibration.feedback import load_feedback
+    from drift.calibration.profile_builder import build_profile
+    from drift.config import DriftConfig, SignalWeights
+
+    session = _resolve_session(session_id)
+
+    def _sync() -> str:
+        repo = _Path(path).resolve()
+        cfg = DriftConfig.load(repo)
+        feedback_path = repo / cfg.calibration.feedback_path
+        events = load_feedback(feedback_path)
+
+        if not events:
+            return json.dumps({
+                "status": "no_data",
+                "message": "No feedback evidence found. Use drift_feedback to record evidence.",
+                "agent_instruction": "Record TP/FP/FN feedback for findings before calibrating.",
+            })
+
+        result = build_profile(
+            events, cfg.weights,
+            min_samples=cfg.calibration.min_samples,
+            fn_boost_factor=cfg.calibration.fn_boost_factor,
+        )
+        diff = result.weight_diff(SignalWeights())
+
+        if not dry_run and diff:
+            import yaml as _yaml  # type: ignore[import-untyped]
+
+            config_path = DriftConfig._find_config_file(repo) or repo / "drift.yaml"
+            if config_path.exists():
+                data = _yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+            else:
+                data = {}
+            default_dict = SignalWeights().as_dict()
+            custom: dict[str, float] = {}
+            for key, val in result.calibrated_weights.as_dict().items():
+                if abs(val - default_dict.get(key, 0.0)) > 0.0001:
+                    custom[key] = round(val, 6)
+            if custom:
+                data["weights"] = custom
+            config_path.write_text(
+                _yaml.dump(data, default_flow_style=False, allow_unicode=True, sort_keys=False),
+                encoding="utf-8",
+            )
+
+        return json.dumps({
+            "status": "calibrated" if diff else "no_change",
+            "total_events": result.total_events,
+            "signals_with_data": result.signals_with_data,
+            "weight_changes": diff,
+            "dry_run": dry_run,
+            "written": not dry_run and bool(diff),
+            "agent_instruction": (
+                "Review the weight changes. Use dry_run=false to apply, "
+                "or record more feedback for higher confidence."
+                if dry_run else "Weights written to drift.yaml."
+            ),
+        }, default=str)
+
+    raw = await _run_sync_in_thread(_sync)
+    if session:
+        session.touch()
+    return _enrich_response_with_session(raw, session, "drift_calibrate")
+
+
 _EXPORTED_MCP_TOOLS = (
     drift_scan,
     drift_diff,
@@ -1950,6 +2192,8 @@ _EXPORTED_MCP_TOOLS = (
     drift_task_status,
     drift_session_trace,
     drift_map,
+    drift_feedback,
+    drift_calibrate,
 )
 
 

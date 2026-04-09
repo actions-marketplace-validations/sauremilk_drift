@@ -5,7 +5,8 @@ from __future__ import annotations
 import importlib
 import json
 import sys
-from typing import Any, Callable, NoReturn
+from collections.abc import Callable
+from typing import Any, NoReturn
 
 import click
 
@@ -105,9 +106,9 @@ def mcp(serve: bool, list_tools: bool, show_schema: bool, allow_tty: bool) -> No
         raise click.UsageError("Use only one mode: --serve, --list, or --schema.")
 
     if list_tools or show_schema:
-        from drift.mcp_server import get_tool_catalog
+        from drift.mcp_server import get_tool_catalog as get_catalog
 
-        catalog = get_tool_catalog()
+        catalog = get_catalog()
 
         if show_schema:
             console.print(json.dumps({"tools": catalog}, indent=2))

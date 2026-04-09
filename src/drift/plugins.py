@@ -29,7 +29,7 @@ from importlib.metadata import EntryPoint, entry_points
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import click
+    from click import Command
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ def discover_output_plugins() -> dict[str, object]:
     return loaded
 
 
-def discover_command_plugins() -> list[click.BaseCommand]:
+def discover_command_plugins() -> list[Command]:
     """Discover CLI commands registered under 'drift.commands'.
 
     Each entry point must point to a ``click.BaseCommand`` instance
@@ -123,7 +123,7 @@ def discover_command_plugins() -> list[click.BaseCommand]:
     """
     import click as _click  # lazy import to keep module lightweight
 
-    loaded: list[_click.BaseCommand] = []
+    loaded: list[Command] = []
     for ep in _load_entry_points(COMMAND_GROUP):
         try:
             obj = ep.load()
@@ -135,9 +135,9 @@ def discover_command_plugins() -> list[click.BaseCommand]:
             )
             continue
 
-        if not isinstance(obj, _click.BaseCommand):
+        if not isinstance(obj, _click.Command):
             logger.warning(
-                "Plugin command %r is not a click.BaseCommand; skipping.",
+                "Plugin command %r is not a click.Command; skipping.",
                 ep.value,
             )
             continue

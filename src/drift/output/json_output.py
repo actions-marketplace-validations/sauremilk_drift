@@ -183,6 +183,16 @@ def _finding_to_dict(f: Finding, *, impact_rank: int | None = None) -> dict[str,
         "status_set_by": f.status_set_by,
         "status_reason": f.status_reason,
         "metadata": f.metadata,
+        "attribution": {
+            "commit_hash": f.attribution.commit_hash,
+            "author": f.attribution.author,
+            "email": f.attribution.email,
+            "date": f.attribution.date.isoformat(),
+            "branch_hint": f.attribution.branch_hint,
+            "ai_attributed": f.attribution.ai_attributed,
+            "ai_confidence": f.attribution.ai_confidence,
+            "commit_message": f.attribution.commit_message_summary,
+        } if f.attribution else None,
         "remediation": {
             "title": rec.title,
             "description": rec.description,
@@ -417,9 +427,24 @@ def findings_to_sarif(analysis: RepoAnalysis) -> str:
             result["message"]["text"] = f"{f.title}\n{f.description}\nFIX: {f.fix}"
 
         # ADR-006: context tags as SARIF result properties
+        props: dict[str, Any] = {}
         ctx_tags = f.metadata.get("context_tags")
         if ctx_tags:
-            result["properties"] = {"drift:context": ctx_tags}
+            props["drift:context"] = ctx_tags
+
+        # ADR-034: attribution provenance in SARIF properties
+        if f.attribution:
+            props["drift:attribution"] = {
+                "commitHash": f.attribution.commit_hash,
+                "author": f.attribution.author,
+                "date": f.attribution.date.isoformat(),
+                "branchHint": f.attribution.branch_hint,
+                "aiAttributed": f.attribution.ai_attributed,
+                "aiConfidence": f.attribution.ai_confidence,
+            }
+
+        if props:
+            result["properties"] = props
 
         results.append(result)
 

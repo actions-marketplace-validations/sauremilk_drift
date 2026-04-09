@@ -339,6 +339,50 @@ class TestMcpSessionIntegration:
         assert "session" not in result
         assert result["drift_score"] == 40.0
 
+    def test_session_start_autopilot_reuses_single_analysis(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """Autopilot must not run duplicate full analyses for scan and fix_plan."""
+        import drift.analyzer as analyzer_module
+        from drift import mcp_server
+
+        monkeypatch.setattr(
+            "drift.api.validate",
+            lambda *a, **kw: {"status": "ok", "type": "validate"},
+        )
+        monkeypatch.setattr(
+            "drift.api.brief",
+            lambda *a, **kw: {"status": "ok", "type": "brief"},
+        )
+
+        calls = {"count": 0}
+        original_analyze_repo = analyzer_module.analyze_repo
+
+        def _counting_analyze_repo(*args: object, **kwargs: object):
+            calls["count"] += 1
+            return original_analyze_repo(*args, **kwargs)
+
+        monkeypatch.setattr(analyzer_module, "analyze_repo", _counting_analyze_repo)
+
+        # Ensure the temporary repo has analyzable content.
+        (tmp_path / "module.py").write_text("def ping() -> int:\n    return 1\n", encoding="utf-8")
+
+        raw = _run_tool(
+            mcp_server.drift_session_start(
+                path=str(tmp_path),
+                autopilot=True,
+            )
+        )
+        result = json.loads(raw)
+
+        assert result["status"] == "ok"
+        assert "autopilot" in result
+        assert "scan" in result["autopilot"]
+        assert "fix_plan" in result["autopilot"]
+        assert calls["count"] == 1
+
 
 class TestMcpStrictGuardrails:
     """Regression tests for opt-in strict MCP orchestration guardrails (#202)."""

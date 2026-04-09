@@ -100,7 +100,13 @@ class TestSignalRegistryCore:
         assert "hardcoded_secret" in ids
 
     def test_all_categories_are_known(self):
-        known = {"structural_risk", "architecture_boundary", "style_hygiene", "security", "ai_quality"}
+        known = {
+            "structural_risk",
+            "architecture_boundary",
+            "style_hygiene",
+            "security",
+            "ai_quality",
+        }
         for m in get_all_meta():
             assert m.category in known, f"{m.signal_id} has unknown category {m.category!r}"
 

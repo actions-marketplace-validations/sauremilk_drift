@@ -264,6 +264,13 @@ jobs:
           }
           & $env:PYTHON_BIN scripts/check_risk_audit.py --diff-base $diffBase
 
+      - name: Validate negative-pattern library
+        if: matrix.python-version == '3.12'
+        shell: powershell
+        run: |
+          & $env:PYTHON_BIN scripts/validate_negative_patterns.py
+          & $env:PYTHON_BIN scripts/check_negative_patterns.py --check
+
       # --- Performance regression loop (conditional on PR label) ---
       - name: Performance benchmark (perf-loop PR)
         if: >-

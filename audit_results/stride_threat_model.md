@@ -1,5 +1,20 @@
 # STRIDE Threat Model
 
+## 2026-04-12 - ADR-034: Causal Attribution via Git Blame
+
+- Scope: New optional enrichment pipeline (`src/drift/attribution.py`, `src/drift/ingestion/git_blame.py`) that executes `git blame --porcelain` as a subprocess to attribute findings to commits, authors, and branches. Opt-in via `attribution.enabled: true` in config. No signal, scoring, or ingestion logic changes — purely post-scoring enrichment.
+- Input path changes: Yes — new subprocess input path. `git blame --porcelain` and `git log --format=%s` are invoked per analyzed file via `subprocess.run()` with `capture_output=True`.
+- Output path changes: Yes — `Finding.attribution` field serialized in JSON (`attribution` dict), SARIF (`drift:attribution` property), and Rich terminal output (footer line).
+- External interface changes: Additive only; existing findings structure unchanged. New `attribution` field is null when feature is disabled.
+- Trust boundary: drift process ↔ git subprocess. Relies on repository path integrity (same trust boundary as existing `git log` calls in `src/drift/ingestion/git_history.py`).
+- STRIDE review:
+	- S (Spoofing): Low risk. Git blame output reflects repository history which may contain spoofed author identities (standard git limitation). No new authentication boundary.
+	- T (Tampering): Low risk. Subprocess invoked with explicit arguments, no shell=True. File paths come from existing ingestion pipeline (already validated). Timeout enforced per file (default 3s).
+	- R (Repudiation): Improved — attribution provides commit-level provenance for each finding, enabling audit trail.
+	- I (Information Disclosure): Low risk. Author names and emails are already in git history; attribution surfaces them in analysis output. Users opt in explicitly.
+	- D (Denial of Service): Low risk. ThreadPoolExecutor capped at 4 workers, per-file timeout of 3s, in-memory LRU cache (500 entries). Large monorepo performance bounded.
+	- E (Elevation of Privilege): No privilege change. Git subprocess runs with same OS-level permissions as drift CLI user.
+
 ## 2026-04-09 - ADR-029: Preflight diagnosis and markdown report export
 
 - Scope: Additiver Output-Pfad fuer vorstrukturierte Preflight-Diagnosen und den Markdown-Report-Export (`src/drift/preflight.py`, `src/drift/output/markdown_report.py`) inklusive zugehoeriger Agent-Hinweisaufbereitung.

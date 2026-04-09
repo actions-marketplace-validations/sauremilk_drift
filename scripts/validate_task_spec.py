@@ -107,9 +107,9 @@ def main() -> int:
     if issues:
         print(f"\nADVISORIES ({len(issues)}):")
         for issue in issues:
-            print(f"  ⚠ {issue}")
+            print(f"  [!] {issue}")
 
-    print("\n✓ TaskSpec is structurally valid.")
+    print("\n[OK] TaskSpec is structurally valid.")
     return 0
 
 

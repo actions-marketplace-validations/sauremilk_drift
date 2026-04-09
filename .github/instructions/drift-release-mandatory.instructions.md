@@ -9,8 +9,6 @@ description: "Releases are automated via python-semantic-release in CI. Agents m
 
 **Kurzregel:** Conventional Commits (`feat:`, `fix:`, `BREAKING:`) verwenden — CI übernimmt Version, Tag, Release, PyPI.
 Kein manueller Release-Befehl nötig. Fallback: `python scripts/release_automation.py --full-release`.
-python scripts/release_automation.py --full-release
-```
 
 ## See Also
 

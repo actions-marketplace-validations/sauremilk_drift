@@ -505,7 +505,7 @@ wheels = [
 
 [[package]]
 name = "drift-analyzer"
-version = "2.6.1"
+version = "2.7.2"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -520,6 +520,7 @@ dependencies = [
 all = [
     { name = "faiss-cpu" },
     { name = "hypothesis" },
+    { name = "jsonschema" },
     { name = "mcp", extra = ["cli"] },
     { name = "mistune" },
     { name = "mutmut" },
@@ -538,6 +539,7 @@ all = [
 ]
 dev = [
     { name = "hypothesis" },
+    { name = "jsonschema" },
     { name = "mistune" },
     { name = "mutmut" },
     { name = "mypy" },
@@ -573,6 +575,7 @@ requires-dist = [
     { name = "faiss-cpu", marker = "extra == 'embeddings'", specifier = ">=1.7" },
     { name = "gitpython", specifier = ">=3.1" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.100" },
+    { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "mcp", extras = ["cli"], marker = "extra == 'mcp'", specifier = ">=1.2.0,<2.0" },
     { name = "mistune", marker = "extra == 'dev'", specifier = ">=3.0" },
     { name = "mistune", marker = "extra == 'markdown'", specifier = ">=3.0" },

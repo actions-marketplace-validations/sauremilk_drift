@@ -1,5 +1,38 @@
 # Risk Register
 
+## 2026-04-12 - ADR-035: Per-Repository Signal Calibration
+
+- Risk ID: RISK-SIGNAL-2026-04-12-035
+- Component: `src/drift/calibration/`, `src/drift/signals/phantom_reference.py`, `src/drift/task_spec.py`, `src/drift/commands/calibrate.py`, `src/drift/commands/feedback.py`
+- Type: Signal behavior adaptation (repo-scoped calibration) + new local input path (`data/negative-patterns/`)
+- Description: Drift now applies repository-scoped precision hardening for selected signal patterns (initially PHR) using persisted calibration snapshots derived from user feedback and benchmark traces.
+- Severity: Medium
+- Likelihood: Low to Medium (calibration is bounded and confidence-weighted, but mis-calibration can suppress valid findings)
+- Mitigation:
+  - Calibration operates per repository fingerprint, not globally
+  - Conservative default when calibration data is missing or stale
+  - Signal-level guardrails cap score dampening and prevent full suppression from a single sample
+  - Tests cover calibration loading, persistence, and PHR behavior under calibrated/un-calibrated paths
+  - Audit/benchmark artifacts are updated alongside calibration changes (`docs/STUDY.md`, evidence JSON)
+- Residual risk: Medium-Low. Main residual risk is repository-local false negatives if repeated incorrect feedback is provided; bounded dampening and fallback defaults reduce blast radius.
+
+## 2026-04-12 - ADR-034: Causal Attribution via Git Blame
+
+- Risk ID: RISK-INGESTION-2026-04-12-034
+- Component: `src/drift/ingestion/git_blame.py`, `src/drift/attribution.py`, `src/drift/pipeline.py`
+- Type: New subprocess input path (git blame) + additive output field (Finding.attribution)
+- Description: Opt-in enrichment that invokes `git blame --porcelain` per analyzed file to attribute findings to commits, authors, and branches. Subprocess execution introduces a new trust boundary (drift ↔ git CLI). Author data from git history is surfaced in JSON/SARIF/Rich output.
+- Severity: Low
+- Likelihood: Low (opt-in, disabled by default; subprocess uses same git binary as existing git_history.py)
+- Mitigation:
+  - Feature disabled by default (`attribution.enabled: false`)
+  - Per-file timeout (3s) prevents blame on slow/large files from blocking analysis
+  - ThreadPoolExecutor capped at 4 workers; in-memory LRU cache (500 entries)
+  - No `shell=True` in subprocess calls; arguments are explicit
+  - File paths sourced from existing ingestion pipeline (already validated)
+  - Branch hint extraction via deterministic regex on merge commit messages only
+- Residual risk: Low. Author/email data in blame output could be spoofed in git history (inherent git limitation, not a drift-specific risk). Performance on very large repos with thousands of files may require increasing timeout or disabling attribution.
+
 ## 2026-04-09 - ADR-029: Preflight-Diagnose und Markdown-Report-Export
 
 - Risk ID: RISK-OUTPUT-2026-04-09-029

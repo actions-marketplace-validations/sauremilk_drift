@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -87,10 +88,10 @@ def validate_gate(gate: dict[str, str | bool], repo_root: Path | None = None) ->
     # Validate criterion
     kriterium = str(g.get("zulassungskriterium", g.get("zulassungskriterium_erfüllt", ""))).lower()
     if kriterium:
-        # Extract the criterion name (after "ja →" or similar)
-        criterion_parts = kriterium.replace("ja", "").replace("→", "").strip().split()
-        if criterion_parts:
-            criterion = criterion_parts[-1].strip()
+        # Extract criterion name after arrow (→) or colon
+        match = re.search(r"[→:]\s*(\w+)", kriterium)
+        if match:
+            criterion = match.group(1).strip()
             if criterion and criterion not in VALID_CRITERIA:
                 issues.append(
                     f"Criterion '{criterion}' is not a recognized admission criterion. "
@@ -126,8 +127,12 @@ def validate_gate(gate: dict[str, str | bool], repo_root: Path | None = None) ->
 
     # Check audit artifacts exist when signal work is declared
     if "ja" in betrifft_signal:
+        resolved_root = root.resolve()
         for artifact in AUDIT_ARTIFACTS:
-            if not (root / artifact).is_file():
+            artifact_path = (root / artifact).resolve()
+            if not artifact_path.is_relative_to(resolved_root):
+                issues.append(f"Audit artifact path escapes repo root: {artifact}")
+            elif not artifact_path.is_file():
                 issues.append(f"Audit artifact missing: {artifact}")
 
     # Check begründung is not empty/ritualistic

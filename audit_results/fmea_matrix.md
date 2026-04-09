@@ -1,5 +1,13 @@
 # FMEA Matrix
 
+## 2026-04-12 - ADR-035: PHR per-repository calibration
+
+| Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN | Status |
+|---|---|---|---|---|---|---:|---:|---:|---:|---|
+| PHR | FN: relevant phantom reference finding down-ranked too strongly | Repository feedback history contains biased/incorrect "false positive" labels for structurally valid PHR cases | Under-prioritized remediation for real reference drift in calibrated repository | `tests/test_calibration.py`, `tests/test_phantom_reference.py`, precision/recall run | Bound dampening factors, confidence weighting, and default fallback when calibration confidence is low | 7 | 4 | 4 | 112 | Open (bounded) |
+| PHR | FP: calibration not applied although repository has repeat FP pattern | Missing or stale `data/negative-patterns/` calibration snapshot, repo fingerprint mismatch, or cache invalidation | Repeated noisy PHR findings persist and reduce actionability | CLI calibration tests + snapshot persistence checks | Explicit calibrate/feedback commands, deterministic repo fingerprinting, lazy reload on changed calibration file | 5 | 3 | 4 | 60 | Mitigated |
+| PHR | Integrity risk: malformed calibration payload influences scoring path | External/manual edits to calibration JSON introduce invalid schema/value ranges | Runtime errors or unstable score adjustments | `tests/test_task_spec.py`, schema validation in calibration loading path | Strict validation + safe defaults on parse/validation failure; ignore invalid entries | 6 | 2 | 3 | 36 | Mitigated |
+
 ## 2026-04-07 - PFS FTA v1: RETURN_PATTERN extraction (MCS-1 recall fix)
 
 | Signal | Failure Mode | Cause | Effect | Detection | Mitigation | S | O | D | RPN | Status |

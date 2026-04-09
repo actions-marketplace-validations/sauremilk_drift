@@ -38,6 +38,7 @@
   "findings": [
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "2 identical copies (6 lines each) at: src\\myapp\\service_a.py:4, src\\myapp\\service_b.py:4. Consider consolidating.",
       "end_line": null,
@@ -89,6 +90,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "2 identical copies (9 lines each) at: src\\myapp\\service_a.py:12, src\\myapp\\service_b.py:12. Consider consolidating.",
       "end_line": null,
@@ -140,6 +142,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:8 and src\\myapp\\connectors\\db.py:17 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -181,6 +184,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:8 and src\\myapp\\connectors\\db.py:26 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -222,6 +226,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:8 and src\\myapp\\connectors\\db.py:35 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -263,6 +268,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:8 and src\\myapp\\connectors\\db.py:44 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -304,6 +310,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:8 and src\\myapp\\connectors\\db.py:53 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -345,6 +352,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:8 and src\\myapp\\connectors\\db.py:62 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -386,6 +394,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:8 and src\\myapp\\connectors\\db.py:71 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -427,6 +436,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:17 and src\\myapp\\connectors\\db.py:26 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -468,6 +478,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:17 and src\\myapp\\connectors\\db.py:35 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -509,6 +520,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:17 and src\\myapp\\connectors\\db.py:44 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -550,6 +562,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:17 and src\\myapp\\connectors\\db.py:53 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -591,6 +604,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:17 and src\\myapp\\connectors\\db.py:62 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -632,6 +646,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:17 and src\\myapp\\connectors\\db.py:71 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -673,6 +688,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:26 and src\\myapp\\connectors\\db.py:35 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -714,6 +730,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:26 and src\\myapp\\connectors\\db.py:44 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -755,6 +772,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:26 and src\\myapp\\connectors\\db.py:53 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -796,6 +814,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:26 and src\\myapp\\connectors\\db.py:62 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -837,6 +856,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:26 and src\\myapp\\connectors\\db.py:71 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -878,6 +898,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:35 and src\\myapp\\connectors\\db.py:44 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -919,6 +940,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:35 and src\\myapp\\connectors\\db.py:53 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -960,6 +982,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:35 and src\\myapp\\connectors\\db.py:62 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1001,6 +1024,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:35 and src\\myapp\\connectors\\db.py:71 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1042,6 +1066,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:44 and src\\myapp\\connectors\\db.py:53 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1083,6 +1108,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:44 and src\\myapp\\connectors\\db.py:62 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1124,6 +1150,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:44 and src\\myapp\\connectors\\db.py:71 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1165,6 +1192,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:53 and src\\myapp\\connectors\\db.py:62 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1206,6 +1234,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:53 and src\\myapp\\connectors\\db.py:71 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1247,6 +1276,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py:62 and src\\myapp\\connectors\\db.py:71 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1288,6 +1318,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\handler_v1.py:4 and src\\myapp\\handler_v2.py:4 are 100% similar. Small differences may indicate copy-paste divergence.",
       "end_line": null,
@@ -1329,6 +1360,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "2 return_pattern variants in src/myapp/models/ (1/2 use canonical pattern).\n  - src/myapp/models/core.py:25 (Product.find_by_sku)",
       "end_line": null,
@@ -1375,6 +1407,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Complexity: 29, LOC: 60. No docstring. No corresponding test found. No return type annotation.",
       "end_line": 63,
@@ -1415,6 +1448,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Complexity: 19, LOC: 49. No docstring. No corresponding test found. No return type annotation.",
       "end_line": 52,
@@ -1455,6 +1489,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src/myapp/models/enriched.py:3 — data/infrastructure layer imports from presentation/API layer. Expected direction: presentation → service → data.",
       "end_line": null,
@@ -1495,6 +1530,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src/myapp/models/enriched.py:4 — data/infrastructure layer imports from presentation/API layer. Expected direction: presentation → service → data.",
       "end_line": null,
@@ -1535,6 +1571,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Complexity: 10, LOC: 25. No docstring. No corresponding test found. No return type annotation.",
       "end_line": 28,
@@ -1575,6 +1612,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "3/3 public functions lack guard clauses (guarded ratio 0.0%, mean unguarded complexity 38.7).",
       "end_line": null,
@@ -1607,6 +1645,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'Inventory.check_stock' has prefix 'check_' but does not satisfy the expected contract: validate_*/check_* expects at least one raise or return False/None.",
       "end_line": 43,
@@ -1640,6 +1679,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'validate_user_profile' has prefix 'validate_' but does not satisfy the expected contract: validate_*/check_* expects at least one raise or return False/None.",
       "end_line": 8,
@@ -1673,6 +1713,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'ensure_database_connection' has prefix 'ensure_' but does not satisfy the expected contract: ensure_* expects at least one raise statement.",
       "end_line": 17,
@@ -1706,6 +1747,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "6 test functions with 12 positive / 0 negative assertions (negative ratio 0.0%). 0 boundary-named tests.",
       "end_line": null,
@@ -1739,6 +1781,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'transform_dataset' in src\\myapp\\processors\\transform.py has nesting depth 7 (threshold: 4). Deep nesting makes control flow hard to follow.",
       "end_line": 63,
@@ -1770,6 +1813,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'process_registration' in src\\myapp\\processors\\validator.py has nesting depth 6 (threshold: 4). Deep nesting makes control flow hard to follow.",
       "end_line": 28,
@@ -1801,6 +1845,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'calculate_pricing' in src\\myapp\\processors\\pricing.py has nesting depth 5 (threshold: 4). Deep nesting makes control flow hard to follow.",
       "end_line": 52,
@@ -1832,6 +1877,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "README mentions 'connectors/' but no such directory exists. Documentation may be outdated.",
       "end_line": null,
@@ -1862,6 +1908,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "README mentions 'handlers/' but no such directory exists. Documentation may be outdated.",
       "end_line": null,
@@ -1892,6 +1939,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "README mentions 'middleware/' but no such directory exists. Documentation may be outdated.",
       "end_line": null,
@@ -1922,6 +1970,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "README mentions 'models/' but no such directory exists. Documentation may be outdated.",
       "end_line": null,
@@ -1952,6 +2001,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "README mentions 'utils/' but no such directory exists. Documentation may be outdated.",
       "end_line": null,
@@ -1982,6 +2032,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "README mentions 'views/' but no such directory exists. Documentation may be outdated.",
       "end_line": null,
@@ -2012,6 +2063,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'calculate_pricing' in src\\myapp\\processors\\pricing.py has cognitive complexity 52 (threshold: 15). Complex control flow makes this function hard to understand and maintain.",
       "end_line": 52,
@@ -2044,6 +2096,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'transform_dataset' in src\\myapp\\processors\\transform.py has cognitive complexity 108 (threshold: 15). Complex control flow makes this function hard to understand and maintain.",
       "end_line": 63,
@@ -2076,6 +2129,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "Function 'process_registration' in src\\myapp\\processors\\validator.py has cognitive complexity 27 (threshold: 15). Complex control flow makes this function hard to understand and maintain.",
       "end_line": 28,
@@ -2108,6 +2162,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\connectors\\db.py exports 8/8 public symbols that are never imported elsewhere: connect_postgres, connect_redis, connect_mongodb, connect_elasticsearch, connect_rabbitmq, connect_kafka, connect_memcached, connect_dynamodb. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2182,6 +2237,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\handlers\\orders.py exports 2/3 public symbols that are never imported elsewhere: OrderError, PaymentError. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2226,6 +2282,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\handlers\\payments.py exports 2/2 public symbols that are never imported elsewhere: handle_payment, handle_refund. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2270,6 +2327,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\models\\core.py exports 9/9 public symbols that are never imported elsewhere: User.__init__, User.find_by_email, Product.__init__, Product.find_by_sku, Inventory.__init__, Inventory.check_stock, User, Product, Inventory. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2349,6 +2407,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\models\\enriched.py exports 2/3 public symbols that are never imported elsewhere: EnrichedOrder.__init__, EnrichedOrder.process. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2393,6 +2452,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\outlier_module.py exports 3/3 public symbols that are never imported elsewhere: read_shared_memory, call_native_lib, process_binary_data. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2442,6 +2502,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\service_a.py exports 2/2 public symbols that are never imported elsewhere: process_order, validate_input. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2486,6 +2547,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\service_b.py exports 2/2 public symbols that are never imported elsewhere: process_order, validate_input. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2530,6 +2592,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\utils\\formatting.py exports 2/2 public symbols that are never imported elsewhere: format_currency, format_money. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,
@@ -2574,6 +2637,7 @@
     },
     {
       "ai_attributed": false,
+      "attribution": null,
       "deferred": false,
       "description": "src\\myapp\\utils\\naming.py exports 2/2 public symbols that are never imported elsewhere: validate_user_profile, ensure_database_connection. Dead code increases maintenance cost and confuses contributors.",
       "end_line": null,

@@ -1,5 +1,38 @@
 # Fault Tree Analysis
 
+## 2026-04-12 - ADR-035: PHR calibration over-suppression risk
+
+### Top Event (TE-0)
+`phantom_reference` emits no actionable finding for a real unresolved reference in a repository where calibration data is present, due to over-aggressive per-repo dampening.
+
+### FT-1: TE-0 <- AND-Gate
+
+```
+                    TE-0: real PHR miss after calibration
+                               |
+                            AND-Gate
+                   +-----------+-----------+
+              IE-1: calibration active   IE-2: dampening weight
+                    for current repo            too high for this case
+```
+
+- IE-1 causes:
+  - repository fingerprint matches a stored calibration profile
+  - calibration file is valid and loaded successfully
+- IE-2 causes:
+  - repeated FP feedback for similar references biases local pattern score
+  - conservative floor is not reached before severity tier shifts below reporting threshold
+
+### Minimal Cut Set
+| MCS | Basis-Ereignis | SPOF | Mitigation |
+|---|---|---|---|
+| MCS-1 | Valid local calibration profile + biased FP-heavy feedback cluster for matching PHR pattern | Nein (AND path) | Cap dampening, enforce minimum evidence threshold, fallback to default weights when confidence is low |
+
+### Verification
+- `tests/test_calibration.py` validates calibration loading, bounds, and safe fallback behavior.
+- `tests/test_phantom_reference.py` validates calibrated vs uncalibrated reporting behavior.
+- Benchmark evidence for ADR-035 captured in versioned feature-evidence artifact.
+
 ## 2026-04-07 - PFS FTA v1: pfs_002 recall = 0 (RETURN_PATTERN SPOF)
 
 ### Top Event (TE-0)

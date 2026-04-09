@@ -41,6 +41,13 @@ _baseline_store: dict[
 ] = {}
 
 
+def _is_derived_cache_artifact(path_str: str) -> bool:
+    """Return True for derived drift cache artifacts (not source files)."""
+    normalized = path_str.replace("\\", "/")
+    top_level = normalized.split("/", 1)[0]
+    return top_level.startswith(".drift-cache")
+
+
 def _get_changed_files_from_git(
     repo_path: Path,
     *,
@@ -53,7 +60,10 @@ def _get_changed_files_from_git(
     """
     import subprocess
 
-    args = ["git", "diff", "--name-only"]
+    # ``--relative`` keeps the file list scoped to ``cwd`` (repo_path).
+    # This avoids pulling unrelated dirty files from a parent git root when
+    # nudge is executed on a sub-directory benchmark/project path.
+    args = ["git", "diff", "--name-only", "--relative"]
     if uncommitted:
         args.append("HEAD")
     else:
@@ -188,6 +198,11 @@ def nudge(
             else:
                 changed_files = detected
         changed_set = set(changed_files)
+        ignored_changed_files = sorted(
+            fp for fp in changed_set if _is_derived_cache_artifact(fp)
+        )
+        if ignored_changed_files:
+            changed_set.difference_update(ignored_changed_files)
 
         # -- Ensure baseline exists via BaselineManager (Phase 5) -----------
         from drift.incremental import BaselineManager
@@ -256,8 +271,15 @@ def nudge(
 
         baseline, baseline_findings, baseline_parse_map = stored
 
-        # -- Parse only changed files ---------------------------------------
+        # -- Parse only files that are changed vs baseline snapshot ----------
+        # A file can stay in ``git diff`` for a long time. If its current
+        # content hash already matches the baseline snapshot, re-parsing it
+        # on every nudge call is pure overhead and does not improve quality.
+        from drift.cache import ParseCache
+
         current_parse: dict[str, ParseResult] = {}
+        effective_changed_set: set[str] = set()
+        unchanged_hash_skips = 0
         all_files_info = discover_files(
             repo_path,
             include=cfg.include,
@@ -274,7 +296,30 @@ def nudge(
                     reason="file_not_discovered",
                     errors=["changed file is not part of discoverable source set"],
                 )
+                # Keep this in the changed set for conservative downstream handling.
+                effective_changed_set.add(fp)
                 continue
+
+            full_path = repo_path / fi.path
+            try:
+                current_hash = ParseCache.file_hash(full_path)
+            except OSError:
+                current_hash = None
+
+            baseline_hash = baseline.file_hashes.get(fp)
+            baseline_parse_result = baseline_parse_map.get(fp)
+            baseline_has_parse_errors = bool(
+                baseline_parse_result and baseline_parse_result.parse_errors
+            )
+            if (
+                current_hash is not None
+                and baseline_hash == current_hash
+                and not baseline_has_parse_errors
+            ):
+                unchanged_hash_skips += 1
+                continue
+
+            effective_changed_set.add(fp)
             try:
                 pr = parse_file(fi.path, repo_path, fi.language)
                 current_parse[fp] = pr
@@ -310,13 +355,30 @@ def nudge(
         parse_failure_count = len(parse_failed_files)
 
         # -- Run incremental analysis ---------------------------------------
-        runner = IncrementalSignalRunner(
-            baseline=baseline,
-            config=cfg,
-            baseline_findings=baseline_findings,
-            baseline_parse_results=baseline_parse_map,
-        )
-        inc_result = runner.run(changed_set, current_parse)
+        # Fast path: no effective source-file changes means no directional
+        # signal delta; avoid invoking the full incremental runner.
+        if not effective_changed_set and parse_failure_count == 0:
+            from drift.incremental import IncrementalResult
+
+            inc_result = IncrementalResult(
+                direction="stable",
+                delta=0.0,
+                score=baseline.score,
+                new_findings=[],
+                resolved_findings=[],
+                confidence={},
+                file_local_signals_run=[],
+                cross_file_signals_estimated=[],
+                baseline_valid=True,
+            )
+        else:
+            runner = IncrementalSignalRunner(
+                baseline=baseline,
+                config=cfg,
+                baseline_findings=baseline_findings,
+                baseline_parse_results=baseline_parse_map,
+            )
+            inc_result = runner.run(effective_changed_set, current_parse)
 
         # -- safe_to_commit hardrule (Step 13) ------------------------------
         blocking_reasons: list[str] = []
@@ -428,6 +490,9 @@ def nudge(
                 ),
             },
             changed_files=sorted(changed_set),
+            ignored_changed_files=ignored_changed_files,
+            analyzed_changed_files=sorted(effective_changed_set),
+            unchanged_hash_skips=unchanged_hash_skips,
             agent_instruction=(
                 "Use drift_nudge between edits for fast direction checks. "
                 "If safe_to_commit is false, address blocking_reasons first. "

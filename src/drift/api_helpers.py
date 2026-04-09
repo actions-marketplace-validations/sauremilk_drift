@@ -18,6 +18,9 @@ from typing import TYPE_CHECKING, Any
 from drift.config import DriftConfig
 from drift.finding_context import classify_finding_context
 from drift.models import SignalType
+from drift.response_shaping import build_drift_score_scope as _build_drift_score_scope
+from drift.signal_mapping import resolve_signal as _resolve_signal
+from drift.signal_mapping import signal_scope_label as _signal_scope_label
 
 logger = logging.getLogger("drift")
 
@@ -78,13 +81,7 @@ def signal_abbrev_map() -> dict[str, str]:
 
 def resolve_signal(name: str) -> SignalType | None:
     """Resolve a signal abbreviation or full name to ``SignalType``."""
-    upper = name.upper()
-    if upper in _ABBREV_TO_SIGNAL:
-        return _ABBREV_TO_SIGNAL[upper]
-    try:
-        return SignalType(name)
-    except ValueError:
-        return None
+    return _resolve_signal(name)
 
 
 def signal_abbrev(signal_type: str) -> str:
@@ -98,15 +95,7 @@ def signal_scope_label(
     ignored: list[str] | None = None,
 ) -> str:
     """Build a compact label describing which signals contributed to a score."""
-    if selected:
-        normalized = sorted({item.strip().upper() for item in selected if item.strip()})
-        if normalized:
-            return "+".join(normalized)
-    if ignored:
-        normalized = sorted({item.strip().upper() for item in ignored if item.strip()})
-        if normalized:
-            return f"all-minus:{'+'.join(normalized)}"
-    return "all"
+    return _signal_scope_label(selected=selected, ignored=ignored)
 
 
 def build_drift_score_scope(
@@ -117,15 +106,12 @@ def build_drift_score_scope(
     baseline_filtered: bool = False,
 ) -> str:
     """Return a stable scope descriptor for drift_score values."""
-    normalized_path = (path or "all").strip("/") or "all"
-    parts = [
-        f"context:{context}",
-        f"signals:{signal_scope}",
-        f"path:{normalized_path}",
-    ]
-    if baseline_filtered:
-        parts.append("baseline:filtered")
-    return ",".join(parts)
+    return _build_drift_score_scope(
+        context=context,
+        path=path,
+        signal_scope=signal_scope,
+        baseline_filtered=baseline_filtered,
+    )
 
 
 def _base_response(**extra: Any) -> dict[str, Any]:

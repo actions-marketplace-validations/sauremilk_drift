@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-04-09T16:28:09.229569+00:00",
-  "version": "2.7.0",
-  "git_sha": "875897f76",
+  "timestamp": "2026-04-09T17:51:08.471377+00:00",
+  "version": "2.7.2",
+  "git_sha": "207308b1e",
   "precision_recall": {
     "aggregate_f1": 1.0,
-    "total_fixtures": 115,
+    "total_fixtures": 129,
     "signals": {
       "architecture_violation": {
         "precision": 1.0,
@@ -132,6 +132,15 @@
         "fn": 0,
         "tn": 3
       },
+      "phantom_reference": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "tn": 10
+      },
       "system_misalignment": {
         "precision": 1.0,
         "recall": 1.0,
@@ -242,5 +251,6 @@
         "recall": 1.0
       }
     }
-  }
+  },
+  "self_analysis_finding_count": 419
 }

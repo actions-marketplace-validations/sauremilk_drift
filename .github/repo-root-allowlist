@@ -19,6 +19,7 @@ CHANGELOG.md
 CITATION.cff
 CODE_OF_CONDUCT.md
 conda.recipe
+data
 .dockerignore
 Dockerfile
 CONTRIBUTING.md

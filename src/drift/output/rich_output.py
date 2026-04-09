@@ -345,6 +345,19 @@ def _format_finding_detail(
     if dpr:
         text.append(f"  ⚠ {dpr}\n", style="dim italic")
 
+    # Causal attribution (ADR-034)
+    if f.attribution:
+        a = f.attribution
+        short_hash = a.commit_hash[:7] if a.commit_hash else "?"
+        date_str = a.date.isoformat() if a.date else "?"
+        parts = [f"Commit {short_hash}", a.author, date_str]
+        if a.branch_hint:
+            parts.append(a.branch_hint)
+        attr_line = " · ".join(parts)
+        if a.ai_attributed:
+            attr_line += " [AI]"
+        text.append(f"  ╰─ {attr_line}\n", style="dim cyan")
+
     return text
 
 

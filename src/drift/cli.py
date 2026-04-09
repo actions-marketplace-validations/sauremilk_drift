@@ -207,12 +207,14 @@ from drift.commands.analyze import analyze
 from drift.commands.badge import badge
 from drift.commands.baseline import baseline
 from drift.commands.brief import brief
+from drift.commands.calibrate import calibrate
 from drift.commands.check import check
 from drift.commands.config_cmd import config
 from drift.commands.copilot_context import copilot_context
 from drift.commands.diff_cmd import diff
 from drift.commands.explain import explain
 from drift.commands.export_context import export_context
+from drift.commands.feedback import feedback
 from drift.commands.fix_plan import fix_plan
 from drift.commands.init_cmd import init
 from drift.commands.mcp import mcp
@@ -229,6 +231,7 @@ from drift.commands.validate_cmd import validate
 main.add_command(analyze)
 main.add_command(baseline)
 main.add_command(brief)
+main.add_command(calibrate)
 main.add_command(init)
 main.add_command(check)
 main.add_command(config)
@@ -236,6 +239,7 @@ main.add_command(copilot_context)
 main.add_command(diff)
 main.add_command(explain)
 main.add_command(export_context)
+main.add_command(feedback)
 main.add_command(fix_plan)
 main.add_command(mcp)
 main.add_command(patterns)

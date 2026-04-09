@@ -109,7 +109,6 @@ def test_api_explain_emits_telemetry(
 
 def test_api_diff_returns_acceptance_fields(monkeypatch) -> None:
     import drift.analyzer as analyzer_module
-    import drift.api as api_module
     from drift.config import DriftConfig
 
     finding = SimpleNamespace(
@@ -150,7 +149,6 @@ def test_api_diff_returns_acceptance_fields(monkeypatch) -> None:
 
 def test_api_diff_scopes_decision_logic_to_target_path(monkeypatch) -> None:
     import drift.analyzer as analyzer_module
-    import drift.api as api_module
     from drift.config import DriftConfig
 
     in_scope = SimpleNamespace(
@@ -322,7 +320,6 @@ def test_api_diff_staged_only_reports_zero_staged_files(monkeypatch) -> None:
 
 def test_api_scan_returns_acceptance_fields(monkeypatch) -> None:
     import drift.analyzer as analyzer_module
-    import drift.api as api_module
     from drift.config import DriftConfig
 
     finding = SimpleNamespace(

@@ -182,6 +182,41 @@ class FileHistory:
 
 
 # ---------------------------------------------------------------------------
+# Attribution Models (ADR-034)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class BlameLine:
+    """A single line result from git blame --porcelain."""
+
+    line_no: int
+    commit_hash: str
+    author: str
+    email: str
+    date: datetime.date
+    content: str = ""
+
+
+@dataclass
+class Attribution:
+    """Causal provenance for a finding — who introduced the drifting code.
+
+    Populated by the attribution enrichment pipeline when
+    ``attribution.enabled`` is set in drift.yaml.
+    """
+
+    commit_hash: str
+    author: str
+    email: str
+    date: datetime.date
+    branch_hint: str | None = None
+    ai_attributed: bool = False
+    ai_confidence: float = 0.0
+    commit_message_summary: str = ""
+
+
+# ---------------------------------------------------------------------------
 # Shared Helpers
 # ---------------------------------------------------------------------------
 
@@ -229,6 +264,7 @@ class Finding:
     status_reason: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     rule_id: str | None = None
+    attribution: Attribution | None = None
 
     def __post_init__(self) -> None:
         if self.rule_id is None:

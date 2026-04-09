@@ -253,6 +253,50 @@ GroundTruthFixture(
 
 Fields not set in the override use sensible defaults (see `precision.py:run_fixture`).
 
+## Negative-Pattern Library
+
+The **negative-pattern library** under `data/negative-patterns/` is a standalone contribution path — no Rust, no analyzer internals needed. You contribute labelled code patterns that drift should detect.
+
+### What you contribute
+
+- A `.py` file (or directory of `.py` files) containing a minimal, self-contained anti-pattern
+- A `.json` metadata file describing the pattern (validated against `data/negative-patterns/schema.json`)
+
+### Quick-start
+
+1. Pick a signal from the [signal list](data/negative-patterns/README.md#current-signals-covered) (or propose one not yet covered)
+2. Write a minimal `.py` file exhibiting the anti-pattern — no external imports, keep it short
+3. Create a matching `.json` file following the schema:
+   ```json
+   {
+     "id": "mutant_duplicate_004",
+     "signal": "mutant_duplicate",
+     "origin": "ai_generated",
+     "model_hint": "gpt-4o",
+     "pattern_class": "copy_paste_with_variation",
+     "confirmed_problematic": true,
+     "severity": "medium",
+     "description": "AI-generated duplicate with cosmetic renaming only",
+     "tp_confirmed": true,
+     "added_by": "your-github-handle",
+     "drift_version": "2.7.2"
+   }
+   ```
+4. Validate locally:
+   ```bash
+   python scripts/validate_negative_patterns.py
+   python scripts/check_negative_patterns.py
+   ```
+5. Open a PR — CI will verify schema conformance and detection
+
+### Naming conventions
+
+- Pattern IDs: `{signal}_{nnn}` (e.g. `mutant_duplicate_004`)
+- Single-file: `patterns/{id}.py` + `patterns/{id}.json`
+- Multi-file: `patterns/{id}/` directory with `{id}.json` + multiple `.py` files
+
+See [data/negative-patterns/README.md](data/negative-patterns/README.md) for full details including schema documentation.
+
 ## Code conventions
 
 - Python 3.11+, type annotations everywhere

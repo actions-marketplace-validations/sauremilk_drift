@@ -342,6 +342,117 @@ def _default_includes() -> list[str]:
     return patterns
 
 
+class CalibrationConfig(BaseModel):
+    """Configuration for per-repo signal calibration (ADR-035).
+
+    When enabled, drift collects and uses feedback evidence to compute
+    project-specific signal weights via Bayesian weight calibration.
+
+    Example drift.yaml::
+
+        calibration:
+          enabled: true
+          min_samples: 20
+          bug_labels:
+            - bug
+            - regression
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = Field(
+        default=False,
+        description="Enable per-repo signal calibration.",
+    )
+    min_samples: int = Field(
+        default=20,
+        description=(
+            "Minimum TP+FP observations per signal for full confidence. "
+            "Below this, calibration blends toward default weights."
+        ),
+    )
+    correlation_window_days: int = Field(
+        default=30,
+        description="Days after a scan to look for defect-fix commits (TP evidence).",
+    )
+    decay_days: int = Field(
+        default=90,
+        description="Days after which the calibration profile is considered stale.",
+    )
+    weak_fp_window_days: int = Field(
+        default=60,
+        description="Days without a defect-fix → weak FP evidence.",
+    )
+    fn_boost_factor: float = Field(
+        default=0.1,
+        description=(
+            "How much to boost weight for signals with high false-negative rate "
+            "(0.0 disables FN boosting, max 1.0)."
+        ),
+    )
+    github_token: str | None = Field(
+        default=None,
+        description="GitHub API token for issue/PR correlation (or use DRIFT_GITHUB_TOKEN env).",
+    )
+    bug_labels: list[str] = Field(
+        default_factory=lambda: ["bug", "regression", "defect"],
+        description="Issue labels that identify bug reports for GitHub correlation.",
+    )
+    auto_recalibrate: bool = Field(
+        default=False,
+        description="Automatically recalibrate after each drift analyze run.",
+    )
+    feedback_path: str = Field(
+        default=".drift/feedback.jsonl",
+        description="Path to the feedback JSONL file (relative to repo root).",
+    )
+    history_dir: str = Field(
+        default=".drift/history",
+        description="Directory for scan history snapshots (relative to repo root).",
+    )
+    max_snapshots: int = Field(
+        default=20,
+        description="Maximum number of scan snapshots to retain.",
+    )
+
+
+class AttributionConfig(BaseModel):
+    """Configuration for causal attribution enrichment (ADR-034).
+
+    When enabled, findings are enriched with git-blame provenance data
+    identifying the commit, author, and date that introduced the drifting code.
+
+    Example drift.yaml::
+
+        attribution:
+          enabled: true
+          timeout_per_file_seconds: 3.0
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = Field(
+        default=False,
+        description="Enable git-blame-based causal attribution on findings.",
+    )
+    cache_enabled: bool = Field(
+        default=True,
+        description="Cache blame results per file content hash.",
+    )
+    timeout_per_file_seconds: float = Field(
+        default=3.0,
+        description="Maximum seconds for a single git-blame subprocess call.",
+    )
+    max_parallel_workers: int = Field(
+        default=4,
+        description="Thread pool size for parallel blame calls.",
+    )
+    include_branch_hint: bool = Field(
+        default=True,
+        description="Attempt to extract branch name from merge-commit messages.",
+    )
+
+
 class PluginConfig(BaseModel):
     """Configuration for Drift plugins.
 
@@ -411,6 +522,8 @@ class DriftConfig(BaseModel):
     finding_context: FindingContextPolicy = Field(default_factory=FindingContextPolicy)
     brief: BriefConfig = Field(default_factory=BriefConfig)
     plugins: PluginConfig = Field(default_factory=PluginConfig)
+    calibration: CalibrationConfig = Field(default_factory=CalibrationConfig)
+    attribution: AttributionConfig = Field(default_factory=AttributionConfig)
     agent: AgentObjective | None = Field(
         default=None,
         description=(

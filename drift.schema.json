@@ -68,6 +68,44 @@
       "title": "AgentObjective",
       "type": "object"
     },
+    "AttributionConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for causal attribution enrichment (ADR-034).\n\nWhen enabled, findings are enriched with git-blame provenance data\nidentifying the commit, author, and date that introduced the drifting code.\n\nExample drift.yaml::\n\n    attribution:\n      enabled: true\n      timeout_per_file_seconds: 3.0",
+      "properties": {
+        "cache_enabled": {
+          "default": true,
+          "description": "Cache blame results per file content hash.",
+          "title": "Cache Enabled",
+          "type": "boolean"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Enable git-blame-based causal attribution on findings.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "include_branch_hint": {
+          "default": true,
+          "description": "Attempt to extract branch name from merge-commit messages.",
+          "title": "Include Branch Hint",
+          "type": "boolean"
+        },
+        "max_parallel_workers": {
+          "default": 4,
+          "description": "Thread pool size for parallel blame calls.",
+          "title": "Max Parallel Workers",
+          "type": "integer"
+        },
+        "timeout_per_file_seconds": {
+          "default": 3.0,
+          "description": "Maximum seconds for a single git-blame subprocess call.",
+          "title": "Timeout Per File Seconds",
+          "type": "number"
+        }
+      },
+      "title": "AttributionConfig",
+      "type": "object"
+    },
     "BriefConfig": {
       "additionalProperties": false,
       "description": "Configuration for ``drift brief`` pre-task briefings.",
@@ -82,6 +120,95 @@
         }
       },
       "title": "BriefConfig",
+      "type": "object"
+    },
+    "CalibrationConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for per-repo signal calibration (ADR-035).\n\nWhen enabled, drift collects and uses feedback evidence to compute\nproject-specific signal weights via Bayesian weight calibration.\n\nExample drift.yaml::\n\n    calibration:\n      enabled: true\n      min_samples: 20\n      bug_labels:\n        - bug\n        - regression",
+      "properties": {
+        "auto_recalibrate": {
+          "default": false,
+          "description": "Automatically recalibrate after each drift analyze run.",
+          "title": "Auto Recalibrate",
+          "type": "boolean"
+        },
+        "bug_labels": {
+          "description": "Issue labels that identify bug reports for GitHub correlation.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Bug Labels",
+          "type": "array"
+        },
+        "correlation_window_days": {
+          "default": 30,
+          "description": "Days after a scan to look for defect-fix commits (TP evidence).",
+          "title": "Correlation Window Days",
+          "type": "integer"
+        },
+        "decay_days": {
+          "default": 90,
+          "description": "Days after which the calibration profile is considered stale.",
+          "title": "Decay Days",
+          "type": "integer"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Enable per-repo signal calibration.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "feedback_path": {
+          "default": ".drift/feedback.jsonl",
+          "description": "Path to the feedback JSONL file (relative to repo root).",
+          "title": "Feedback Path",
+          "type": "string"
+        },
+        "fn_boost_factor": {
+          "default": 0.1,
+          "description": "How much to boost weight for signals with high false-negative rate (0.0 disables FN boosting, max 1.0).",
+          "title": "Fn Boost Factor",
+          "type": "number"
+        },
+        "github_token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub API token for issue/PR correlation (or use DRIFT_GITHUB_TOKEN env).",
+          "title": "Github Token"
+        },
+        "history_dir": {
+          "default": ".drift/history",
+          "description": "Directory for scan history snapshots (relative to repo root).",
+          "title": "History Dir",
+          "type": "string"
+        },
+        "max_snapshots": {
+          "default": 20,
+          "description": "Maximum number of scan snapshots to retain.",
+          "title": "Max Snapshots",
+          "type": "integer"
+        },
+        "min_samples": {
+          "default": 20,
+          "description": "Minimum TP+FP observations per signal for full confidence. Below this, calibration blends toward default weights.",
+          "title": "Min Samples",
+          "type": "integer"
+        },
+        "weak_fp_window_days": {
+          "default": 60,
+          "description": "Days without a defect-fix \u2192 weak FP evidence.",
+          "title": "Weak Fp Window Days",
+          "type": "integer"
+        }
+      },
+      "title": "CalibrationConfig",
       "type": "object"
     },
     "DeferredArea": {
@@ -640,6 +767,9 @@
       "default": null,
       "description": "Optional agent objective declaration. Helps drift provide targeted feedback aligned with the agent's task."
     },
+    "attribution": {
+      "$ref": "#/$defs/AttributionConfig"
+    },
     "auto_calibrate": {
       "default": true,
       "title": "Auto Calibrate",
@@ -652,6 +782,9 @@
       "default": ".drift-cache",
       "title": "Cache Dir",
       "type": "string"
+    },
+    "calibration": {
+      "$ref": "#/$defs/CalibrationConfig"
     },
     "context_dampening": {
       "default": 0.5,

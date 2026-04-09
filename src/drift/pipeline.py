@@ -824,6 +824,18 @@ class AnalysisPipeline:
         )
         scored = self._scoring.run(repo_path, files, config, signaled.findings)
 
+        # Attribution enrichment (ADR-034): enrich findings with git-blame
+        # provenance when enabled.  Runs after scoring, before assembly.
+        if config.attribution.enabled:
+            from drift.attribution import enrich_findings
+
+            scored.findings = enrich_findings(
+                scored.findings,
+                repo_path,
+                config.attribution,
+                commits=parsed.commits,
+            )
+
         return self._assembly.run(
             repo_path,
             files,

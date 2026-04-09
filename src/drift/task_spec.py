@@ -27,13 +27,13 @@ Example YAML (embedded in drift.yaml or standalone)::
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
-class ArchitectureLayer(str, Enum):
+class ArchitectureLayer(StrEnum):
     """Valid architecture layers in the Drift data-flow pipeline."""
 
     SIGNALS = "signals"
@@ -106,13 +106,19 @@ class TaskSpec(BaseModel):
             description="Conditions that define task completion.",
         ),
     ]
-    requires_adr: bool = Field(
-        default=False,
-        description="Whether an ADR under decisions/ must exist before implementation.",
+    requires_adr: bool | None = Field(
+        default=None,
+        description=(
+            "Whether an ADR under decisions/ must exist before implementation. "
+            "None = auto-infer."
+        ),
     )
-    requires_audit_update: bool = Field(
-        default=False,
-        description="Whether audit artifacts under audit_results/ must be updated.",
+    requires_audit_update: bool | None = Field(
+        default=None,
+        description=(
+            "Whether audit artifacts under audit_results/ must be updated. "
+            "None = auto-infer."
+        ),
     )
     commit_type: str = Field(
         default="",
@@ -129,24 +135,27 @@ class TaskSpec(BaseModel):
     @model_validator(mode="after")
     def _infer_gate_requirements(self) -> TaskSpec:
         """Auto-detect gate requirements from affected layers."""
+        affected_set = set(self.affected_layers)
         signal_layers = {
             ArchitectureLayer.SIGNALS,
             ArchitectureLayer.INGESTION,
             ArchitectureLayer.OUTPUT,
         }
-        if signal_layers & set(self.affected_layers):
-            # Signal/ingestion/output changes require audit updates (Policy §18)
-            if not self.requires_audit_update:
-                self.requires_audit_update = True
+        # Signal/ingestion/output changes require audit updates (Policy §18).
+        if signal_layers & affected_set and self.requires_audit_update is None:
+            self.requires_audit_update = True
+        if self.requires_audit_update is None:
+            self.requires_audit_update = False
         adr_layers = {
             ArchitectureLayer.SIGNALS,
             ArchitectureLayer.SCORING,
             ArchitectureLayer.OUTPUT,
         }
-        if adr_layers & set(self.affected_layers):
-            # Signal/scoring/output changes require ADR
-            if not self.requires_adr:
-                self.requires_adr = True
+        # Signal/scoring/output changes require ADR.
+        if adr_layers & affected_set and self.requires_adr is None:
+            self.requires_adr = True
+        if self.requires_adr is None:
+            self.requires_adr = False
         return self
 
 
@@ -175,7 +184,8 @@ def validate_task_spec(spec: TaskSpec) -> list[str]:
         ArchitectureLayer.OUTPUT,
         ArchitectureLayer.COMMANDS,
     }
-    if code_layers & set(spec.affected_layers) and not spec.quality_constraints:
+    affected_set = set(spec.affected_layers)
+    if code_layers & affected_set and not spec.quality_constraints:
         issues.append(
             "quality_constraints is empty for a code change — "
             "define measurable quality requirements."
@@ -202,5 +212,20 @@ def validate_task_spec(spec: TaskSpec) -> list[str]:
             f"commit_type '{spec.commit_type}' is not a valid conventional commit type. "
             f"Expected one of: {', '.join(sorted(valid_types - {''}))}."
         )
+
+    # Warn when code layers are affected but tests layer is missing
+    if code_layers & affected_set and ArchitectureLayer.TESTS not in spec.affected_layers:
+        issues.append(
+            "Code layers affected but 'tests' not in affected_layers — "
+            "consider adding tests to ensure coverage."
+        )
+
+    # Warn about very short acceptance criteria (likely vague)
+    for criterion in spec.acceptance_criteria:
+        if len(criterion.strip()) < 15:
+            issues.append(
+                f"Acceptance criterion is very short ({len(criterion.strip())} chars): "
+                f"'{criterion}' — may be too vague to verify."
+            )
 
     return issues

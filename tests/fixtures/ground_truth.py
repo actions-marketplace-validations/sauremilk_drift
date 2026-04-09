@@ -63,7 +63,8 @@ class GroundTruthFixture:
     expected: list[ExpectedFinding] = field(default_factory=list)
     file_history_overrides: dict[str, FileHistoryOverride] = field(default_factory=dict)
     commits: list[CommitInfo] = field(default_factory=list)
-    old_sources: dict[str, str] = field(default_factory=dict)  # prior file contents for git-backed signals
+    # Prior file contents for git-backed signals.
+    old_sources: dict[str, str] = field(default_factory=dict)
 
     def materialize(self, root: Path) -> Path:
         """Write all files to disk under *root* and return the fixture dir."""
@@ -4510,7 +4511,10 @@ CCC_BOUNDARY_TP = GroundTruthFixture(
             signal_type=SignalType.CO_CHANGE_COUPLING,
             file_path="inventory/stock.py",
             should_detect=True,
-            description="At minimum 8-commit threshold — hidden coupling between inventory and shipping",
+            description=(
+                "At minimum 8-commit threshold — hidden coupling between "
+                "inventory and shipping"
+            ),
         ),
     ],
 )
@@ -4690,7 +4694,10 @@ ECM_CONFOUNDER_TN = GroundTruthFixture(
             signal_type=SignalType.EXCEPTION_CONTRACT_DRIFT,
             file_path="auth/login.py",
             should_detect=False,
-            description="Same raises (AuthError) in both versions — body change, contract unchanged",
+            description=(
+                "Same raises (AuthError) in both versions — body change, "
+                "contract unchanged"
+            ),
         ),
     ],
 )
@@ -4724,7 +4731,10 @@ PHR_TRUE_POSITIVE = GroundTruthFixture(
             signal_type=SignalType.PHANTOM_REFERENCE,
             file_path="services/auth.py",
             should_detect=True,
-            description="sanitize_input and validate_token are called but never defined or imported",
+            description=(
+                "sanitize_input and validate_token are called but never "
+                "defined or imported"
+            ),
         ),
     ],
 )
@@ -4763,7 +4773,10 @@ PHR_TRUE_NEGATIVE = GroundTruthFixture(
 PHR_STAR_IMPORT_TN = GroundTruthFixture(
     name="phr_star_import_tn",
     kind=FixtureKind.CONFOUNDER,
-    description="Star import means we cannot verify names → should NOT fire PHR (conservative skip)",
+    description=(
+        "Star import means we cannot verify names → should NOT fire PHR "
+        "(conservative skip)"
+    ),
     files={
         "lib/__init__.py": textwrap.dedent("""\
             def secret_helper():
@@ -4871,6 +4884,253 @@ PHR_DYNAMIC_GETATTR_TN = GroundTruthFixture(
     ],
 )
 
+PHR_COMPREHENSION_TN = GroundTruthFixture(
+    name="phr_comprehension_tn",
+    kind=FixtureKind.CONFOUNDER,
+    description="Comprehension/genexpr iteration variables must not be flagged as phantom",
+    files={
+        "app/__init__.py": "",
+        "app/transform.py": textwrap.dedent("""\
+            def process(items):
+                upper = [item.strip().upper() for item in items if item.strip()]
+                mapping = {k: v.lower() for k, v in zip(items, items)}
+                total = sum(x.count("a") for x in items)
+                return upper, mapping, total
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="app/transform.py",
+            should_detect=False,
+            description="item/k/v/x are comprehension iteration vars, not phantom refs",
+        ),
+    ],
+)
+
+PHR_LAMBDA_PARAM_TN = GroundTruthFixture(
+    name="phr_lambda_param_tn",
+    kind=FixtureKind.CONFOUNDER,
+    description="Lambda parameter names must not be flagged as phantom",
+    files={
+        "app/__init__.py": "",
+        "app/sort.py": textwrap.dedent("""\
+            data = [{"path": "a.txt"}, {"path": "b.txt"}]
+
+            def sorted_data():
+                return sorted(data, key=lambda item: str(item["path"]))
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="app/sort.py",
+            should_detect=False,
+            description="item is a lambda parameter, not a phantom reference",
+        ),
+    ],
+)
+
+PHR_IMPORT_FROM_TP = GroundTruthFixture(
+    name="phr_import_from_tp",
+    kind=FixtureKind.POSITIVE,
+    description="Importing a non-existent name from a project module → phantom import",
+    files={
+        "pkg/__init__.py": "",
+        "pkg/helpers.py": textwrap.dedent("""\
+            def actual_func():
+                return 42
+        """),
+        "pkg/main.py": textwrap.dedent("""\
+            from pkg.helpers import hallucinated_helper
+
+            def run():
+                return hallucinated_helper()
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="pkg/main.py",
+            should_detect=True,
+            description="hallucinated_helper does not exist in pkg.helpers → phantom import",
+        ),
+    ],
+)
+
+PHR_DECORATOR_PHANTOM_TP = GroundTruthFixture(
+    name="phr_decorator_tp",
+    kind=FixtureKind.POSITIVE,
+    description="Decorator referencing undefined name → should fire PHR",
+    files={
+        "webapp/__init__.py": "",
+        "webapp/routes.py": textwrap.dedent("""\
+            from webapp.models import User
+
+            @require_auth
+            @rate_limit(max_calls=100)
+            def get_users():
+                return User.query.all()
+        """),
+        "webapp/models.py": textwrap.dedent("""\
+            class User:
+                pass
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="webapp/routes.py",
+            should_detect=True,
+            description=(
+                "require_auth and rate_limit are never defined/imported "
+                "- phantom decorators"
+            ),
+        ),
+    ],
+)
+
+PHR_MULTI_PHANTOM_TP = GroundTruthFixture(
+    name="phr_multi_phantom_tp",
+    kind=FixtureKind.POSITIVE,
+    description="File with many phantom calls → high score expected",
+    files={
+        "pipeline/__init__.py": "",
+        "pipeline/process.py": textwrap.dedent("""\
+            def run_pipeline(data):
+                validated = validate_schema(data)
+                normalized = normalize_encoding(validated)
+                deduplicated = deduplicate_records(normalized)
+                enriched = enrich_metadata(deduplicated)
+                scored = calculate_risk_score(enriched)
+                return scored
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="pipeline/process.py",
+            should_detect=True,
+            description=(
+                "5 hallucinated names: validate_schema, normalize_encoding, "
+                "deduplicate_records, enrich_metadata, calculate_risk_score"
+            ),
+        ),
+    ],
+)
+
+PHR_TYPE_CHECKING_TN = GroundTruthFixture(
+    name="phr_type_checking_tn",
+    kind=FixtureKind.CONFOUNDER,
+    description="Names inside TYPE_CHECKING block should not fire PHR",
+    files={
+        "lib/__init__.py": "",
+        "lib/service.py": textwrap.dedent("""\
+            from __future__ import annotations
+            import typing
+
+            if typing.TYPE_CHECKING:
+                from lib.models import DetailedReport, AuditTrail
+
+            def get_summary() -> str:
+                return "summary"
+        """),
+        "lib/models.py": textwrap.dedent("""\
+            class DetailedReport:
+                pass
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="lib/service.py",
+            should_detect=False,
+            description="TYPE_CHECKING imports are excluded from phantom detection",
+        ),
+    ],
+)
+
+PHR_PRIVATE_NAME_BOUNDARY = GroundTruthFixture(
+    name="phr_private_boundary",
+    kind=FixtureKind.BOUNDARY,
+    description="Private _names are skipped by design → boundary: should NOT fire",
+    files={
+        "core/__init__.py": "",
+        "core/engine.py": textwrap.dedent("""\
+            def run():
+                result = _internal_helper("data")
+                config = _load_defaults()
+                return _format_result(result, config)
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="core/engine.py",
+            should_detect=False,
+            description="_-prefixed names are intentionally excluded (low hallucination risk)",
+        ),
+    ],
+)
+
+PHR_SINGLE_CHAR_BOUNDARY = GroundTruthFixture(
+    name="phr_single_char_boundary",
+    kind=FixtureKind.BOUNDARY,
+    description="Single-character names are skipped by design → boundary: should NOT fire",
+    files={
+        "math_utils/__init__.py": "",
+        "math_utils/calc.py": textwrap.dedent("""\
+            def compute(x, y, z):
+                a = x + y
+                b = y * z
+                c = a + b
+                return c
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="math_utils/calc.py",
+            should_detect=False,
+            description=(
+                "Single-char names (a, b, c) are skipped - "
+                "too common for meaningful detection"
+            ),
+        ),
+    ],
+)
+
+PHR_PARENT_REEXPORT_TN = GroundTruthFixture(
+    name="phr_parent_reexport_tn",
+    kind=FixtureKind.CONFOUNDER,
+    description="Name re-exported by parent __init__.py → import-from should NOT fire",
+    files={
+        "mylib/__init__.py": textwrap.dedent("""\
+            from mylib.core import Engine
+        """),
+        "mylib/core.py": textwrap.dedent("""\
+            class Engine:
+                def run(self):
+                    return True
+        """),
+        "mylib/cli.py": textwrap.dedent("""\
+            from mylib import Engine
+
+            def main():
+                engine = Engine()
+                engine.run()
+        """),
+    },
+    expected=[
+        ExpectedFinding(
+            signal_type=SignalType.PHANTOM_REFERENCE,
+            file_path="mylib/cli.py",
+            should_detect=False,
+            description="Engine is re-exported by mylib/__init__.py — valid import",
+        ),
+    ],
+)
+
 
 # Append NBV + BAT + PHR fixtures to ALL_FIXTURES
 ALL_FIXTURES.extend([
@@ -4951,6 +5211,15 @@ ALL_FIXTURES.extend([
     PHR_BUILTIN_TN,
     PHR_CROSS_FILE_TP,
     PHR_DYNAMIC_GETATTR_TN,
+    PHR_COMPREHENSION_TN,
+    PHR_LAMBDA_PARAM_TN,
+    PHR_IMPORT_FROM_TP,
+    PHR_DECORATOR_PHANTOM_TP,
+    PHR_MULTI_PHANTOM_TP,
+    PHR_TYPE_CHECKING_TN,
+    PHR_PRIVATE_NAME_BOUNDARY,
+    PHR_SINGLE_CHAR_BOUNDARY,
+    PHR_PARENT_REEXPORT_TN,
 ])
 
 

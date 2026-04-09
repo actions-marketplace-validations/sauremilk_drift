@@ -74,7 +74,7 @@ _FMEA_TABLE_RE = re.compile(
     r"^\|.*Signal.*\|.*Failure Mode.*\|.*RPN.*\|", re.MULTILINE | re.IGNORECASE
 )
 _FMEA_ROW_RE = re.compile(
-    r"^\|\s*\w{2,4}\s*\|", re.MULTILINE  # Signal ID (2-4 uppercase chars)
+    r"^\|\s*[A-Za-z]\w+.*\|.*\|", re.MULTILINE  # Signal ID starting with letter, not separator
 )
 
 # Risk Register: must have structured entries with Risk ID and Mitigation

@@ -375,3 +375,76 @@ class TestPhantomReferenceSignal:
         findings = _run_phr(files, tmp_path)
         phr = [f for f in findings if f.signal_type == SignalType.PHANTOM_REFERENCE]
         assert len(phr) == 0
+
+    # --- Regression tests for FP bug fixes ---
+
+    def test_comprehension_variables_not_flagged(self, tmp_path: Path):
+        """Comprehension iteration variables must not be flagged as phantom."""
+        files = {
+            "app/__init__.py": "",
+            "app/utils.py": """\
+                def transform(items):
+                    upper = [item.strip().upper() for item in items]
+                    pairs = {k: v.lower() for k, v in enumerate(items)}
+                    total = sum(x.count("a") for x in items)
+                    return upper, pairs, total
+            """,
+        }
+        findings = _run_phr(files, tmp_path)
+        phr = [f for f in findings if f.signal_type == SignalType.PHANTOM_REFERENCE]
+        assert len(phr) == 0
+
+    def test_lambda_parameters_not_flagged(self, tmp_path: Path):
+        """Lambda parameter names must not be flagged as phantom."""
+        files = {
+            "app/__init__.py": "",
+            "app/sort.py": """\
+                data = [{"path": "a"}, {"path": "b"}]
+
+                def sorted_data():
+                    return sorted(data, key=lambda item: str(item["path"]))
+            """,
+        }
+        findings = _run_phr(files, tmp_path)
+        phr = [f for f in findings if f.signal_type == SignalType.PHANTOM_REFERENCE]
+        assert len(phr) == 0
+
+    def test_import_from_phantom_detected(self, tmp_path: Path):
+        """Importing a non-existent name from a project module is phantom."""
+        files = {
+            "pkg/__init__.py": "",
+            "pkg/helpers.py": """\
+                def actual_func():
+                    return 42
+            """,
+            "pkg/main.py": """\
+                from pkg.helpers import nonexistent_func
+
+                def run():
+                    return nonexistent_func()
+            """,
+        }
+        findings = _run_phr(files, tmp_path)
+        phr = [f for f in findings if f.signal_type == SignalType.PHANTOM_REFERENCE]
+        assert len(phr) >= 1
+        phantom_names = [p["name"] for p in phr[0].metadata["phantom_names"]]
+        assert "nonexistent_func" in phantom_names
+
+    def test_import_from_constant_not_flagged(self, tmp_path: Path):
+        """Importing a module-level constant should not be flagged."""
+        files = {
+            "pkg/__init__.py": "",
+            "pkg/constants.py": """\
+                MAX_SIZE = 100
+                VERSION = "1.0"
+            """,
+            "pkg/main.py": """\
+                from pkg.constants import MAX_SIZE
+
+                def check(size):
+                    return size < MAX_SIZE
+            """,
+        }
+        findings = _run_phr(files, tmp_path)
+        phr = [f for f in findings if f.signal_type == SignalType.PHANTOM_REFERENCE]
+        assert len(phr) == 0

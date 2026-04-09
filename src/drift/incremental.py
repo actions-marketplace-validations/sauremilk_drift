@@ -344,8 +344,13 @@ class BaselineManager:
         if current.stash_hash != previous.stash_hash:
             return "stash_changed"
 
-        # (c) Many files changed since baseline was stored
-        if current.changed_file_count > _MAX_CHANGED_FILES_BEFORE_INVALIDATION:
+        # (c) Invalidate only when crossing from <= threshold to > threshold.
+        # This avoids repeated invalidations in persistently dirty repos where
+        # the changed-file count remains high but stable across calls.
+        if (
+            previous.changed_file_count <= _MAX_CHANGED_FILES_BEFORE_INVALIDATION
+            and current.changed_file_count > _MAX_CHANGED_FILES_BEFORE_INVALIDATION
+        ):
             return "changed_file_threshold"
 
         return None

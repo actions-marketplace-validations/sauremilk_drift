@@ -69,11 +69,11 @@ _MIN_CALLS_FOR_FINDING = 1
 
 
 class _NameCollector(ast.NodeVisitor):
-    """Collect names that are *used* (called / accessed) in a module.
+    """Collect names that are *used* (referenced in Load context) in a module.
 
-    Only collects top-level names (the leftmost identifier), since that
-    is what must be in scope.  E.g. for ``foo.bar.baz()`` we collect
-    ``foo``; for ``validate_token(x)`` we collect ``validate_token``.
+    Covers call-targets, bare name references, decorator names, argument
+    values, and f-string expressions.  Only the leftmost identifier is
+    collected — e.g. ``foo.bar.baz()`` → ``foo``.
     """
 
     def __init__(self) -> None:
@@ -133,12 +133,12 @@ class _NameCollector(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> None:
-        """Collect bare name references in non-type-checking context."""
+        """Collect bare name references in Load context (non-TYPE_CHECKING)."""
         if self._in_type_checking:
+            self.generic_visit(node)
             return
-        # Only collect if it is used in a call or attribute context
-        # (handled by visit_Call and parent traversal).
-        # We do NOT collect every bare Name — that would be too noisy.
+        if isinstance(node.ctx, ast.Load):
+            self.used_names[node.id].append(node.lineno)
         self.generic_visit(node)
 
     @staticmethod
@@ -177,20 +177,29 @@ class _ScopeCollector(ast.NodeVisitor):
     def __init__(self) -> None:
         self.defined_names: set[str] = set()
 
+    def _register_argument_names(self, args: ast.arguments) -> None:
+        """Register argument identifiers from function/lambda signatures."""
+        for arg in args.args + args.posonlyargs + args.kwonlyargs:
+            self.defined_names.add(arg.arg)
+        if args.vararg:
+            self.defined_names.add(args.vararg.arg)
+        if args.kwarg:
+            self.defined_names.add(args.kwarg.arg)
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Register function name."""
         self.defined_names.add(node.name)
         # Also register parameter names (they are in scope within the function)
-        for arg in node.args.args + node.args.posonlyargs + node.args.kwonlyargs:
-            self.defined_names.add(arg.arg)
-        if node.args.vararg:
-            self.defined_names.add(node.args.vararg.arg)
-        if node.args.kwarg:
-            self.defined_names.add(node.args.kwarg.arg)
+        self._register_argument_names(node.args)
         # Register decorator names as used (not defined)
         self.generic_visit(node)
 
     visit_AsyncFunctionDef = visit_FunctionDef  # type: ignore[assignment]  # noqa: N815
+
+    def visit_Lambda(self, node: ast.Lambda) -> None:
+        """Register lambda parameter names."""
+        self._register_argument_names(node.args)
+        self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Register class name."""
@@ -246,6 +255,11 @@ class _ScopeCollector(ast.NodeVisitor):
             self.defined_names.add(node.name)
         self.generic_visit(node)
 
+    def visit_comprehension(self, node: ast.comprehension) -> None:
+        """Register comprehension / generator iteration variables."""
+        self._collect_target_names(node.target)
+        self.generic_visit(node)
+
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         """Register walrus operator target."""
         if isinstance(node.target, ast.Name):
@@ -296,10 +310,13 @@ def _build_project_symbols(
 
 def _build_module_exports(
     parse_results: list[ParseResult],
+    repo_path: Path | None = None,
 ) -> dict[str, set[str]]:
     """Map dotted module names to the set of names they export.
 
     Used to verify that ``from X import Y`` actually finds ``Y`` in X.
+    Includes functions, classes, re-exports via imports, and module-level
+    assignments (constants, singletons).
     """
     exports: dict[str, set[str]] = defaultdict(set)
     for pr in parse_results:
@@ -317,20 +334,59 @@ def _build_module_exports(
             for name in imp.imported_names:
                 if name != "*":
                     exports[mod_name].add(name)
+        # Module-level assignments (constants like __version__, console, etc.)
+        if repo_path is not None:
+            _enrich_exports_from_source(exports[mod_name], pr.file_path, repo_path)
     return dict(exports)
 
 
 def _path_to_module(file_path: Path) -> str:
-    """Convert a file path to a dotted module name."""
+    """Convert a file path to a dotted module name.
+
+    Strips common layout prefixes (``src/``, ``lib/``) so that the
+    resulting dotted name matches what ``import`` statements use.
+    """
     posix = PurePosixPath(file_path)
     parts = list(posix.parts)
     if not parts:
         return ""
+    # Strip common source layout prefixes
+    if parts and parts[0] in ("src", "lib"):
+        parts = parts[1:]
     if parts[-1].endswith(".py"):
         parts[-1] = parts[-1][:-3]
     if parts[-1] == "__init__":
         parts = parts[:-1]
     return ".".join(parts)
+
+
+def _enrich_exports_from_source(
+    names: set[str],
+    file_path: Path,
+    repo_path: Path,
+) -> None:
+    """Add module-level assignment targets from source code to *names*.
+
+    This captures constants, singletons, and other module-level names
+    that are not function/class definitions but are still importable
+    (e.g. ``console = Console()``, ``__version__ = "1.0"``).
+    """
+    full_path = repo_path / file_path
+    try:
+        source = full_path.read_text(encoding="utf-8", errors="replace")
+        tree = ast.parse(source)
+    except (OSError, SyntaxError):
+        return
+
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    names.add(target.id)
+        elif isinstance(node, (ast.AnnAssign, ast.AugAssign)) and isinstance(
+            node.target, ast.Name,
+        ):
+            names.add(node.target.id)
 
 
 # ---------------------------------------------------------------------------
@@ -365,7 +421,7 @@ class PhantomReferenceSignal(BaseSignal):
     ) -> list[Finding]:
         """Run phantom-reference detection across all Python files."""
         project_symbols = _build_project_symbols(parse_results)
-        module_exports = _build_module_exports(parse_results)
+        module_exports = _build_module_exports(parse_results, self.repo_path)
 
         findings: list[Finding] = []
 
@@ -421,7 +477,7 @@ class PhantomReferenceSignal(BaseSignal):
         available.update(_FRAMEWORK_GLOBALS)
         available.update(project_symbols)
 
-        # Find phantom references
+        # Find phantom references (unresolvable names)
         phantoms: list[tuple[str, int]] = []  # (name, first_line)
         for name, lines in name_collector.used_names.items():
             if name in available:
@@ -436,6 +492,13 @@ class PhantomReferenceSignal(BaseSignal):
             if name.startswith("_"):
                 continue
             phantoms.append((name, min(lines)))
+
+        # Find phantom imports: from <project_module> import <name>
+        # where <name> does not exist in that module's known exports
+        phantom_imports = self._check_import_from_phantoms(
+            tree, module_exports,
+        )
+        phantoms.extend(phantom_imports)
 
         if not phantoms:
             return []
@@ -498,3 +561,39 @@ class PhantomReferenceSignal(BaseSignal):
             return full_path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             return None
+
+    @staticmethod
+    def _check_import_from_phantoms(
+        tree: ast.Module,
+        module_exports: dict[str, set[str]],
+    ) -> list[tuple[str, int]]:
+        """Detect ``from <project_module> import <name>`` where name is absent.
+
+        Only checks modules whose source we have parsed (i.e. project-internal).
+        Third-party and stdlib modules are NOT checked.
+        """
+        phantoms: list[tuple[str, int]] = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom):
+                continue
+            mod_name = node.module or ""
+            if mod_name not in module_exports:
+                continue
+            known = module_exports[mod_name]
+            for alias in node.names:
+                if alias.name == "*":
+                    continue
+                real_name = alias.name
+                if real_name not in known:
+                    # Check parent packages (e.g. drift.signals might
+                    # re-export from sub-modules)
+                    parts = mod_name.rsplit(".", 1)
+                    if len(parts) == 2:
+                        parent_mod = parts[0]
+                        if (
+                            parent_mod in module_exports
+                            and real_name in module_exports[parent_mod]
+                        ):
+                            continue
+                    phantoms.append((real_name, node.lineno))
+        return phantoms

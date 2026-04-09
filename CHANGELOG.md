@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add causal-attribution pipeline for findings via optional git-blame enrichment, including new attribution models, ingestion utilities, CLI integration, and JSON/Rich output support (ADR-034).
+- Add per-repository signal calibration workflow with persisted negative-pattern datasets, new `drift calibrate` and `drift feedback` commands, and calibration-aware PHR scoring behavior (ADR-035).
 - Add A2A Agent Card and HTTP serve endpoint (`drift serve`) for agent discovery in multi-agent systems (ADR-026). Exposes `GET /.well-known/agent-card.json` and `POST /a2a/v1` JSON-RPC 2.0 endpoint with 8 core analysis skills. Optional: `pip install drift-analyzer[serve]`.
 - Add machine-readable next-step contracts (`next_tool_call`, `fallback_tool_call`, `done_when`) to all agent-oriented API responses (scan detailed, diff, fix_plan, nudge, brief, negative_context), plus `recovery_tool_call` on error responses, reducing agent hallucinations in tool-call chains (ADR-024).
 - Add `preferred_pattern` field to guardrails and `canonical_refs` list to fix_plan tasks, surfacing positive code references (canonical exemplars, preferred patterns) from existing analysis data so coding agents receive concrete "do this" guidance alongside anti-patterns (ADR-023).
