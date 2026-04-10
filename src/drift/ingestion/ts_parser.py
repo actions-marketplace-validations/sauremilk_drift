@@ -803,7 +803,7 @@ def _extract_hook_patterns(
 
 def _collect_identifiers(node: Any, source: bytes) -> set[str]:
     """Collect non-builtin identifier names from a callback node."""
-    _BUILTINS = frozenset({
+    builtins = frozenset({
         "console", "document", "window", "setTimeout", "setInterval",
         "clearTimeout", "clearInterval", "fetch", "JSON", "Math",
         "Promise", "Array", "Object", "String", "Number", "Boolean",
@@ -813,7 +813,7 @@ def _collect_identifiers(node: Any, source: bytes) -> set[str]:
     for child in _walk(node):
         if child.type == "identifier":
             name = _node_text(child, source)
-            if name not in _BUILTINS and not name.startswith("_"):
+            if name not in builtins and not name.startswith("_"):
                 ids.add(name)
     return ids
 
