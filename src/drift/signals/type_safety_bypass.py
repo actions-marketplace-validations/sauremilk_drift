@@ -32,7 +32,7 @@ _TS_DIRECTIVE_RE = re.compile(r"@ts-(ignore|expect-error)")
 _DEFAULT_THRESHOLD = 5
 
 
-def _count_bypasses(source: str, language: str) -> list[dict[str, object]]:
+def _count_bypasses(source: str, language: str) -> list[dict[str, str | int]]:
     """Count type-safety bypass patterns in TS/TSX source.
 
     Returns a list of dicts with keys: kind, line, detail.
@@ -42,7 +42,7 @@ def _count_bypasses(source: str, language: str) -> list[dict[str, object]]:
         return []
 
     root, source_bytes = tree
-    bypasses: list[dict[str, object]] = []
+    bypasses: list[dict[str, str | int]] = []
 
     for node in ts_walk(root):
         # as any
@@ -144,7 +144,7 @@ class TypeSafetyBypassSignal(BaseSignal):
                 Severity.HIGH if score >= 0.7 else Severity.MEDIUM if score >= 0.3 else Severity.LOW
             )
 
-            kinds = {}
+            kinds: dict[str, int] = {}
             for b in bypasses:
                 kind = str(b["kind"])
                 kinds[kind] = kinds.get(kind, 0) + 1

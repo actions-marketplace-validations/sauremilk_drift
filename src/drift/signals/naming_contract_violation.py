@@ -443,7 +443,7 @@ class NamingContractViolationSignal(BaseSignal):
         # ── TS-specific naming convention checks ──────────────────────
 
         # 1. Interface I-Prefix consistency (cross-file)
-        iface_names: list[tuple[str, Path, int]] = []
+        iface_names_2: list[tuple[str, Path, int]] = []
         for pr in parse_results:
             if pr.language not in _TS_LANGUAGES:
                 continue
@@ -451,18 +451,20 @@ class NamingContractViolationSignal(BaseSignal):
                 continue
             for cls in pr.classes:
                 if cls.is_interface:
-                    iface_names.append((cls.name, cls.file_path, cls.start_line))
+                    iface_names_2.append((cls.name, cls.file_path, cls.start_line))
 
-        if len(iface_names) >= 4:
+        if len(iface_names_2) >= 4:
             i_prefixed = [
-                n for n, _, _ in iface_names if n.startswith("I") and len(n) > 1 and n[1].isupper()
+                n
+                for n, _, _ in iface_names_2
+                if n.startswith("I") and len(n) > 1 and n[1].isupper()
             ]
-            prefixed_ratio_text = f"{len(i_prefixed)}/{len(iface_names)}"
-            ratio = len(i_prefixed) / len(iface_names)
+            prefixed_ratio_text = f"{len(i_prefixed)}/{len(iface_names_2)}"
+            ratio = len(i_prefixed) / len(iface_names_2)
 
             if ratio > 0.5:
                 # I-prefix is dominant → flag outliers without I-prefix
-                for iname, fpath, line in iface_names:
+                for iname, fpath, line in iface_names_2:
                     if not (iname.startswith("I") and len(iname) > 1 and iname[1].isupper()):
                         findings.append(
                             Finding(
@@ -487,7 +489,7 @@ class NamingContractViolationSignal(BaseSignal):
                         )
             elif ratio < 0.2:
                 # No-prefix is dominant → flag outliers with I-prefix
-                for iname, fpath, line in iface_names:
+                for iname, fpath, line in iface_names_2:
                     if iname.startswith("I") and len(iname) > 1 and iname[1].isupper():
                         findings.append(
                             Finding(
@@ -497,7 +499,7 @@ class NamingContractViolationSignal(BaseSignal):
                                 title=f"Interface '{iname}' uses I-prefix against convention",
                                 description=(
                                     f"Interface '{iname}' at {fpath.as_posix()}:{line} "
-                                    f"uses I-prefix, but only {len(i_prefixed)}/{len(iface_names)} "
+                                    f"uses I-prefix, but only {prefixed_ratio_text} "
                                     f"interfaces do. Inconsistent naming reduces readability."
                                 ),
                                 file_path=fpath,
@@ -658,7 +660,7 @@ class NamingContractViolationSignal(BaseSignal):
 
             if ratio > 0.5:
                 # I-prefix is dominant → flag outliers without I-prefix
-                for iname, fpath, line in iface_names:
+                for iname, fpath, line in iface_names_2:
                     if not (iname.startswith("I") and len(iname) > 1 and iname[1].isupper()):
                         findings.append(
                             Finding(
@@ -732,24 +734,24 @@ class NamingContractViolationSignal(BaseSignal):
                     ts_node_text(enum_name_node, src_bytes) if enum_name_node else "anonymous"
                 )
 
-                members: list[str] = []
+                members_2: list[str] = []
                 for child in ts_walk(node):
                     if child.type == "enum_assignment":
                         name_node = child.child_by_field_name("name")
                         if name_node:
-                            members.append(ts_node_text(name_node, src_bytes))
+                            members_2.append(ts_node_text(name_node, src_bytes))
                     elif (
                         child.type == "property_identifier"
                         and child.parent
                         and child.parent.type == "enum_body"
                     ):
-                        members.append(ts_node_text(child, src_bytes))
+                        members_2.append(ts_node_text(child, src_bytes))
 
-                if len(members) < 2:
+                if len(members_2) < 2:
                     continue
 
-                screaming = sum(1 for m in members if re.match(r"^[A-Z][A-Z0-9_]+$", m))
-                pascal = sum(1 for m in members if re.match(r"^[A-Z][a-z]", m) and "_" not in m)
+                screaming = sum(1 for m in members_2 if re.match(r"^[A-Z][A-Z0-9_]+$", m))
+                pascal = sum(1 for m in members_2 if re.match(r"^[A-Z][a-z]", m) and "_" not in m)
 
                 if screaming > 0 and pascal > 0:
                     # Mixed casing
@@ -793,8 +795,8 @@ class NamingContractViolationSignal(BaseSignal):
                 continue
             root, src_bytes = parsed
 
-            single_letter: list[str] = []
-            verbose: list[str] = []
+            single_letter_2: list[str] = []
+            verbose_2: list[str] = []
 
             for node in ts_walk(root):
                 if node.type == "type_parameter":
@@ -802,11 +804,11 @@ class NamingContractViolationSignal(BaseSignal):
                     if name_node:
                         pname = ts_node_text(name_node, src_bytes)
                         if len(pname) == 1 and pname.isupper():
-                            single_letter.append(pname)
+                            single_letter_2.append(pname)
                         elif len(pname) > 1:
-                            verbose.append(pname)
+                            verbose_2.append(pname)
 
-            if single_letter and verbose:
+            if single_letter_2 and verbose_2:
                 findings.append(
                     Finding(
                         signal_type=self.signal_type,
@@ -815,8 +817,8 @@ class NamingContractViolationSignal(BaseSignal):
                         title=f"Mixed generic parameter naming in {pr.file_path.name}",
                         description=(
                             f"{pr.file_path.as_posix()} mixes single-letter generics "
-                            f"({', '.join(sorted(set(single_letter)))}) with verbose names "
-                            f"({', '.join(sorted(set(verbose)))}). "
+                            f"({', '.join(sorted(set(single_letter_2)))}) with verbose names "
+                            f"({', '.join(sorted(set(verbose_2)))}). "
                             f"Pick one convention per codebase."
                         ),
                         file_path=pr.file_path,
@@ -826,8 +828,8 @@ class NamingContractViolationSignal(BaseSignal):
                             "to either single-letter or descriptive style."
                         ),
                         metadata={
-                            "single_letter": sorted(set(single_letter)),
-                            "verbose": sorted(set(verbose)),
+                            "single_letter": sorted(set(single_letter_2)),
+                            "verbose": sorted(set(verbose_2)),
                         },
                     )
                 )
