@@ -21,7 +21,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Sync labels from .github/labels.yml
         uses: crazy-max/ghaction-github-labeler@v5
