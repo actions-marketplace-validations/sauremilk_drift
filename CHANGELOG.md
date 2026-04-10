@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [2.8.0] - 2026-04-10
+
 ### Added
 
 - Add causal-attribution pipeline for findings via optional git-blame enrichment, including new attribution models, ingestion utilities, CLI integration, and JSON/Rich output support (ADR-034).
