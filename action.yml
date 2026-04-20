@@ -343,7 +343,7 @@ runs:
     # Runs even when the check step failed so that SARIF is never lost.
     - name: Upload SARIF to GitHub Code Scanning
       if: always() && inputs.upload-sarif == 'true'
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4.35.1
       with:
         sarif_file: ${{ steps.drift-run.outputs.sarif-file }}
         category: drift
