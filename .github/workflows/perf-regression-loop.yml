@@ -50,7 +50,7 @@ jobs:
       issue_body: ${{ steps.gate.outputs.issue_body }}
       findings_count: ${{ steps.gate.outputs.findings_count }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
@@ -158,7 +158,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Download benchmark artifacts
         uses: actions/download-artifact@v4
@@ -206,7 +206,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Close resolved issues
         shell: powershell
